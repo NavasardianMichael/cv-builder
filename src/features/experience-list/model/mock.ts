@@ -1,6 +1,6 @@
-import { Experience } from "./types";
+import { ExperienceListSlice } from "./types";
 
-export const experienceMock: Experience = {
+export const mock: ExperienceListSlice = {
     byId: {
         'workspace 1': {
             id: 'workspace 1',

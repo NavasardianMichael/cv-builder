@@ -1,1 +1,1 @@
-export { Education } from './ui/main'
+export { EducationList } from './ui/main'

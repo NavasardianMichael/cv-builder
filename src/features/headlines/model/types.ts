@@ -1,4 +1,4 @@
-import { Contact } from "entities/contact-item/model/types"
+import { Contact } from "entities/contact/model/types"
 import { NormalizedShape } from "shared/types/commons"
 
 export type HeadlinesSlice = {

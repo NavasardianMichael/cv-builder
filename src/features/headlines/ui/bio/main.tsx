@@ -1,14 +1,13 @@
 import { FC } from 'react'
+import { HeadlinesSlice } from 'features/headlines/model/types'
 import styles from './main.module.css'
 
-type Props = {
+type Props = Pick<HeadlinesSlice, 'bio'>
 
-}
-
-export const Bio: FC<Props> = ({  }) => {
+export const Bio: FC<Props> = ({ bio }) => {
   return (
     <p className={styles.bio}>
-      I am a Project Manager, currently working at Geeglo. I help companies build products from zero to one. This is a brief description about you. Write some details about yourself, and make it meaningful. Maximum 3 lines of text.
+      {bio}
     </p>
   )
 }

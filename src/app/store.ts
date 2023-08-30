@@ -3,9 +3,11 @@ import { headlinesReducer } from 'features/headlines/model/slice'
 import { experienceReducer } from 'features/experience-list/model/slice'
 import { educationReducer } from 'features/education-list/model/slice'
 import { skillsReducer } from 'features/skills-list/model/slice'
+import { templatesReducer } from 'widgets/CV/model/slice'
 
 export const store = configureStore({
   reducer: {
+    templates: templatesReducer,
     headlines: headlinesReducer,
     experience: experienceReducer,
     education: educationReducer,

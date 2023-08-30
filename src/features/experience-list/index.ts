@@ -1,1 +1,1 @@
-export { Experience } from './ui/main'
+export { ExperienceList } from './ui/main'

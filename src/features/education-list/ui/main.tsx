@@ -1,15 +1,22 @@
 import { FC } from 'react'
-import { SectionComponentProps } from 'shared/types/sections'
+import { EducationListSlice } from '../model/types'
+import { Education } from 'entities/education'
 import styles from './main.module.css'
 
-type Props = SectionComponentProps<'education'>
+type Props = {
+  data: EducationListSlice
+}
 
-export const Education: FC<Props> = ({  }) => {
+export const EducationList: FC<Props> = ({ data }) => {
   return (
-    <div className={styles.education}>
-      <div>
-        Education
-      </div>
+    <div className={styles.educationList}>
+      {
+        data.allIds.map(educationId => {
+          const props = data.byId[educationId] 
+          
+          return <Education key={educationId} {...props} />
+        })
+      }      
     </div>
   )
 }

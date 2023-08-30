@@ -1,15 +1,24 @@
 import { FC } from 'react'
-import { SectionComponentProps } from 'shared/types/sections'
+import { SkillsListSlice } from '../model/types'
+import { Skill } from 'entities/skill'
 import styles from './main.module.css'
 
-type Props = SectionComponentProps<'skills'>
+type Props = {
+  data: SkillsListSlice
+}
 
-export const Skills: FC<Props> = ({  }) => {
+export const Skills: FC<Props> = ({ data }) => {
   return (
     <div className={styles.skills}>
-      <div>
-        Skills
-      </div>
+      {
+        data.allIds.map(skillId => {
+          const props = data.byId[skillId]
+
+          return (
+            <Skill key={skillId} {...props} />
+          )
+        })
+      }
     </div>
   )
 }

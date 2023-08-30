@@ -1,20 +1,26 @@
 import { FC } from 'react'
-import { contactsMock } from '../model/mock'
+import { Contact } from 'entities/contact'
+import { HeadlinesSlice } from 'features/headlines/model/types'
 import styles from './main.module.css'
-import { ContactItem } from 'entities/contact-item'
+import { combineClassNames } from 'shared/functions/commons'
+import { useAppSelector } from 'shared/hooks/useAppSelector'
+import { selectTemplates } from 'widgets/CV/model/selectors'
 
-type Props = {}
+type Props = {
+  data: HeadlinesSlice['contacts']
+}
 
-export const Contacts: FC<Props> = ({  }) => {
+export const Contacts: FC<Props> = ({ data }) => {
+
+  const { selectedTemplate } = useAppSelector(selectTemplates)
+
   return (
-    <div className={styles.contact}>
+    <div className={combineClassNames(styles.contact, styles[selectedTemplate])}>
       {
-        contactsMock.allIds.map(contactId => {
-          const props = contactsMock.byId[contactId] 
+        data.allIds.map(contactId => {
+          const props = data.byId[contactId]
           
-          return (
-            <ContactItem key={contactId} {...props} />
-          )
+          return <Contact key={contactId} {...props} />
         })
       }
     </div>

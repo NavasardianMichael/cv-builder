@@ -1,11 +1,14 @@
 import { createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
 import type { Actions, EducationListSlice } from './types'
+import { mock } from './mock'
 
-const initialState: EducationListSlice = {
-  byId: {},
-  allIds: []
-}
+// const initialState: EducationListSlice = {
+//   byId: {},
+//   allIds: []
+// }
+
+const initialState = mock
 
 export const educationSlice = createSlice({
   name: 'education',

@@ -1,11 +1,14 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { createSlice } from '@reduxjs/toolkit'
 import type { Actions, ExperienceListSlice } from './types'
+import { mock } from './mock'
 
-const initialState: ExperienceListSlice = {
-  byId: {},
-  allIds: []
-}
+// const initialState: ExperienceListSlice = {
+//   byId: {},
+//   allIds: []
+// }
+
+const initialState = mock
 
 export const experienceSlice = createSlice({
   name: 'experience',

@@ -1,8 +1,8 @@
 import { FC } from 'react'
-import { ExperienceItem } from 'entities/experience-item/model/types'
 import styles from './main.module.css'
+import { Experience } from 'entities/experience/model/types';
 
-type Props = Pick<ExperienceItem, 'description'>
+type Props = Pick<Experience, 'description'>
 
 export const Description: FC<Props> = ({ description }) => {
 

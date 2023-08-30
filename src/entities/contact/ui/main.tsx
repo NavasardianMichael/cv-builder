@@ -1,11 +1,11 @@
 import { FC } from 'react'
 import { getAnchorRef } from '../helpers/link'
+import { Contact as ContactModel } from '../model/types'
 import styles from './main.module.css'
-import { Contact } from '../model/types'
 
-type Props = Contact
+type Props = ContactModel
 
-export const ContactItem: FC<Props> = ({ name, link }) => {
+export const Contact: FC<Props> = ({ name, link }) => {
   return (
     <a 
       href={getAnchorRef(link)} 

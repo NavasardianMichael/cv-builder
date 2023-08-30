@@ -1,8 +1,8 @@
 import { FC } from 'react'
 import styles from './main.module.css'
-import { ExperienceItem } from 'entities/experience-item/model/types'
+import { Experience } from 'entities/experience/model/types'
 
-type Props = Pick<ExperienceItem, 'company' | 'position'>
+type Props = Pick<Experience, 'company' | 'position'>
 
 export const Heading: FC<Props> = ({ company, position }) => {
   return (

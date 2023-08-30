@@ -1,0 +1,5 @@
+.skill {
+    color: var(--typography-color-standard);
+    font-size: 0.625rem;
+    font-weight: bold;
+}

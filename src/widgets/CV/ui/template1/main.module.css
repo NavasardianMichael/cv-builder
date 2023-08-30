@@ -1,0 +1,11 @@
+.template1 {
+    display: flex;
+    justify-content: space-between;
+
+    .headlineLeft {
+        display: flex;
+        flex-direction: column;
+        gap: .25rem;
+        width: 60%;
+    }
+}

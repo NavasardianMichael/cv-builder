@@ -1,14 +1,12 @@
 import { FC } from 'react'
-import styles from './main.module.css'
 import { PropsWithOptionalChildren } from 'shared/types/commons'
-import { SECTION } from 'widgets/CV/types/sections'
+import styles from './main.module.css'
 
 type Props = {
   title: string
-  templateStyles: SECTION['styles']
 }
 
-export const Section: FC<PropsWithOptionalChildren<Props>> = ({ title, templateStyles, children }) => {
+export const Section: FC<PropsWithOptionalChildren<Props>> = ({ title, children }) => {
   return (
     <div className={styles.section}>
         <h3 className={styles.title}>

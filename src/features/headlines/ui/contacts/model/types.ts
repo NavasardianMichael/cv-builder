@@ -1,4 +1,4 @@
-import { ContactItem } from "entities/contact-item/model/types"
 import { NormalizedShape } from "shared/types/commons"
+import { ContactModel } from "entities/contact"
 
-export type Contacts = NormalizedShape<ContactItem>
+export type Contacts = NormalizedShape<ContactModel>

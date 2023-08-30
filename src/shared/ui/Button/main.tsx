@@ -1,7 +1,7 @@
 import { FC } from 'react'
 import { UI_SIZES } from '../shared/constants'
 import { UI_SIZE } from '../shared/types'
-import { combineClassNames } from 'shared/helpers/commons'
+import { combineClassNames } from 'shared/functions/commons'
 import styles from './main.module.css'
 
 type Props = {

@@ -1,20 +1,21 @@
 import { FC } from 'react'
-import { ExperienceItem } from 'entities/experience-item'
-import { experienceMock } from '../model/mock'
-import { SectionComponentProps } from 'shared/types/sections'
+import { ExperienceListSlice } from '../model/types'
+import { Experience } from 'entities/experience'
 import styles from './main.module.css'
 
-type Props = SectionComponentProps<'experience'>
+type Props = {
+  data: ExperienceListSlice
+}
 
-export const Experience: FC<Props> = ({  }) => {
+export const ExperienceList: FC<Props> = ({ data }) => {
   return (
     <div className={styles.experience}>
       {
-        experienceMock.allIds.map(experienceId => {
-          const props = experienceMock.byId[experienceId] 
+        data.allIds.map(experienceId => {
+          const props = data.byId[experienceId] 
           
           return (
-            <ExperienceItem key={experienceId} {...props} />
+            <Experience key={experienceId} {...props} />
           )
         })
       }
