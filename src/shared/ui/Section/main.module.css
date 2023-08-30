@@ -1,0 +1,12 @@
+.section {
+    
+    .title {
+        font-size: .75rem;
+        margin-bottom: .6rem;
+        text-transform: capitalize;
+    }
+
+    .content {
+
+    }
+}

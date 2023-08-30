@@ -1,0 +1,11 @@
+.heading {
+    .company {
+        color: var(--typography-color-standard);
+        font-weight: bold;
+        text-decoration: none;
+    }
+
+    .position {
+        color: var(--typography-color-light);
+    }
+}
