@@ -422,11 +422,27 @@ span.cv-editable {
   position: relative;
 }
 
+/*
+ * A toolbar floats above its block, so the pointer has to leave the block to reach it. Two
+ * things keep it from vanishing on the way:
+ *
+ * - No gap: the toolbar's transparent bottom padding reaches down into the block, so the
+ *   pointer goes from block to toolbar without ever leaving the block's hover (the toolbar
+ *   is the block's child, so hovering it hovers the block).
+ * - A grace period: hiding is delayed (visibility switches only after the delay), so a
+ *   diagonal path that crosses a neighbouring block on the way still arrives in time.
+ *   Once the pointer is on the toolbar, the block is hovered again and it stays.
+ */
 .cv-toolbar,
 .cv-item-toolbar {
   position: absolute;
   z-index: 20;
-  display: none;
+  display: flex;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity 0.12s ease 0.25s,
+    visibility 0s linear 0.37s;
   color: initial;
   font: 500 12px/1 var(--font-ui), system-ui, sans-serif;
   letter-spacing: normal;
@@ -434,15 +450,17 @@ span.cv-editable {
 }
 
 .cv-toolbar {
-  top: -4px;
+  top: 6px;
   right: -4px;
+  padding-bottom: 10px;
   transform: translateY(-100%);
 }
 
 .cv-item-toolbar {
-  top: 0;
+  top: 6px;
   right: 0;
-  transform: translateY(-85%);
+  padding-bottom: 8px;
+  transform: translateY(-100%);
   z-index: 21;
 }
 
@@ -451,7 +469,10 @@ span.cv-editable {
 .cv-toolbar:focus-within,
 .cv-item-editable:hover > .cv-item-toolbar,
 .cv-item-toolbar:focus-within {
-  display: flex;
+  z-index: 30;
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
 }
 
 .cv-tag-remove {
