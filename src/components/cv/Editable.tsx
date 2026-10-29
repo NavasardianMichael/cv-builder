@@ -53,6 +53,32 @@ export const Editable: FC<Props> = ({ value, onChange, placeholder, as: Tag = 's
   return <EditableField value={value} onChange={onChange} placeholder={placeholder} as={Tag} multiline={multiline} className={className} />
 }
 
+/**
+ * The element's text as typed. Not `innerText`: that returns text *as rendered*, so a
+ * template that uppercases its titles (`text-transform`) would save every keystroke uppercased.
+ * Line breaks come back from a `<br>` or a block the browser inserted on Enter.
+ */
+const readText = (element: HTMLElement): string => {
+  let text = ''
+  const walk = (node: Node): void => {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) text += child.textContent ?? ''
+      else if (child.nodeName === 'BR') text += '\n'
+      else {
+        if ((child.nodeName === 'DIV' || child.nodeName === 'P') && text && !text.endsWith('\n')) text += '\n'
+        walk(child)
+      }
+    }
+  }
+  walk(element)
+  return text
+}
+
+/** Multiline fields are `white-space: pre-wrap`, so plain text with `\n` renders its breaks. */
+const writeText = (element: HTMLElement, value: string): void => {
+  if (readText(element) !== value) element.textContent = value
+}
+
 const normalize = (raw: string, multiline: boolean): string => {
   // A contentEditable emptied by the user often keeps one stray line break.
   const text = raw.replace(/\r/g, '').replace(/\n$/, '')
@@ -72,13 +98,13 @@ const EditableField: FC<Required<Pick<Props, 'value' | 'onChange' | 'placeholder
   useLayoutEffect(() => {
     const element = ref.current
     if (!element || document.activeElement === element) return
-    if (element.innerText !== value) element.innerText = value
+    writeText(element, value)
     element.dataset.empty = String(!value)
   }, [value])
 
   const handleInput = useCallback(
     (event: FormEvent<HTMLElement>) => {
-      const text = normalize(event.currentTarget.innerText, multiline)
+      const text = normalize(readText(event.currentTarget), multiline)
       event.currentTarget.dataset.empty = String(!text)
       onChange(text)
     },
@@ -108,7 +134,7 @@ const EditableField: FC<Required<Pick<Props, 'value' | 'onChange' | 'placeholder
   // Re-sync on blur: the store may have coalesced or the user may have undone mid-edit.
   const handleBlur = useCallback(() => {
     const element = ref.current
-    if (element && element.innerText !== value) element.innerText = value
+    if (element) writeText(element, value)
   }, [value])
 
   return (

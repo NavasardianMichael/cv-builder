@@ -150,7 +150,8 @@
 }
 
 .cv-text,
-.cv-entry-description {
+.cv-entry-description,
+.cv-editable-multiline {
   white-space: pre-wrap;
 }
 

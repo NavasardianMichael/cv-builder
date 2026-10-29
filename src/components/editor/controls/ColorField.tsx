@@ -15,8 +15,8 @@ type Props = {
 }
 
 /**
- * A colour, as the CV stores it: `#rrggbb` (alpha is disabled — the API accepts six-digit
- * hex only). Presets are the current palette first, then every preset's accent.
+ * A colour, as the CV stores it: `#rrggbb` (the API accepts six-digit hex only, so any alpha
+ * is dropped). Presets are the current palette first, then every preset's accent.
  */
 export const ColorField: FC<Props> = ({ label, value, onChange, clearable }) => {
   const t = useTranslations('Editor.design')
@@ -32,12 +32,14 @@ export const ColorField: FC<Props> = ({ label, value, onChange, clearable }) => 
       <span className='text-muted'>{label}</span>
       <ColorPicker
         value={value ?? undefined}
-        disabledAlpha
+        // An unset colour is antd's transparent default, which `disabledAlpha` warns about;
+        // the slice below keeps any pick opaque `#rrggbb` either way.
+        disabledAlpha={value !== null}
         allowClear={clearable}
         presets={presets}
         size='small'
-        showText={(color) => (value ? color.toHexString().toUpperCase() : '—')}
-        onChange={(color) => onChange(color.toHexString())}
+        showText={(color) => (value ? color.toHexString().slice(0, 7).toUpperCase() : '—')}
+        onChange={(color) => onChange(color.toHexString().slice(0, 7))}
         onClear={() => onChange(null)}
       />
     </label>
