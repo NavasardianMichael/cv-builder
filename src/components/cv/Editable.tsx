@@ -10,6 +10,7 @@ import {
   useRef,
 } from 'react'
 import { cn } from '@helpers/cn'
+import { linkify, linkTarget } from '@helpers/linkify'
 import { useCvEdit } from './CvEditContext'
 
 type EditableTag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3'
@@ -21,8 +22,31 @@ type Props = {
   as?: EditableTag
   multiline?: boolean
   className?: string
-  /** View mode renders a link when set (email, phone, website). */
+  /** View mode makes the whole text a link (email, phone, website, an item's own URL). */
   href?: string
+  /** View mode turns URLs, emails and domains inside the text into links. */
+  linkify?: boolean
+}
+
+/** The read-only text: a link, auto-detected links, or plain. Links survive into the PDF. */
+const ViewText: FC<{ value: string; href?: string; linkify?: boolean }> = ({ value, href, linkify: detect }) => {
+  if (href) {
+    return (
+      <a href={href} className='cv-link' {...linkTarget(href)}>
+        {value}
+      </a>
+    )
+  }
+  if (!detect) return value
+  return linkify(value).map((part, index) =>
+    part.href ? (
+      <a key={index} href={part.href} className='cv-autolink' {...linkTarget(part.href)}>
+        {part.text}
+      </a>
+    ) : (
+      part.text
+    )
+  )
 }
 
 /**
@@ -35,19 +59,16 @@ type Props = {
  * user is not typing there, otherwise every keystroke would re-render the text and throw the
  * caret to the start. Undo, which changes `value` from outside, lands once focus leaves.
  */
-export const Editable: FC<Props> = ({ value, onChange, placeholder, as: Tag = 'span', multiline, className, href }) => {
+export const Editable: FC<Props> = ({ value, onChange, placeholder, as: Tag = 'span', multiline, className, href, linkify }) => {
   const edit = useCvEdit()
 
   if (!edit) {
     if (!value) return null
-    if (href) {
-      return (
-        <a href={href} className={className}>
-          {value}
-        </a>
-      )
-    }
-    return <Tag className={className}>{value}</Tag>
+    return (
+      <Tag className={className}>
+        <ViewText value={value} href={href} linkify={linkify} />
+      </Tag>
+    )
   }
 
   return <EditableField value={value} onChange={onChange} placeholder={placeholder} as={Tag} multiline={multiline} className={className} />

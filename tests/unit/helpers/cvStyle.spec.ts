@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { templateDesign } from '@constants/templates'
 import { emptyStyle, newSection, sampleContent } from '@helpers/cvFactory'
-import { blockStyleVars, hasBlockStyle, initialsOf, splitSections } from '@helpers/cvStyle'
+import { blockStyleVars, hasBlockStyle, initialsOf, sectionHasContent, splitSections } from '@helpers/cvStyle'
 
 describe('splitSections', () => {
   const sections = sampleContent().sections
@@ -28,6 +28,22 @@ describe('splitSections', () => {
     const withHidden = [...sections, { ...newSection('awards'), hidden: true }]
     expect(splitSections(templateDesign('classic'), withHidden, { includeHidden: false }).main).toHaveLength(sections.length)
     expect(splitSections(templateDesign('classic'), withHidden, { includeHidden: true }).main).toHaveLength(sections.length + 1)
+  })
+})
+
+describe('sectionHasContent', () => {
+  it('is false for a fresh section of every kind and true once something is written', () => {
+    const summary = newSection('summary')
+    const experience = newSection('experience')
+    const skills = newSection('skills')
+    expect([summary, experience, skills].map(sectionHasContent)).toEqual([false, false, false])
+    expect(sectionHasContent({ ...summary, text: 'Ինժեներ' })).toBe(true)
+    expect(sectionHasContent({ ...experience, entries: [{ ...experience.entries[0], period: '2020' }] })).toBe(true)
+    expect(sectionHasContent({ ...skills, tags: [{ ...skills.tags[0], name: 'Figma' }] })).toBe(true)
+  })
+
+  it('treats whitespace as empty', () => {
+    expect(sectionHasContent({ ...newSection('summary'), text: '  \n ' })).toBe(false)
   })
 })
 

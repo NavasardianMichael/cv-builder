@@ -5,7 +5,9 @@ import {
   ArrowLeftOutlined,
   CheckCircleFilled,
   CloudSyncOutlined,
+  EditOutlined,
   ExclamationCircleFilled,
+  EyeOutlined,
   LaptopOutlined,
   RedoOutlined,
   SettingOutlined,
@@ -30,6 +32,8 @@ type Props = {
   onZoomChange: (zoom: number | null) => void
   onOpenPanel: () => void
   autoCheckout: boolean
+  previewing: boolean
+  onPreviewChange: (previewing: boolean) => void
 }
 
 const ZOOM_STEP = 0.1
@@ -61,7 +65,7 @@ const SaveIndicator: FC = () => {
   )
 }
 
-export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, onOpenPanel, autoCheckout }) => {
+export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, onOpenPanel, autoCheckout, previewing, onPreviewChange }) => {
   const t = useTranslations('Editor')
   const tCommon = useTranslations('Common')
   const doc = useCvEditorStore.use.doc()
@@ -120,6 +124,15 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
           <Button type='text' size='small' icon={<ZoomInOutlined />} onClick={() => step(1)} aria-label={t('zoomIn')} />
         </div>
         <span className='mr-1 hidden text-xs text-muted xl:inline'>{t('pages', { count: pages })}</span>
+        <Tooltip title={previewing ? t('previewExitHint') : t('previewHint')}>
+          <Button
+            type={previewing ? 'primary' : 'default'}
+            icon={previewing ? <EditOutlined /> : <EyeOutlined />}
+            aria-pressed={previewing}
+            aria-label={previewing ? t('previewExit') : t('preview')}
+            onClick={() => onPreviewChange(!previewing)}
+          />
+        </Tooltip>
         <Button className='lg:hidden' icon={<SettingOutlined />} onClick={onOpenPanel} aria-label={t('panelOpen')} />
         <DownloadButton autoOpen={autoCheckout} />
       </div>

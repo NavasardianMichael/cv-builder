@@ -20,7 +20,15 @@ import {
  */
 
 export type BlockStyle = { background: string | null; text: string | null; heading: string | null; font: FontSlug | null }
-export type CvEntry = { id: string; title: string; subtitle: string; period: string; location: string; description: string }
+export type CvEntry = {
+  id: string
+  title: string
+  subtitle: string
+  period: string
+  location: string
+  description: string
+  url: string
+}
 export type CvTag = { id: string; name: string; level: number | null }
 export type SectionColumn = 'auto' | 'main' | 'side'
 export type CvSection = {
@@ -80,6 +88,8 @@ export const CV_LIMITS = {
   /** A 400px JPEG data URL is ~40-80KB; this leaves room for a PNG without letting MBs in. */
   photo: 700_000,
   id: 40,
+  /** Stored as typed; the web renders it only through toWebsiteUrl, which allows http(s) alone. */
+  url: 500,
 } as const
 
 const HEX = /^#[0-9a-f]{6}$/i
@@ -130,6 +140,7 @@ const coerceEntry = (raw: unknown): CvEntry => {
     period: str(value.period, CV_LIMITS.short),
     location: str(value.location, CV_LIMITS.short),
     description: str(value.description, CV_LIMITS.long),
+    url: str(value.url, CV_LIMITS.url),
   }
 }
 

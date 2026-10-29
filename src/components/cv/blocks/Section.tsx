@@ -4,9 +4,11 @@ import type { FC } from 'react'
 import type { CvDesign, CvSection } from '@store/cvs/single/types'
 import { SECTION_META } from '@constants/sections'
 import { cn } from '@helpers/cn'
-import { blockStyleVars } from '@helpers/cvStyle'
+import { blockStyleVars, sectionHasContent } from '@helpers/cvStyle'
+import { toWebsiteUrl } from '@helpers/url'
 import { Level } from './Level'
 import { useCvEdit } from '../CvEditContext'
+import { CvIcon } from '../CvIcons'
 import { Editable } from '../Editable'
 
 /**
@@ -24,8 +26,9 @@ export const SectionList: FC<{ sections: CvSection[]; design: CvDesign; tags?: T
   className,
 }) => {
   const edit = useCvEdit()
-  // The editor shows hidden sections dimmed, so they can be found and shown again.
-  const shown = edit ? sections : sections.filter((section) => !section.hidden)
+  // The editor shows hidden and empty sections (dimmed / with placeholders) so they can be
+  // found and filled; a rendered CV — preview, thumbnail, PDF — never prints a bare heading.
+  const shown = edit ? sections : sections.filter((section) => !section.hidden && sectionHasContent(section))
   if (!shown.length) return null
   return (
     <div className={cn('cv-sections', className)}>
@@ -78,6 +81,7 @@ const TextBody: FC<{ section: CvSection }> = ({ section }) => {
       as='p'
       multiline
       className='cv-text'
+      linkify
       value={section.text}
       placeholder='Մի քանի նախադասություն ձեր մասին․ ով եք, ինչում եք ուժեղ, ինչ եք փնտրում։'
       onChange={(value) => edit?.actions.setSectionField(section.id, 'text', value)}
@@ -112,17 +116,28 @@ const EntryList: FC<{ section: CvSection }> = ({ section }) => {
           <li key={entry.id} className={cn('cv-entry', edit && 'cv-item-editable')}>
             {edit?.entryToolbar(section, entry, index)}
             <div className='cv-entry-head'>
-              <Editable as='h3' className='cv-entry-title' value={entry.title} placeholder={placeholders.title} onChange={set('title')} />
+              <div className='cv-entry-title-row'>
+                <Editable
+                  as='h3'
+                  className='cv-entry-title'
+                  value={entry.title}
+                  href={toWebsiteUrl(entry.url)}
+                  placeholder={placeholders.title}
+                  onChange={set('title')}
+                />
+                {toWebsiteUrl(entry.url) && <CvIcon name='link' />}
+              </div>
               <Editable className='cv-entry-period' value={entry.period} placeholder='2020 – այժմ' onChange={set('period')} />
             </div>
             <div className='cv-entry-sub'>
-              <Editable className='cv-entry-subtitle' value={entry.subtitle} placeholder={placeholders.subtitle} onChange={set('subtitle')} />
+              <Editable className='cv-entry-subtitle' linkify value={entry.subtitle} placeholder={placeholders.subtitle} onChange={set('subtitle')} />
               <Editable className='cv-entry-location' value={entry.location} placeholder='Քաղաք' onChange={set('location')} />
             </div>
             <Editable
               as='p'
               multiline
               className='cv-entry-description'
+              linkify
               value={entry.description}
               placeholder='Նկարագրություն․ ձեռքբերումներ, պարտականություններ (• նոր տողից)'
               onChange={set('description')}
@@ -146,6 +161,7 @@ const TagList: FC<{ section: CvSection; design: CvDesign; variant: TagVariant }>
         <li key={tag.id} className={cn('cv-tag', edit && 'cv-item-editable')}>
           <Editable
             className='cv-tag-name'
+            linkify
             value={tag.name}
             placeholder='Անվանում'
             onChange={(value) => edit?.actions.setTagName(section.id, tag.id, value)}

@@ -1,21 +1,24 @@
 'use client'
 
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useRef, useState } from 'react'
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   BgColorsOutlined,
+  CloseOutlined,
   CopyOutlined,
   DeleteOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
+  LinkOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
-import { Popconfirm, Popover } from 'antd'
+import { Button, Input, type InputRef, Popconfirm, Popover } from 'antd'
 import { useTranslations } from 'next-intl'
 import { useCvEditorStore } from '@store/cvs/single/store'
 import type { BlockStyle, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
 import { SECTION_META } from '@constants/sections'
+import { toWebsiteUrl } from '@helpers/url'
 import { ToolbarShell, ToolButton } from './ToolButton'
 import { BlockStyleForm } from '../controls/BlockStyleForm'
 
@@ -106,15 +109,87 @@ export const BasicsToolbar: FC = () => {
   )
 }
 
+/** Attaches a URL to an item: its title becomes a link in the preview and the PDF. */
+const EntryLinkForm: FC<{ entry: CvEntry; onSave: (url: string) => void }> = ({ entry, onSave }) => {
+  const t = useTranslations('Editor.block')
+  // `?? ''`: an item from a draft saved before links existed has no `url` yet.
+  const [draft, setDraft] = useState(entry.url ?? '')
+  const inputRef = useRef<InputRef>(null)
+  // The popover opened on a click on the link button, so the field taking focus is expected.
+  useEffect(() => inputRef.current?.focus(), [])
+  const invalid = Boolean(draft.trim()) && !toWebsiteUrl(draft)
+
+  const save = () => {
+    if (!invalid) onSave(draft.trim())
+  }
+
+  return (
+    <div className='flex w-72 flex-col gap-2'>
+      <span className='text-sm font-semibold'>{t('linkTitle')}</span>
+      <Input
+        ref={inputRef}
+        value={draft}
+        placeholder='https://'
+        status={invalid ? 'error' : undefined}
+        prefix={<LinkOutlined className='text-muted' />}
+        onChange={(event) => setDraft(event.target.value)}
+        onPressEnter={save}
+        aria-label={t('linkTitle')}
+      />
+      {invalid ? (
+        <span className='text-xs text-danger'>{t('linkInvalid')}</span>
+      ) : (
+        <span className='text-xs text-muted'>{t('linkHint')}</span>
+      )}
+      <div className='flex justify-end gap-2'>
+        {entry.url && (
+          <Button size='small' danger onClick={() => onSave('')}>
+            {t('linkRemove')}
+          </Button>
+        )}
+        <Button size='small' type='primary' disabled={invalid} onClick={save}>
+          {t('linkSave')}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export const EntryToolbar: FC<{ section: CvSection; entry: CvEntry; index: number }> = ({ section, entry, index }) => {
   const t = useTranslations('Editor.block')
   const moveEntry = useCvEditorStore.use.moveEntry()
   const duplicateEntry = useCvEditorStore.use.duplicateEntry()
   const removeEntry = useCvEditorStore.use.removeEntry()
+  const setEntryField = useCvEditorStore.use.setEntryField()
+  // Focus moves into the popover (a portal), so the toolbar's own :hover/:focus-within no
+  // longer hold it open; this flag does (`data-open` in cv.css).
+  const [linkOpen, setLinkOpen] = useState(false)
 
   return (
-    <div className='cv-item-toolbar'>
+    <div className='cv-item-toolbar' data-open={linkOpen || undefined}>
       <ToolbarShell className='p-0.5'>
+        <Popover
+          trigger='click'
+          placement='bottomRight'
+          open={linkOpen}
+          onOpenChange={setLinkOpen}
+          destroyOnHidden
+          content={
+            <EntryLinkForm
+              entry={entry}
+              onSave={(url) => {
+                setEntryField(section.id, entry.id, 'url', url)
+                setLinkOpen(false)
+              }}
+            />
+          }
+        >
+          <ToolButton
+            icon={<LinkOutlined />}
+            label={entry.url ? t('linkEdit') : t('linkAdd')}
+            className={entry.url ? 'text-accent' : undefined}
+          />
+        </Popover>
         <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveEntry(section.id, entry.id, -1)} />
         <ToolButton
           icon={<ArrowDownOutlined />}
@@ -135,12 +210,13 @@ export const TagRemoveButton: FC<{ section: CvSection; tag: CvTag }> = ({ sectio
   return (
     <button
       type='button'
-      className='cv-tag-remove ml-1 size-4 cursor-pointer place-items-center rounded-full border-0 bg-red-500 p-0 text-[10px] leading-none text-white'
+      className='cv-tag-remove size-4.5 cursor-pointer rounded-full border-0 bg-red-500 p-0 text-[9px] text-white shadow'
       aria-label={t('removeItem')}
       title={t('removeItem')}
       onClick={() => removeTag(section.id, tag.id)}
     >
-      ×
+      {/* An SVG, not the "×" character: a glyph sits on its font's baseline and never centres. */}
+      <CloseOutlined />
     </button>
   )
 }

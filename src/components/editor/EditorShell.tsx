@@ -46,6 +46,8 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   const [fitZoom, setFitZoom] = useState(1)
   const [pages, setPages] = useState(1)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
+  const selectBlock = useCvEditorStore.use.selectBlock()
 
   useAutosave()
   useEditorShortcuts()
@@ -124,6 +126,11 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
         onZoomChange={setZoom}
         onOpenPanel={() => setPanelOpen(true)}
         autoCheckout={autoCheckout}
+        previewing={previewing}
+        onPreviewChange={(next) => {
+          if (next) selectBlock(null)
+          setPreviewing(next)
+        }}
       />
       {cvId === DRAFT_ID && (
         <div className='flex shrink-0 items-center justify-center gap-3 bg-accent-soft px-4 py-1.5 text-center text-xs'>
@@ -141,7 +148,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
           <EditorPanel />
         </aside>
         <div className='min-w-0 flex-1 overflow-auto bg-[color-mix(in_srgb,var(--brand-ink)_7%,var(--brand-canvas))]'>
-          <EditorCanvas zoom={zoom} onPagesChange={setPages} onFitZoomChange={setFitZoom} />
+          <EditorCanvas zoom={zoom} previewing={previewing} onPagesChange={setPages} onFitZoomChange={setFitZoom} />
         </div>
       </div>
       <Drawer

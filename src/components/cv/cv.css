@@ -172,6 +172,30 @@
   gap: 1em;
 }
 
+.cv-entry-title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.cv-entry-title-row .cv-icon {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+/* Links: an item's own URL keeps its title's look; links found inside text are marked. */
+.cv-link:hover {
+  text-decoration: underline;
+}
+
+.cv-root .cv-autolink {
+  color: var(--cv-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
 .cv-entry-title {
   color: var(--cv-heading);
   font-size: 1.05em;
@@ -468,19 +492,48 @@ span.cv-editable {
 .cv-block-editable.is-selected > .cv-toolbar,
 .cv-toolbar:focus-within,
 .cv-item-editable:hover > .cv-item-toolbar,
-.cv-item-toolbar:focus-within {
+.cv-item-toolbar:focus-within,
+.cv-item-toolbar[data-open] {
   z-index: 30;
   visibility: visible;
   opacity: 1;
   transition-delay: 0s;
 }
 
+/*
+ * A tag's remove button floats just outside the tag's right edge, centred on its row, so
+ * showing it never shifts the name or the level. `::before` bridges the gap back to the
+ * tag (hovering the button hovers the tag), and hiding waits, as with the toolbars.
+ */
 .cv-tag-remove {
-  display: none;
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 22;
+  display: grid;
+  place-items: center;
+  visibility: hidden;
+  opacity: 0;
+  transform: translate(calc(100% + 6px), -50%);
+  transition:
+    opacity 0.12s ease 0.2s,
+    visibility 0s linear 0.32s;
 }
 
-.cv-item-editable:hover > .cv-tag-remove {
-  display: inline-flex;
+.cv-tag-remove::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: 100%;
+  bottom: -4px;
+  width: 10px;
+}
+
+.cv-item-editable:hover > .cv-tag-remove,
+.cv-tag-remove:focus-visible {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
 }
 
 .cv-add-item {

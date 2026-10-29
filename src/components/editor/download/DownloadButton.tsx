@@ -2,7 +2,7 @@
 
 import { type FC, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
+import { Button, Tooltip } from 'antd'
 import { useTranslations } from 'next-intl'
 import { useCvEditorStore } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
@@ -44,9 +44,16 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
 
   return (
     <>
-      <Button type='primary' icon={<DownloadOutlined />} loading={isDownloading} onClick={start} className='bg-accent hover:bg-accent-strong'>
-        <span className='hidden sm:inline'>{t('button')}</span>
-      </Button>
+      <Tooltip title={t('button')}>
+        <Button
+          type='primary'
+          icon={<DownloadOutlined />}
+          loading={isDownloading}
+          onClick={start}
+          aria-label={t('button')}
+          className='bg-accent hover:bg-accent-strong'
+        />
+      </Tooltip>
       <SignInToDownloadModal open={modal === 'signIn'} onClose={() => setModal(null)} />
       <CheckoutModal
         open={modal === 'checkout'}

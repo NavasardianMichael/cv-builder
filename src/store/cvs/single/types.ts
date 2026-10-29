@@ -24,6 +24,8 @@ export type CvEntry = {
   period: string
   location: string
   description: string
+  /** Makes the title a link (a project, a certificate, a company). '' for none. */
+  url: string
 }
 
 export type CvTag = {

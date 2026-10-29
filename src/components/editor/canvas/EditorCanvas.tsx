@@ -12,6 +12,8 @@ import { PhotoEditor } from './PhotoEditor'
 type Props = {
   /** null = fit to the available width. */
   zoom: number | null
+  /** Preview: the CV exactly as it will be read — no editing, links clickable, text selectable. */
+  previewing: boolean
   onPagesChange: (pages: number) => void
   onFitZoomChange: (zoom: number) => void
 }
@@ -23,7 +25,7 @@ const CANVAS_GUTTER_PX = 48
  * guides mark where each A4 page ends (approximate — the PDF repeats page padding and keeps
  * entries whole, so a break can land slightly earlier than its guide).
  */
-export const EditorCanvas: FC<Props> = ({ zoom, onPagesChange, onFitZoomChange }) => {
+export const EditorCanvas: FC<Props> = ({ zoom, previewing, onPagesChange, onFitZoomChange }) => {
   const t = useTranslations('Editor')
   const doc = useCvEditorStore.use.doc()
   const selectedBlock = useCvEditorStore.use.selectedBlock()
@@ -81,9 +83,14 @@ export const EditorCanvas: FC<Props> = ({ zoom, onPagesChange, onFitZoomChange }
       <div className='mx-auto' style={{ width: A4_WIDTH_PX * scale, height: sheetHeight * scale }}>
         <div className='relative origin-top-left' style={{ width: A4_WIDTH_PX, transform: `scale(${scale})` }}>
           <div ref={sheetRef} className='shadow-[0_18px_50px_-12px_rgba(20,24,45,0.35)]'>
-            <CvEditProvider value={api}>
+            {/* Preview renders without the edit context: the same path as the PDF. */}
+            {previewing ? (
               <CvDocument content={doc.content} design={doc.design} />
-            </CvEditProvider>
+            ) : (
+              <CvEditProvider value={api}>
+                <CvDocument content={doc.content} design={doc.design} />
+              </CvEditProvider>
+            )}
           </div>
           {Array.from({ length: pages - 1 }, (_, index) => (
             <div

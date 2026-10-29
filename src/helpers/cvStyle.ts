@@ -75,6 +75,14 @@ export const splitSections = (
 }
 
 /** Whether a template has a second column a section can be pinned to. */
+/** Whether a section has anything to print besides its title (by its type's kind). */
+export const sectionHasContent = (section: CvSection): boolean => {
+  const kind = SECTION_META[section.type].kind
+  if (kind === 'text') return Boolean(section.text.trim())
+  if (kind === 'tags') return section.tags.some((tag) => tag.name.trim())
+  return section.entries.some((entry) => entry.title.trim() || entry.subtitle.trim() || entry.description.trim() || entry.period.trim())
+}
+
 export const hasColumns = (design: CvDesign): boolean => TEMPLATES[design.templateId].layout !== 'single'
 
 /** Initials for an empty photo slot: "Անի Հովհաննիսյան" → "ԱՀ". */
