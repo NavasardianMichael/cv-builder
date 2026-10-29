@@ -1,0 +1,979 @@
+{
+  "paidModern": {
+    "title": "Դիզայներ — Ժամանակակից",
+    "content": {
+      "basics": {
+        "fullName": "Անի Հովհաննիսյան",
+        "headline": "Ավագ արտադրանքի դիզայներ",
+        "email": "ani.hovhannisyan@mail.am",
+        "phone": "+374 91 123 456",
+        "location": "Երևան, Հայաստան",
+        "website": "anihovhannisyan.am",
+        "linkedin": "linkedin.com/in/anihov",
+        "photo": null,
+        "style": {
+          "background": null,
+          "text": null,
+          "heading": null,
+          "font": null
+        }
+      },
+      "sections": [
+        {
+          "id": "fe777a125d28",
+          "type": "summary",
+          "title": "Իմ մասին",
+          "hidden": false,
+          "column": "auto",
+          "text": "Արտադրանքի դիզայներ՝ 7 տարվա փորձով ֆինտեք և էլեկտրոնային առևտրի ոլորտներում։ Սիրում եմ բարդ գործընթացները դարձնել պարզ և հաճելի, աշխատել հետազոտության տվյալներով և թիմի հետ գտնել լուծումներ, որոնք օգնում են և՛ օգտատիրոջը, և՛ բիզնեսին։",
+          "entries": [],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "f587c8705841",
+          "type": "experience",
+          "title": "Աշխատանքային փորձ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "c434e3a5caac",
+              "title": "Ավագ արտադրանքի դիզայներ",
+              "subtitle": "Արարատ Տեխ",
+              "period": "2021 – այժմ",
+              "location": "Երևան",
+              "description": "• Ղեկավարել եմ բջջային բանկինգի հավելվածի վերանախագծումը՝ 1,2 մլն օգտատեր\n• Կրճատել եմ վճարման քայլերը 5-ից 2-ի, ինչը 18%-ով բարձրացրեց փոխարկումը\n• Ստեղծել և պահպանում եմ ընկերության դիզայն համակարգը"
+            },
+            {
+              "id": "c23babbfe6f3",
+              "title": "UX/UI դիզայներ",
+              "subtitle": "Սևան Դիջիթալ",
+              "period": "2018 – 2021",
+              "location": "Երևան",
+              "description": "• Նախագծել եմ 20+ վեբ և բջջային ինտերֆեյս տեղական և միջազգային հաճախորդների համար\n• Անցկացրել եմ օգտատերերի հարցազրույցներ և օգտագործելիության թեստեր"
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "43cd15f0ce94",
+          "type": "education",
+          "title": "Կրթություն",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "1d24464875bc",
+              "title": "Ինֆորմատիկայի մագիստրոս",
+              "subtitle": "Երևանի պետական համալսարան",
+              "period": "2016 – 2018",
+              "location": "Երևան",
+              "description": ""
+            },
+            {
+              "id": "2d017e6a6aa7",
+              "title": "Դիզայնի բակալավր",
+              "subtitle": "Հայաստանի ամերիկյան համալսարան",
+              "period": "2012 – 2016",
+              "location": "Երևան",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "b01262ec1c35",
+          "type": "skills",
+          "title": "Հմտություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "cde3663006cd",
+              "name": "Figma",
+              "level": 5
+            },
+            {
+              "id": "db258109f5da",
+              "name": "Օգտատերերի հետազոտություն",
+              "level": 4
+            },
+            {
+              "id": "87fc8416db72",
+              "name": "Դիզայն համակարգեր",
+              "level": 5
+            },
+            {
+              "id": "0afac5dbcf0b",
+              "name": "Պրոտոտիպավորում",
+              "level": 4
+            },
+            {
+              "id": "7233994321bf",
+              "name": "HTML/CSS",
+              "level": 3
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "5dfb267a5647",
+          "type": "languages",
+          "title": "Լեզուներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "b943bf56eaf5",
+              "name": "Հայերեն",
+              "level": 5
+            },
+            {
+              "id": "72a9391e4930",
+              "name": "Անգլերեն",
+              "level": 4
+            },
+            {
+              "id": "2fe0b90588cd",
+              "name": "Ռուսերեն",
+              "level": 4
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "069eb9c4055e",
+          "type": "certificates",
+          "title": "Վկայականներ և դասընթացներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "d93eccd0fa40",
+              "title": "Google UX Design Certificate",
+              "subtitle": "Coursera",
+              "period": "2020",
+              "location": "",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "3ff3f5b4ac68",
+          "type": "interests",
+          "title": "Հետաքրքրություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "4b758a2bb28c",
+              "name": "Լեռնագնացություն",
+              "level": null
+            },
+            {
+              "id": "3b588f120360",
+              "name": "Լուսանկարչություն",
+              "level": null
+            },
+            {
+              "id": "42f84da72e37",
+              "name": "Շախմատ",
+              "level": null
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        }
+      ]
+    },
+    "design": {
+      "palette": {
+        "accent": "#14b8a6",
+        "background": "#ffffff",
+        "text": "#334155",
+        "heading": "#0f172a",
+        "muted": "#64748b",
+        "sidebarBackground": "#1e293b",
+        "sidebarText": "#e2e8f0"
+      },
+      "headingFont": "montserrat-armenian",
+      "bodyFont": "mardoto",
+      "fontScale": 1,
+      "lineHeight": 1.45,
+      "spacing": "normal",
+      "photoShape": "circle",
+      "showPhoto": true,
+      "levelStyle": "bars",
+      "showIcons": true,
+      "templateId": "modern"
+    }
+  },
+  "unpaidCreative": {
+    "title": "Դիզայներ — Ստեղծագործական",
+    "content": {
+      "basics": {
+        "fullName": "Անի Հովհաննիսյան",
+        "headline": "Ավագ արտադրանքի դիզայներ",
+        "email": "ani.hovhannisyan@mail.am",
+        "phone": "+374 91 123 456",
+        "location": "Երևան, Հայաստան",
+        "website": "anihovhannisyan.am",
+        "linkedin": "linkedin.com/in/anihov",
+        "photo": null,
+        "style": {
+          "background": null,
+          "text": null,
+          "heading": null,
+          "font": null
+        }
+      },
+      "sections": [
+        {
+          "id": "a7e426859268",
+          "type": "summary",
+          "title": "Իմ մասին",
+          "hidden": false,
+          "column": "auto",
+          "text": "Արտադրանքի դիզայներ՝ 7 տարվա փորձով ֆինտեք և էլեկտրոնային առևտրի ոլորտներում։ Սիրում եմ բարդ գործընթացները դարձնել պարզ և հաճելի, աշխատել հետազոտության տվյալներով և թիմի հետ գտնել լուծումներ, որոնք օգնում են և՛ օգտատիրոջը, և՛ բիզնեսին։",
+          "entries": [],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "d7a2d3616548",
+          "type": "experience",
+          "title": "Աշխատանքային փորձ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "ae5c29f6725b",
+              "title": "Ավագ արտադրանքի դիզայներ",
+              "subtitle": "Արարատ Տեխ",
+              "period": "2021 – այժմ",
+              "location": "Երևան",
+              "description": "• Ղեկավարել եմ բջջային բանկինգի հավելվածի վերանախագծումը՝ 1,2 մլն օգտատեր\n• Կրճատել եմ վճարման քայլերը 5-ից 2-ի, ինչը 18%-ով բարձրացրեց փոխարկումը\n• Ստեղծել և պահպանում եմ ընկերության դիզայն համակարգը"
+            },
+            {
+              "id": "3707a38c3942",
+              "title": "UX/UI դիզայներ",
+              "subtitle": "Սևան Դիջիթալ",
+              "period": "2018 – 2021",
+              "location": "Երևան",
+              "description": "• Նախագծել եմ 20+ վեբ և բջջային ինտերֆեյս տեղական և միջազգային հաճախորդների համար\n• Անցկացրել եմ օգտատերերի հարցազրույցներ և օգտագործելիության թեստեր"
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "12496f8a3c2e",
+          "type": "education",
+          "title": "Կրթություն",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "ab5c8390ac93",
+              "title": "Ինֆորմատիկայի մագիստրոս",
+              "subtitle": "Երևանի պետական համալսարան",
+              "period": "2016 – 2018",
+              "location": "Երևան",
+              "description": ""
+            },
+            {
+              "id": "fe96b9c22732",
+              "title": "Դիզայնի բակալավր",
+              "subtitle": "Հայաստանի ամերիկյան համալսարան",
+              "period": "2012 – 2016",
+              "location": "Երևան",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "c0210c03348d",
+          "type": "skills",
+          "title": "Հմտություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "bc4dbac3ad18",
+              "name": "Figma",
+              "level": 5
+            },
+            {
+              "id": "244090da8ebd",
+              "name": "Օգտատերերի հետազոտություն",
+              "level": 4
+            },
+            {
+              "id": "fd5a4bf32577",
+              "name": "Դիզայն համակարգեր",
+              "level": 5
+            },
+            {
+              "id": "6a0e388bc7ff",
+              "name": "Պրոտոտիպավորում",
+              "level": 4
+            },
+            {
+              "id": "8da45768b60e",
+              "name": "HTML/CSS",
+              "level": 3
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "48e2d3736b5d",
+          "type": "languages",
+          "title": "Լեզուներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "b45a2b111bed",
+              "name": "Հայերեն",
+              "level": 5
+            },
+            {
+              "id": "e10e4eb8e5e1",
+              "name": "Անգլերեն",
+              "level": 4
+            },
+            {
+              "id": "feb87b0a751b",
+              "name": "Ռուսերեն",
+              "level": 4
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "990a2f17ce75",
+          "type": "certificates",
+          "title": "Վկայականներ և դասընթացներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "194d19f250e0",
+              "title": "Google UX Design Certificate",
+              "subtitle": "Coursera",
+              "period": "2020",
+              "location": "",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "aa6211d311de",
+          "type": "interests",
+          "title": "Հետաքրքրություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "bcfdc73bb184",
+              "name": "Լեռնագնացություն",
+              "level": null
+            },
+            {
+              "id": "dae03fe586e8",
+              "name": "Լուսանկարչություն",
+              "level": null
+            },
+            {
+              "id": "444a662bae67",
+              "name": "Շախմատ",
+              "level": null
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        }
+      ]
+    },
+    "design": {
+      "palette": {
+        "accent": "#ff6b4a",
+        "background": "#fffaf5",
+        "text": "#2d2a26",
+        "heading": "#1f1f1f",
+        "muted": "#8b8178",
+        "sidebarBackground": "#ff6b4a",
+        "sidebarText": "#ffffff"
+      },
+      "headingFont": "arm-hmks-bebas-neue",
+      "bodyFont": "mardoto",
+      "fontScale": 1,
+      "lineHeight": 1.45,
+      "spacing": "normal",
+      "photoShape": "circle",
+      "showPhoto": true,
+      "levelStyle": "bars",
+      "showIcons": true,
+      "templateId": "creative"
+    }
+  },
+  "blankClassic": {
+    "title": "Նոր ռեզյումե",
+    "content": {
+      "basics": {
+        "fullName": "",
+        "headline": "",
+        "email": "",
+        "phone": "",
+        "location": "",
+        "website": "",
+        "linkedin": "",
+        "photo": null,
+        "style": {
+          "background": null,
+          "text": null,
+          "heading": null,
+          "font": null
+        }
+      },
+      "sections": [
+        {
+          "id": "9331d36a1546",
+          "type": "summary",
+          "title": "Իմ մասին",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "6a47cf86547b",
+          "type": "experience",
+          "title": "Աշխատանքային փորձ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "486f493fcd36",
+              "title": "",
+              "subtitle": "",
+              "period": "",
+              "location": "",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "02703502b759",
+          "type": "education",
+          "title": "Կրթություն",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "6c06e4321a2d",
+              "title": "",
+              "subtitle": "",
+              "period": "",
+              "location": "",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "a155d423b28c",
+          "type": "skills",
+          "title": "Հմտություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "d4d85636719a",
+              "name": "",
+              "level": 4
+            },
+            {
+              "id": "43dacf1e0810",
+              "name": "",
+              "level": 3
+            },
+            {
+              "id": "d2c8f32364db",
+              "name": "",
+              "level": 3
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "9177b692a269",
+          "type": "languages",
+          "title": "Լեզուներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "7e020fd1cae4",
+              "name": "Հայերեն",
+              "level": 5
+            },
+            {
+              "id": "e693962b95d8",
+              "name": "Ռուսերեն",
+              "level": 4
+            },
+            {
+              "id": "4e1d3ade2564",
+              "name": "Անգլերեն",
+              "level": 3
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        }
+      ]
+    },
+    "design": {
+      "palette": {
+        "accent": "#1f3a5f",
+        "background": "#ffffff",
+        "text": "#2a2d34",
+        "heading": "#111827",
+        "muted": "#6b7280",
+        "sidebarBackground": "#f4f5f7",
+        "sidebarText": "#2a2d34"
+      },
+      "headingFont": "free-serif",
+      "bodyFont": "ghea-grapalat",
+      "fontScale": 1,
+      "lineHeight": 1.45,
+      "spacing": "normal",
+      "photoShape": "circle",
+      "showPhoto": false,
+      "levelStyle": "text",
+      "showIcons": true,
+      "templateId": "classic"
+    }
+  },
+  "longTimeline": {
+    "title": "Երկար ռեզյումե (2 էջ)",
+    "content": {
+      "basics": {
+        "fullName": "Անի Հովհաննիսյան",
+        "headline": "Ավագ արտադրանքի դիզայներ",
+        "email": "ani.hovhannisyan@mail.am",
+        "phone": "+374 91 123 456",
+        "location": "Երևան, Հայաստան",
+        "website": "anihovhannisyan.am",
+        "linkedin": "linkedin.com/in/anihov",
+        "photo": null,
+        "style": {
+          "background": null,
+          "text": null,
+          "heading": null,
+          "font": null
+        }
+      },
+      "sections": [
+        {
+          "id": "f16b59b63041",
+          "type": "summary",
+          "title": "Իմ մասին",
+          "hidden": false,
+          "column": "auto",
+          "text": "Արտադրանքի դիզայներ՝ 7 տարվա փորձով ֆինտեք և էլեկտրոնային առևտրի ոլորտներում։ Սիրում եմ բարդ գործընթացները դարձնել պարզ և հաճելի, աշխատել հետազոտության տվյալներով և թիմի հետ գտնել լուծումներ, որոնք օգնում են և՛ օգտատիրոջը, և՛ բիզնեսին։",
+          "entries": [],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "301b1d5fc18d",
+          "type": "experience",
+          "title": "Աշխատանքային փորձ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "long0",
+              "title": "Ավագ արտադրանքի դիզայներ",
+              "subtitle": "Արարատ Տեխ",
+              "period": "2021 – այժմ",
+              "location": "Երևան",
+              "description": "• Ղեկավարել եմ բջջային բանկինգի հավելվածի վերանախագծումը՝ 1,2 մլն օգտատեր\n• Կրճատել եմ վճարման քայլերը 5-ից 2-ի, ինչը 18%-ով բարձրացրեց փոխարկումը\n• Ստեղծել և պահպանում եմ ընկերության դիզայն համակարգը"
+            },
+            {
+              "id": "long1",
+              "title": "UX/UI դիզայներ",
+              "subtitle": "Սևան Դիջիթալ",
+              "period": "2018 – 2021",
+              "location": "Երևան",
+              "description": "• Նախագծել եմ 20+ վեբ և բջջային ինտերֆեյս տեղական և միջազգային հաճախորդների համար\n• Անցկացրել եմ օգտատերերի հարցազրույցներ և օգտագործելիության թեստեր"
+            },
+            {
+              "id": "long2",
+              "title": "Ավագ արտադրանքի դիզայներ",
+              "subtitle": "Արարատ Տեխ",
+              "period": "2021 – այժմ",
+              "location": "Երևան",
+              "description": "• Ղեկավարել եմ բջջային բանկինգի հավելվածի վերանախագծումը՝ 1,2 մլն օգտատեր\n• Կրճատել եմ վճարման քայլերը 5-ից 2-ի, ինչը 18%-ով բարձրացրեց փոխարկումը\n• Ստեղծել և պահպանում եմ ընկերության դիզայն համակարգը"
+            },
+            {
+              "id": "long3",
+              "title": "UX/UI դիզայներ",
+              "subtitle": "Սևան Դիջիթալ",
+              "period": "2018 – 2021",
+              "location": "Երևան",
+              "description": "• Նախագծել եմ 20+ վեբ և բջջային ինտերֆեյս տեղական և միջազգային հաճախորդների համար\n• Անցկացրել եմ օգտատերերի հարցազրույցներ և օգտագործելիության թեստեր"
+            },
+            {
+              "id": "long4",
+              "title": "Ավագ արտադրանքի դիզայներ",
+              "subtitle": "Արարատ Տեխ",
+              "period": "2021 – այժմ",
+              "location": "Երևան",
+              "description": "• Ղեկավարել եմ բջջային բանկինգի հավելվածի վերանախագծումը՝ 1,2 մլն օգտատեր\n• Կրճատել եմ վճարման քայլերը 5-ից 2-ի, ինչը 18%-ով բարձրացրեց փոխարկումը\n• Ստեղծել և պահպանում եմ ընկերության դիզայն համակարգը"
+            },
+            {
+              "id": "long5",
+              "title": "UX/UI դիզայներ",
+              "subtitle": "Սևան Դիջիթալ",
+              "period": "2018 – 2021",
+              "location": "Երևան",
+              "description": "• Նախագծել եմ 20+ վեբ և բջջային ինտերֆեյս տեղական և միջազգային հաճախորդների համար\n• Անցկացրել եմ օգտատերերի հարցազրույցներ և օգտագործելիության թեստեր"
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "5c97947f5198",
+          "type": "education",
+          "title": "Կրթություն",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "edc5bafa977c",
+              "title": "Ինֆորմատիկայի մագիստրոս",
+              "subtitle": "Երևանի պետական համալսարան",
+              "period": "2016 – 2018",
+              "location": "Երևան",
+              "description": ""
+            },
+            {
+              "id": "8b9b939b113a",
+              "title": "Դիզայնի բակալավր",
+              "subtitle": "Հայաստանի ամերիկյան համալսարան",
+              "period": "2012 – 2016",
+              "location": "Երևան",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "7ab66b2049ea",
+          "type": "skills",
+          "title": "Հմտություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "e0d51edd98f0",
+              "name": "Figma",
+              "level": 5
+            },
+            {
+              "id": "ff76bf3ac9b2",
+              "name": "Օգտատերերի հետազոտություն",
+              "level": 4
+            },
+            {
+              "id": "515aa7c1f685",
+              "name": "Դիզայն համակարգեր",
+              "level": 5
+            },
+            {
+              "id": "6273fcbb3324",
+              "name": "Պրոտոտիպավորում",
+              "level": 4
+            },
+            {
+              "id": "2fdcad476201",
+              "name": "HTML/CSS",
+              "level": 3
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "e5109f04ec71",
+          "type": "languages",
+          "title": "Լեզուներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "a8a1a71701c2",
+              "name": "Հայերեն",
+              "level": 5
+            },
+            {
+              "id": "00e685d5a480",
+              "name": "Անգլերեն",
+              "level": 4
+            },
+            {
+              "id": "9ce23a872ee7",
+              "name": "Ռուսերեն",
+              "level": 4
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "9028d9f71cdb",
+          "type": "certificates",
+          "title": "Վկայականներ և դասընթացներ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [
+            {
+              "id": "a09dbad20e17",
+              "title": "Google UX Design Certificate",
+              "subtitle": "Coursera",
+              "period": "2020",
+              "location": "",
+              "description": ""
+            }
+          ],
+          "tags": [],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        },
+        {
+          "id": "6e452634be34",
+          "type": "interests",
+          "title": "Հետաքրքրություններ",
+          "hidden": false,
+          "column": "auto",
+          "text": "",
+          "entries": [],
+          "tags": [
+            {
+              "id": "bf01c246371a",
+              "name": "Լեռնագնացություն",
+              "level": null
+            },
+            {
+              "id": "4438d01b3a72",
+              "name": "Լուսանկարչություն",
+              "level": null
+            },
+            {
+              "id": "18c8ca6e184e",
+              "name": "Շախմատ",
+              "level": null
+            }
+          ],
+          "style": {
+            "background": null,
+            "text": null,
+            "heading": null,
+            "font": null
+          }
+        }
+      ]
+    },
+    "design": {
+      "palette": {
+        "accent": "#7c3aed",
+        "background": "#ffffff",
+        "text": "#2e2a3a",
+        "heading": "#1a1530",
+        "muted": "#7a7488",
+        "sidebarBackground": "#f4f1fb",
+        "sidebarText": "#2e2a3a"
+      },
+      "headingFont": "braind-yerevan",
+      "bodyFont": "arian-amu",
+      "fontScale": 1,
+      "lineHeight": 1.45,
+      "spacing": "normal",
+      "photoShape": "circle",
+      "showPhoto": true,
+      "levelStyle": "dots",
+      "showIcons": true,
+      "templateId": "timeline"
+    }
+  }
+}

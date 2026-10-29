@@ -9,14 +9,14 @@ background and font editable in place. Building is free; downloading a CV's PDF 
 Requirements: Node 24, pnpm 10, Docker.
 
 ```bash
-pnpm db:up                                  # Postgres on :5009
-cp server/.env.example server/.env          # dev defaults work as they are
-cp .env.example .env.local
-pnpm install                                # installs, generates Prisma, migrates, seeds
-pnpm dev                                    # http://localhost:7009 (web) · :9009 (api)
+pnpm install    # installs, creates missing env files from the examples, starts the Docker
+                # Postgres (:5009) if it is down, applies pending migrations, seeds
+pnpm dev        # http://localhost:7009 (web) · :9009 (api)
 ```
 
-Sign in as `demo@rezyume.local` / `rezyume-dev-1234`, or build as a guest. Payments use a
+Run `pnpm install` again after pulling: it applies any new migrations.
+
+Sign in with a seeded test account (`docs/DEV_CREDS.md`, password `rezyume-dev-1234`), or build as a guest. Payments use a
 mock bank in dev — the checkout shows a fake page with **Վճարել** / **Մերժել**.
 
 `pnpm verify` runs typecheck, lint, tests and the production build.

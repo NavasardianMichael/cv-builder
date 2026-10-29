@@ -3,10 +3,11 @@
  * Runs after `pnpm install`:
  * 1. stop a running API dev server (Windows only — see stopApiDevServer)
  * 2. prisma generate (always)
- * 3. prisma migrate deploy + db seed when server/.env exists and Postgres is reachable
+ * 3. locally (not CI/production): create missing env files from their examples, apply every
+ *    pending migration — starting the Docker Postgres first if it is not reachable — and seed
  */
 import { spawnSync } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { copyFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -38,9 +39,9 @@ const API_PORT = 9009
 /**
  * A running API holds Prisma's query engine DLL open, and on Windows `prisma generate`
  * then fails with EPERM renaming the new engine over it. So stop whichever node process
- * listens on the API port. `tsx watch` outlives its child and restarts it by itself once
- * the regenerated client lands. Other platforms can replace a loaded library, so they
- * skip this.
+ * listens on the API port. That is the child of `node --watch-path`, which does not restart
+ * it on its own (it waits for a change under src/), so restart `pnpm dev` after an install.
+ * Other platforms can replace a loaded library, so they skip this.
  */
 function stopApiDevServer() {
   if (process.platform !== 'win32') return
@@ -69,27 +70,62 @@ function stopApiDevServer() {
   }
 }
 
+/** A missing env file is copied from its example: the examples' dev defaults work as they are. */
+function ensureEnvFile(relativePath, relativeExample) {
+  const target = path.join(rootDir, relativePath)
+  const example = path.join(rootDir, relativeExample)
+  if (existsSync(target) || !existsSync(example)) return
+  copyFileSync(example, target)
+  console.log(`\n[postinstall] Created ${relativePath} from ${relativeExample}.`)
+}
+
+const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+
+/** The container docker-compose.yml names, polled until its healthcheck passes. */
+const POSTGRES_CONTAINER = 'rezyume-postgres'
+const POSTGRES_WAIT_MS = 60_000
+
+function startPostgres() {
+  console.log('\n[postinstall] Postgres is not reachable — starting it with docker compose...')
+  const up = spawnSync('docker', ['compose', 'up', '-d'], { cwd: rootDir, stdio: 'inherit' })
+  if (up.status !== 0) return false
+
+  const deadline = Date.now() + POSTGRES_WAIT_MS
+  while (Date.now() < deadline) {
+    const health = spawnSync('docker', ['inspect', '-f', '{{.State.Health.Status}}', POSTGRES_CONTAINER], {
+      encoding: 'utf8',
+    })
+    if (health.stdout?.trim() === 'healthy') return true
+    sleep(1000)
+  }
+  console.warn(`\n[postinstall] ${POSTGRES_CONTAINER} did not become healthy within ${POSTGRES_WAIT_MS / 1000}s.`)
+  return false
+}
+
 stopApiDevServer()
 
 run('Generating Prisma client', 'pnpm', ['--filter', 'rezyume-server', 'run', 'db:generate'])
 
-const envFile = path.join(rootDir, 'server', '.env')
-if (!existsSync(envFile)) {
-  console.log(
-    '\n[postinstall] server/.env not found — skipping migrate/seed.',
-    'Copy server/.env.example to server/.env, start Postgres (pnpm db:up), then run pnpm db:setup.'
-  )
+// A build machine installs too, and must never create env files or start containers.
+if (process.env.CI || process.env.NODE_ENV === 'production' || process.env.SKIP_DB_SETUP) {
+  console.log('\n[postinstall] CI/production install — skipping database setup.')
   process.exit(0)
 }
 
-const migrated = run('Applying migrations', 'pnpm', ['--filter', 'rezyume-server', 'run', 'db:deploy'], {
-  allowFailure: true,
-})
+ensureEnvFile('server/.env', 'server/.env.example')
+ensureEnvFile('.env.local', '.env.example')
+
+const deploy = () =>
+  run('Applying pending migrations', 'pnpm', ['--filter', 'rezyume-server', 'run', 'db:deploy'], { allowFailure: true })
+
+// The first attempt covers a Postgres that is already up, Docker or not; only when that fails
+// is the compose service started and the deploy retried.
+const migrated = deploy() || (startPostgres() && deploy())
 
 if (!migrated) {
   console.warn(
-    '\n[postinstall] Migrations skipped — Postgres may be down.',
-    'Run: pnpm db:up && pnpm db:setup'
+    '\n[postinstall] Migrations NOT applied — Postgres is unreachable (is Docker running?).',
+    'Fix that, then run: pnpm db:setup'
   )
   process.exit(0)
 }

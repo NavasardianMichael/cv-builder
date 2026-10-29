@@ -11,15 +11,17 @@ next-intl (one locale, `hy`) · pnpm · Express 5 + Prisma 6 + PostgreSQL · Pup
 ## Commands
 
 ```bash
-pnpm db:up          # Postgres in Docker on :5009
-pnpm install        # also generates Prisma, migrates and seeds (scripts/postinstall.mjs)
+pnpm install        # + Prisma generate; locally also creates missing env files, starts the
+                    # Docker Postgres (:5009) if down, applies pending migrations, seeds.
+                    # Skipped when CI / NODE_ENV=production / SKIP_DB_SETUP (scripts/postinstall.mjs)
+pnpm db:up          # Postgres in Docker on :5009, by hand
 pnpm dev            # web :7009 + api :9009
 pnpm verify         # typecheck → typecheck:server → lint → test → build — run before calling anything done
 pnpm test           # vitest (tests/unit)
 pnpm fonts:css      # public/fonts/manifest.json -> public/fonts/cv-fonts.css
 ```
 
-Seeded account: `demo@rezyume.local` / `rezyume-dev-1234`. In dev `PAYMENT_GATEWAY=mock`: the
+Seeded test accounts (all `rezyume-dev-1234`): `docs/DEV_CREDS.md`. In dev `PAYMENT_GATEWAY=mock`: the
 checkout opens a fake bank page served by the API with Pay / Decline buttons.
 
 The API's `dev` script is `node --watch-path=src --import tsx`, **not** `tsx watch`: under
