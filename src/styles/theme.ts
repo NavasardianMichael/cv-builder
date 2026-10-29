@@ -30,6 +30,15 @@ export const antdTheme: ThemeConfig = {
       primaryShadow: 'none',
       fontWeight: 600,
     },
+    /** The chosen option sits on solid ink, so its text must be light to stay readable. */
+    Select: {
+      optionSelectedBg: INK[900],
+      optionSelectedColor: CANVAS.raised,
+      optionActiveBg: INK[50],
+      // Selected *and* keyboard-active (the state it opens in) uses this global token instead,
+      // which otherwise derives a mid grey from colorPrimary.
+      controlItemBgActiveHover: INK[800],
+    },
     Segmented: {
       itemSelectedBg: CANVAS.raised,
       trackBg: CANVAS.sunken,

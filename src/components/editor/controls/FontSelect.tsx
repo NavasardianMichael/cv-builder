@@ -29,7 +29,7 @@ export const FontSelect: FC<Props> = ({ value, onChange, placeholder, ariaLabel 
           label: (
             <span className='flex items-baseline justify-between gap-3' style={{ fontFamily: cvFontStack(slug) }}>
               <span className='truncate text-[15px]'>{FONTS[slug].name}</span>
-              <span className='shrink-0 text-[15px] text-muted'>{SAMPLE}</span>
+              <span className='shrink-0 text-[15px] opacity-60'>{SAMPLE}</span>
             </span>
           ),
         })),
