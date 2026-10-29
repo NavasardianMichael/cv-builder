@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// An account. Signs in with a password, Google, or both.
+model User {
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  fullName               String
+  /// Null for a Google-only account.
+  passwordHash           String?
+  googleId               String?   @unique
+  avatarUrl              String?
+  /// Set when Google vouched for the address. A password signup is not verified; nothing
+  /// is gated on it except Google linking (see routes/identity-google.ts).
+  emailVerifiedAt        DateTime?
+  /// Bumped by password reset/change and account delete; every session cookie minted
+  /// against an older value stops being honoured (middleware/auth.ts).
+  tokenVersion           Int       @default(0)
+  passwordResetTokenHash String?   @unique
+  passwordResetExpiresAt DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  cvs      Cv[]
+  payments Payment[]
+}
+
+/// One CV document. `content` and `design` are JSON coerced by services/cvDocument.ts on
+/// every write: the shape is the web's `CvContent` / `CvDesign`.
+model Cv {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title      String
+  /// Denormalised from `design.templateId` for listing without parsing JSON.
+  templateId String
+  content    Json
+  design     Json
+  /// Set once, by a settled payment. A paid CV stays downloadable and editable forever.
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  payments Payment[]
+
+  @@index([userId, updatedAt])
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum PaymentGateway {
+  ameria
+  mock
+}
+
+/// One checkout attempt for one CV. Kept when the CV or the account is deleted: it is the
+/// accounting record, so both links are nullable.
+model Payment {
+  id               String         @id @default(cuid())
+  /// The integer order number a gateway needs (Ameria's `OrderID`, plus an offset).
+  orderNumber      Int            @unique @default(autoincrement())
+  userId           String?
+  user             User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  cvId             String?
+  cv               Cv?            @relation(fields: [cvId], references: [id], onDelete: SetNull)
+  /// Whole drams.
+  amount           Int
+  currency         String         @default("AMD")
+  gateway          PaymentGateway
+  gatewayPaymentId String?        @unique
+  status           PaymentStatus  @default(pending)
+  failureReason    String?
+  paidAt           DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([cvId, status])
+}

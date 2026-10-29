@@ -1,0 +1,14 @@
+packages:
+  - server
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - prisma
+  - puppeteer
+  - '@node-rs/argon2'
+
+ignoredBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver

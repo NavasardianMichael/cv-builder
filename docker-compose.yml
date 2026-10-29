@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rezyume-postgres
+    restart: unless-stopped
+    ports:
+      # Host 5009 — never 5432, which a local Postgres or an SSH tunnel often holds.
+      - '5009:5432'
+    environment:
+      POSTGRES_USER: rezyume
+      POSTGRES_PASSWORD: rezyume
+      POSTGRES_DB: rezyume
+    volumes:
+      - rezyume_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rezyume -d rezyume']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rezyume_pg:
