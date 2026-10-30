@@ -54,7 +54,7 @@ export default async function TemplatePage({ params }: Props) {
     description: template.description,
     url: absoluteUrl(templatePath(templateId)),
     inLanguage: LOCALE,
-    keywords: ['ռեզյումե', 'CV', ...template.bestFor].join(', '),
+    keywords: ['ինքնակենսագրական', 'ռեզյումե', 'CV', ...template.bestFor].join(', '),
     isAccessibleForFree: true,
     creator: { '@id': ORGANIZATION_ID },
     isPartOf: { '@type': 'WebSite', name: APP_NAME, url: absoluteUrl('/') },

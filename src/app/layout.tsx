@@ -25,17 +25,17 @@ export const viewport: Viewport = {
  */
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
-  title: { default: `${APP_NAME} — Հայերեն ռեզյումեի կառուցիչ`, template: `%s | ${APP_NAME}` },
+  title: { default: `${APP_NAME} — Հայերեն ինքնակենսագրականի կառուցիչ`, template: `%s | ${APP_NAME}` },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
-  keywords: ['ռեզյումե', 'CV', 'ինքնակենսագրություն', 'ռեզյումեի ձևանմուշ', 'CV հայերեն', 'աշխատանք Հայաստանում', 'resume Armenia'],
+  keywords: ['ինքնակենսագրական', 'ռեզյումե', 'CV', 'ինքնակենսագրություն', 'ինքնակենսագրականի ձևանմուշ', 'ռեզյումեի ձևանմուշ', 'CV հայերեն', 'աշխատանք Հայաստանում', 'resume Armenia'],
   manifest: '/manifest.webmanifest',
   robots: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   openGraph: {
     type: 'website',
     siteName: APP_NAME,
     locale: OG_LOCALE,
-    title: `${APP_NAME} — Հայերեն ռեզյումեի կառուցիչ`,
+    title: `${APP_NAME} — Հայերեն ինքնակենսագրականի կառուցիչ`,
     description: APP_DESCRIPTION,
   },
   twitter: { card: 'summary_large_image' },

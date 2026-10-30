@@ -41,7 +41,9 @@ export const updateCvAPI: UpdateCvAPI['api'] = async ({ id, ...payload }) => {
 }
 
 export const duplicateCvAPI: DuplicateCvAPI['api'] = async ({ id }) => {
-  const { data } = await axiosInstance.post<APIResponse<Cv>>(`${ENDPOINTS.duplicate}/${encodeURIComponent(id)}/duplicate`)
+  const { data } = await axiosInstance.post<APIResponse<Cv>>(
+    `${ENDPOINTS.duplicate}/${encodeURIComponent(id)}/duplicate`
+  )
   return processCvResponse(data)
 }
 
@@ -60,9 +62,13 @@ export const checkoutCvAPI: CheckoutCvAPI['api'] = async ({ id }) => {
  * The PDF as a Blob. A failure still answers the JSON envelope, which axios hands over as a
  * Blob too; it is parsed back so `classifyError` can read its code (402 = not paid).
  */
-export const downloadCvPdfAPI: DownloadCvPdfAPI['api'] = async ({ id }) => {
+export const downloadCvPdfAPI: DownloadCvPdfAPI['api'] = async ({ id, variant }) => {
+  const url =
+    variant === 'basic'
+      ? `${ENDPOINTS.basicPdf}/${encodeURIComponent(id)}/pdf/basic`
+      : `${ENDPOINTS.pdf}/${encodeURIComponent(id)}/pdf`
   try {
-    const { data } = await axiosInstance.get<Blob>(`${ENDPOINTS.pdf}/${encodeURIComponent(id)}/pdf`, {
+    const { data } = await axiosInstance.get<Blob>(url, {
       responseType: 'blob',
       timeout: API_PDF_TIMEOUT_MS,
     })

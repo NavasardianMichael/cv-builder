@@ -232,7 +232,7 @@ export const TEMPLATES: Record<TemplateId, TemplateMeta> = {
     name: 'Համարձակ',
     tagline: 'Դեղին ու սև, խոշոր անուն, աչքի ընկնող',
     description:
-      'Սև ֆոնի վրա դեղին շեշտերով մեծ գլխագիր և ուժեղ կոնտրաստ։ Նրանց համար, ովքեր ուզում են, որ իրենց ռեզյումեն տարբերվի կույտի մեջ։',
+      'Սև ֆոնի վրա դեղին շեշտերով մեծ գլխագիր և ուժեղ կոնտրաստ։ Նրանց համար, ովքեր ուզում են, որ իրենց ինքնակենսագրականը տարբերվի կույտի մեջ։',
     bestFor: ['Ստարտափ', 'Վաճառքներ', 'Կրեատիվ ոլորտ'],
     layout: 'single',
     defaults: {
@@ -314,4 +314,31 @@ export const isTemplateId = (value: unknown): value is TemplateId =>
 export const templateDesign = (id: TemplateId): CvDesign => {
   const { defaults } = TEMPLATES[id]
   return { ...defaults, palette: { ...defaults.palette }, showIcons: defaults.showIcons ?? true, templateId: id }
+}
+
+/**
+ * The free download's fixed black-and-white design: the Classic layout in GHEA Grapalat, no
+ * colour, no photo, no icons. Twin of `BASIC_DESIGN` in `server/src/services/basicCv.ts`,
+ * which is what actually prints it; `twins.spec.ts` pins them equal.
+ */
+export const BASIC_DESIGN: CvDesign = {
+  templateId: 'classic',
+  palette: {
+    accent: '#000000',
+    background: '#ffffff',
+    text: '#000000',
+    heading: '#000000',
+    muted: '#555555',
+    sidebarBackground: '#ffffff',
+    sidebarText: '#000000',
+  },
+  headingFont: 'ghea-grapalat',
+  bodyFont: 'ghea-grapalat',
+  fontScale: 1,
+  lineHeight: 1.45,
+  spacing: 'normal',
+  photoShape: 'circle',
+  showPhoto: false,
+  showIcons: false,
+  levelStyle: 'text',
 }

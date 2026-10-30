@@ -14,7 +14,8 @@ import { config } from '../config.js'
  * One browser is shared and relaunched if it dies; `MAX_CONCURRENT` caps the pages printing
  * at once, which is what bounds memory.
  */
-export type RenderDocument = { title: string; content: CvContent; design: CvDesign }
+/** `watermark` stamps the free PDF's "made with" link in every page's bottom-right corner. */
+export type RenderDocument = { title: string; content: CvContent; design: CvDesign; watermark: boolean }
 
 const MAX_CONCURRENT = 2
 const NAVIGATION_TIMEOUT_MS = 30_000

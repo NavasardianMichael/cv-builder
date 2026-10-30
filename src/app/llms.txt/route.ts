@@ -15,14 +15,18 @@ export const dynamic = 'force-static'
 export function GET(): Response {
   const body = buildLlmsTxt({
     title: `${APP_NAME} (${APP_NAME_LATIN})`,
-    summary: `${APP_DESCRIPTION} Գինը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ռեզյումեի համար (մեկանգամյա, առանց բաժանորդագրության)։ Armenian-language CV/resume builder for job seekers in Armenia: 12 templates, 20 Armenian fonts, in-place editing, one-time ${CV_PRICE_AMD} AMD per CV download.`,
+    summary: `${APP_DESCRIPTION} Պարզ սև-սպիտակ PDF-ն անվճար է, ձևավորված PDF-ը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար (մեկանգամյա, առանց բաժանորդագրության)։ Armenian-language CV/resume builder for job seekers in Armenia: 12 templates, 20 Armenian fonts, in-place editing; a plain black-and-white PDF is free, the designed PDF is a one-time ${CV_PRICE_AMD} AMD per CV.`,
     sections: [
       {
         title: 'Էջեր',
         links: [
           { name: 'Գլխավոր', url: absoluteUrl(ROUTES.home), note: 'ինչ է ծառայությունը, հաճախ տրվող հարցեր' },
           { name: 'Ձևանմուշներ', url: absoluteUrl(ROUTES.templates), note: 'բոլոր 12 ձևանմուշները' },
-          { name: 'Գինը', url: absoluteUrl(ROUTES.pricing), note: `${formatAmd(CV_PRICE_AMD)} մեկ ռեզյումեի PDF-ի համար` },
+          {
+            name: 'Գինը',
+            url: absoluteUrl(ROUTES.pricing),
+            note: `սև-սպիտակ PDF՝ անվճար, ձևավորված PDF՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար`,
+          },
         ],
       },
       {
@@ -54,5 +58,7 @@ export function GET(): Response {
     ],
   })
 
-  return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } })
+  return new Response(body, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' },
+  })
 }

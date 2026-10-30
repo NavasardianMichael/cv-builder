@@ -3,11 +3,14 @@ export const APP_NAME = 'Ռեզյումե'
 export const APP_NAME_LATIN = 'Rezyume'
 
 /** The one-line pitch: page titles, OG cards, llms.txt. */
-export const APP_TAGLINE = 'Հայերեն ռեզյումեի (CV) կառուցիչ'
+export const APP_TAGLINE = 'Հայերեն ինքնակենսագրականի (CV) կառուցիչ'
 
 export const APP_DESCRIPTION =
-  'Ստեղծեք պրոֆեսիոնալ հայերեն ռեզյումե (CV) րոպեների ընթացքում՝ 12 ձևանմուշ, 20 հայերեն տառատեսակ, ' +
-  'ամբողջական խմբագրում հենց էջի վրա։ Կառուցելն անվճար է, PDF ներբեռնումը՝ մեկանգամյա վճարով։'
+  'Ստեղծեք պրոֆեսիոնալ հայերեն ինքնակենսագրական (CV) րոպեների ընթացքում՝ 12 ձևանմուշ, 20 հայերեն տառատեսակ, ' +
+  'ամբողջական խմբագրում հենց էջի վրա։ Պարզ սև-սպիտակ PDF-ն անվճար է, ձևավորվածը՝ մեկանգամյա վճարով։'
+
+/** The public domain, as printed in the free PDF's watermark (which links to it). */
+export const SITE_DOMAIN = 'cv-builder.eapps.com'
 
 /** `NEXT_PUBLIC_SITE_URL` when unset (local dev). */
 export const SITE_URL_FALLBACK = 'http://localhost:7009'

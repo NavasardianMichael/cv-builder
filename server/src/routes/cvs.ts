@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import { type Request, Router } from 'express'
+import { type Request, type Response, Router } from 'express'
 import { isPaymentConfigured } from '../config.js'
 import { fail, ok } from '../lib/api-response.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
@@ -8,9 +8,10 @@ import { createRateLimiter } from '../lib/rateLimit.js'
 import { mapCv } from '../mappers/entities.js'
 import { requireAuth, sessionOf } from '../middleware/auth.js'
 import { asyncHandler, HttpError } from '../middleware/error.js'
+import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
 import { coerceContent, coerceDesign, coerceTitle } from '../services/cvDocument.js'
 import { reconcileCvPayments, startCheckout } from '../services/payments.js'
-import { pdfFileName, renderCvPdf } from '../services/pdf.js'
+import { pdfFileName, renderCvPdf, type RenderDocument } from '../services/pdf.js'
 
 /**
  * A signed-in user's CVs. Every route is scoped to the session's user: a CV id that is not
@@ -21,7 +22,7 @@ export const cvsRouter = Router()
 cvsRouter.use(requireAuth)
 
 const MAX_CVS_PER_USER = 50
-const DEFAULT_TITLE = 'Իմ ռեզյումեն'
+const DEFAULT_TITLE = 'Իմ ինքնակենսագրականը'
 
 const checkoutLimiter = createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 })
 const pdfLimiter = createRateLimiter({ limit: 30, windowMs: 10 * 60 * 1000 })
@@ -138,6 +139,31 @@ cvsRouter.post(
   })
 )
 
+/** Prints the document and answers it as an attachment; the rate limit covers both variants. */
+const sendPdf = async (req: Request, res: Response, cvId: string, doc: RenderDocument): Promise<void> => {
+  const verdict = pdfLimiter(sessionOf(req).userId)
+  if (!verdict.allowed) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
+
+  let pdf: Uint8Array
+  try {
+    pdf = await renderCvPdf(doc)
+  } catch (error) {
+    console.error(`[pdf] render of ${cvId} failed`, error)
+    return fail(res, 'PDF could not be generated', ERROR_CODE.pdfFailed, 500)
+  }
+
+  const fileName = pdfFileName(doc.title)
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Cache-Control', 'private, no-store')
+  // RFC 6266: an ASCII fallback plus the UTF-8 name, which keeps Armenian titles intact.
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="cv.pdf"; filename*=UTF-8''${encodeURIComponent(fileName)}`
+  )
+  res.end(Buffer.from(pdf))
+}
+
+/** The designed PDF: the CV as the user styled it. Paid. */
 cvsRouter.get(
   '/:id/pdf',
   asyncHandler(async (req, res) => {
@@ -145,25 +171,25 @@ cvsRouter.get(
     if (!cv.paidAt && (await reconcileCvPayments(cv.id))) cv = await loadOwnedCv(req)
     if (!cv.paidAt) return fail(res, 'Payment required', ERROR_CODE.cvNotPaid, 402)
 
-    const verdict = pdfLimiter(sessionOf(req).userId)
-    if (!verdict.allowed) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
+    await sendPdf(req, res, cv.id, {
+      title: cv.title,
+      content: coerceContent(cv.content),
+      design: coerceDesign(cv.design),
+      watermark: false,
+    })
+  })
+)
 
-    let pdf: Uint8Array
-    try {
-      pdf = await renderCvPdf({ title: cv.title, content: coerceContent(cv.content), design: coerceDesign(cv.design) })
-    } catch (error) {
-      console.error(`[pdf] render of ${cv.id} failed`, error)
-      return fail(res, 'PDF could not be generated', ERROR_CODE.pdfFailed, 500)
-    }
-
-    const fileName = pdfFileName(cv.title)
-    res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader('Cache-Control', 'private, no-store')
-    // RFC 6266: an ASCII fallback plus the UTF-8 name, which keeps Armenian titles intact.
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="cv.pdf"; filename*=UTF-8''${encodeURIComponent(fileName)}`
-    )
-    res.end(Buffer.from(pdf))
+/** The free PDF: the same text in the fixed black-and-white design (`services/basicCv.ts`), watermarked. */
+cvsRouter.get(
+  '/:id/pdf/basic',
+  asyncHandler(async (req, res) => {
+    const cv = await loadOwnedCv(req)
+    await sendPdf(req, res, cv.id, {
+      title: cv.title,
+      content: basicContent(coerceContent(cv.content)),
+      design: BASIC_DESIGN,
+      watermark: true,
+    })
   })
 )

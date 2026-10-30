@@ -2,7 +2,7 @@
 
 An Armenian-only CV builder. Users pick one of 12 templates, edit the CV **in place** (text,
 colours, backgrounds and fonts per section), and pay once per CV (2,000 ֏) to download its
-PDF. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
+designed PDF; a plain black-and-white PDF of the same text is free. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
 Modelled on `../bookie` — same stack and conventions, smaller.
 
 **Stack:** Next.js 16 · React 19 · TypeScript · Ant Design 6 · Tailwind 4 · Zustand (immer) ·
@@ -48,6 +48,7 @@ mock bank's in-memory payments).
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
 | PDF | `server/src/services/pdf.ts` prints the web's `/render` page (`src/app/render/`) in headless Chrome |
 | Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` |
+| Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` |
 | SEO / GEO | `src/helpers/metadata.ts`, `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
 | Copy | `src/messages/hy.json` (UI) · `src/constants/legal.ts` (draft legal pages) |
@@ -65,7 +66,7 @@ mock bank's in-memory payments).
   autosave runs on every pause. Colours must be `#rrggbb` (they reach `style`), fonts and
   templates must be in the catalogue, the photo a small base64 image data URL.
 - **Twins, pinned by `tests/unit/server/twins.spec.ts`:** template ids, font slugs, section
-  types, the price, error codes, and the paths the server links to. Change both sides together.
+  types, the price, the free PDF's design, error codes, and the paths the server links to. Change both sides together.
 - **Print mechanics** live in `CvPage.tsx`: `@page { margin: 0 }`, a table whose empty
   `thead`/`tfoot` repeat the page padding on every page, and a sidebar strip that is
   `position: fixed` in print so it repeats too. Entries are `break-inside: avoid`.

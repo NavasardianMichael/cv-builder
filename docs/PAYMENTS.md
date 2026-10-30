@@ -1,7 +1,11 @@
 # Payments
 
 One product: unlocking **one CV** for **2,000 ֏**, once. A paid CV can be edited and
-downloaded forever; a duplicate is a new, unpaid CV. Price: `server/src/services/pricing.ts`
+downloaded forever, as designed; a duplicate is a new, unpaid CV.
+
+Free, for any signed-in user and any CV: `GET /cvs/:id/pdf/basic`, the same text printed in
+one fixed black-and-white design (Classic layout, GHEA Grapalat, no colours, photo or block
+styles — `server/src/services/basicCv.ts`). The editor's download dialog offers both. Price: `server/src/services/pricing.ts`
 (charged) and `src/constants/pricing.ts` (printed), pinned equal by a test.
 
 ## Flow
@@ -12,7 +16,7 @@ downloaded forever; a duplicate is a new, unpaid CV. Price: `server/src/services
 4. That route calls `settlePayment`, which asks the gateway **server to server** and moves the
    row `pending → succeeded|failed` by compare-and-set, setting `Cv.paidAt` in the same
    transaction. Then it redirects to the web's `/payment/result?status=…&cv=…`.
-5. `GET /cvs/:id/pdf` answers 402 until `paidAt` is set.
+5. `GET /cvs/:id/pdf` (the designed PDF) answers 402 until `paidAt` is set.
 
 A buyer who closes the tab before step 3 is covered by **reconcile-on-read**: `GET /cvs/:id`
 and `GET /cvs/:id/pdf` re-check that CV's pending payments from the last 3 days.

@@ -127,7 +127,7 @@ export const sampleContent = (): CvContent => ({
   ],
 })
 
-export const DEFAULT_CV_TITLE = 'Իմ ռեզյումեն'
+export const DEFAULT_CV_TITLE = 'Իմ ինքնակենսագրականը'
 
 export const newCvDocument = (templateId: TemplateId, { sample = false }: { sample?: boolean } = {}): CvDocument => ({
   title: DEFAULT_CV_TITLE,

@@ -18,5 +18,8 @@ export type DeleteCvAPI = Endpoint<{ payload: { id: string }; response: null; pr
 export type CheckoutResponse = { redirectUrl: string }
 export type CheckoutCvAPI = Endpoint<{ payload: { id: string }; response: CheckoutResponse; processed: string }>
 
+/** `basic` is the free black-and-white PDF; `designed` the paid one, as styled. */
+export type PdfVariant = 'designed' | 'basic'
+
 /** Not enveloped: the API answers the PDF bytes themselves. */
-export type DownloadCvPdfAPI = Endpoint<{ payload: { id: string }; processed: Blob }>
+export type DownloadCvPdfAPI = Endpoint<{ payload: { id: string; variant: PdfVariant }; processed: Blob }>

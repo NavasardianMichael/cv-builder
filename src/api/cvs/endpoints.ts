@@ -7,4 +7,5 @@ export const ENDPOINTS = {
   duplicate: '/cvs',
   checkout: '/cvs',
   pdf: '/cvs',
+  basicPdf: '/cvs',
 } as const

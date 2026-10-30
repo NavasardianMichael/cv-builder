@@ -98,7 +98,7 @@ export const DashboardClient: FC = () => {
     return (
       <div className='mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 xl:grid-cols-4'>
         {cvs.map((cv) => (
-          <CvCard key={cv.id} cv={cv} onDuplicate={onDuplicate} onDelete={onDelete} onDownload={(item) => void download(item.id, item.title)} />
+          <CvCard key={cv.id} cv={cv} onDuplicate={onDuplicate} onDelete={onDelete} onDownload={(item, variant) => void download(item.id, item.title, variant)} />
         ))}
       </div>
     )

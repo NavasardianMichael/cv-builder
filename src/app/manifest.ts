@@ -5,7 +5,7 @@ import { CANVAS, INK } from '@styles/tokens'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${APP_NAME} — Հայերեն ռեզյումեի կառուցիչ`,
+    name: `${APP_NAME} — Հայերեն ինքնակենսագրականի կառուցիչ`,
     short_name: APP_NAME,
     description: APP_DESCRIPTION,
     lang: LOCALE,

@@ -5,10 +5,13 @@ import { FONT_SLUGS } from '@constants/fonts'
 import { CV_PRICE_AMD } from '@constants/pricing'
 import { ROUTES } from '@constants/routes'
 import { SECTION_TYPES } from '@constants/sections'
-import { TEMPLATE_IDS } from '@constants/templates'
+import { BASIC_DESIGN, TEMPLATE_IDS } from '@constants/templates'
+import { basicContent } from '@helpers/basicCv'
+import { sampleContent } from '@helpers/cvFactory'
 import * as serverCatalogue from '../../../server/src/lib/cv-catalogue'
 import { ERROR_CODE } from '../../../server/src/lib/error-codes'
 import * as returnPath from '../../../server/src/lib/return-path'
+import * as serverBasic from '../../../server/src/services/basicCv'
 import { CV_PRICE_AMD as SERVER_PRICE } from '../../../server/src/services/pricing'
 
 /**
@@ -31,6 +34,19 @@ describe('server/web twins', () => {
 
   it('charge what the pages print', () => {
     expect(SERVER_PRICE).toBe(CV_PRICE_AMD)
+  })
+
+  it('print the free PDF the way the download dialog previews it', () => {
+    expect(serverBasic.BASIC_DESIGN).toEqual(BASIC_DESIGN)
+    const content = sampleContent()
+    content.basics.photo = 'data:image/jpeg;base64,AAAA'
+    content.basics.style = { background: '#ff0000', text: '#00ff00', heading: null, font: 'amar' }
+    content.sections = content.sections.map((section) => ({
+      ...section,
+      style: { background: '#0000ff', text: null, heading: '#ffff00', font: 'nasa-font' },
+    }))
+    expect(serverBasic.basicContent(content)).toEqual(basicContent(content))
+    expect(basicContent(content).basics.photo).toBeNull()
   })
 
   it('agree on every error code', () => {

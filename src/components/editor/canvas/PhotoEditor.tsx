@@ -22,7 +22,17 @@ export const PhotoEditor: FC<{ photo: string | null; initials: string }> = ({ ph
 
   return (
     <div className='group relative size-full'>
-      <ImgCrop aspect={1} quality={0.92} rotationSlider showReset modalTitle={t('cropTitle')} cropShape='round' showGrid>
+      <ImgCrop
+        aspect={1}
+        quality={0.92}
+        rotationSlider
+        showReset
+        resetText={t('cropReset')}
+        modalOk={t('cropApprove')}
+        modalTitle={t('cropTitle')}
+        cropShape='round'
+        showGrid
+      >
         <Upload
           accept='image/png,image/jpeg,image/webp'
           showUploadList={false}
@@ -51,7 +61,9 @@ export const PhotoEditor: FC<{ photo: string | null; initials: string }> = ({ ph
             {photo ? (
               <img src={photo} alt='' className='size-full object-cover' />
             ) : (
-              <span className='font-[family-name:var(--cv-font-heading)] text-[2.2em] font-bold'>{initials || <CameraOutlined />}</span>
+              <span className='font-[family-name:var(--cv-font-heading)] text-[2.2em] font-bold'>
+                {initials || <CameraOutlined />}
+              </span>
             )}
             <span className='absolute inset-0 grid place-items-center bg-black/45 text-[13px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100'>
               <span className='flex flex-col items-center gap-1' style={{ fontFamily: 'var(--font-ui), sans-serif' }}>

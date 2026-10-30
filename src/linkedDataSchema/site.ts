@@ -35,7 +35,7 @@ export const websiteSchema = (): WithContext<WebSite> => ({
   publisher: { '@id': ORGANIZATION_ID },
 })
 
-/** The product itself, with its one price, so answer engines can quote what it costs. */
+/** The product itself, with its two offers, so answer engines can quote what it costs. */
 export const webApplicationSchema = (): WithContext<WebApplication> => ({
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
@@ -49,19 +49,28 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
   isAccessibleForFree: true,
   publisher: { '@id': ORGANIZATION_ID },
   featureList: [
-    '12 ռեզյումեի ձևանմուշ',
+    '12 ինքնակենսագրականի ձևանմուշ',
     '20 հայերեն տառատեսակ',
-    'Խմբագրում անմիջապես ռեզյումեի վրա',
+    'Խմբագրում անմիջապես ինքնակենսագրականի վրա',
     'Գույնի, ֆոնի և տառատեսակի կարգավորում ամեն բաժնի համար',
     'PDF ներբեռնում ներկառուցված տառատեսակներով',
   ],
-  offers: {
-    '@type': 'Offer',
-    price: CV_PRICE_AMD,
-    priceCurrency: CURRENCY,
-    description: 'Մեկ ռեզյումեի PDF ներբեռնում, մեկանգամյա վճար',
-    availability: 'https://schema.org/InStock',
-  },
+  offers: [
+    {
+      '@type': 'Offer',
+      price: 0,
+      priceCurrency: CURRENCY,
+      description: 'Ինքնակենսագրականի պարզ սև-սպիտակ PDF ներբեռնում',
+      availability: 'https://schema.org/InStock',
+    },
+    {
+      '@type': 'Offer',
+      price: CV_PRICE_AMD,
+      priceCurrency: CURRENCY,
+      description: 'Մեկ ինքնակենսագրականի ձևավորված PDF ներբեռնում, մեկանգամյա վճար',
+      availability: 'https://schema.org/InStock',
+    },
+  ],
 })
 
 export const faqSchema = (items: { question: string; answer: string }[]): WithContext<FAQPage> => ({
@@ -89,7 +98,7 @@ export const breadcrumbSchema = (items: { name: string; path: string }[]): WithC
 export const templatesListSchema = (): WithContext<ItemList> => ({
   '@context': 'https://schema.org',
   '@type': 'ItemList',
-  name: 'Ռեզյումեի ձևանմուշներ',
+  name: 'Ինքնակենսագրականի ձևանմուշներ',
   numberOfItems: TEMPLATE_LIST.length,
   itemListElement: TEMPLATE_LIST.map((template, index) => ({
     '@type': 'ListItem',

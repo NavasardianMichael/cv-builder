@@ -524,7 +524,7 @@
     }
   },
   "blankClassic": {
-    "title": "Նոր ռեզյումե",
+    "title": "Նոր ինքնակենսագրական",
     "content": {
       "basics": {
         "fullName": "",
@@ -700,7 +700,7 @@
     }
   },
   "longTimeline": {
-    "title": "Երկար ռեզյումե (2 էջ)",
+    "title": "Երկար ինքնակենսագրական (2 էջ)",
     "content": {
       "basics": {
         "fullName": "Անի Հովհաննիսյան",

@@ -20,8 +20,8 @@ if (experience) {
 const fixtures = {
   paidModern: { title: 'Դիզայներ — Ժամանակակից', content: sampleContent(), design: templateDesign('modern') },
   unpaidCreative: { title: 'Դիզայներ — Ստեղծագործական', content: sampleContent(), design: templateDesign('creative') },
-  blankClassic: { title: 'Նոր ռեզյումե', content: blankContent(), design: templateDesign('classic') },
-  longTimeline: { title: 'Երկար ռեզյումե (2 էջ)', content: long, design: templateDesign('timeline') },
+  blankClassic: { title: 'Նոր ինքնակենսագրական', content: blankContent(), design: templateDesign('classic') },
+  longTimeline: { title: 'Երկար ինքնակենսագրական (2 էջ)', content: long, design: templateDesign('timeline') },
 }
 
 writeFileSync('server/prisma/fixtures/cvs.json', `${JSON.stringify(fixtures, null, 2)}\n`)

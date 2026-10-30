@@ -5,6 +5,7 @@ import { CopyOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, MoreOutli
 import { Button, Dropdown, Tag } from 'antd'
 import Link from 'next/link'
 import { useFormatter, useTranslations } from 'next-intl'
+import type { PdfVariant } from '@api/cvs/types'
 import type { Cv } from '@store/cvs/single/types'
 import { editorPath } from '@constants/routes'
 import { CvPreview } from '@components/cv/CvPreview'
@@ -13,7 +14,7 @@ type Props = {
   cv: Cv
   onDuplicate: (cv: Cv) => void
   onDelete: (cv: Cv) => void
-  onDownload: (cv: Cv) => void
+  onDownload: (cv: Cv, variant: PdfVariant) => void
 }
 
 export const CvCard: FC<Props> = ({ cv, onDuplicate, onDelete, onDownload }) => {
@@ -45,7 +46,9 @@ export const CvCard: FC<Props> = ({ cv, onDuplicate, onDelete, onDownload }) => 
           menu={{
             items: [
               { key: 'edit', icon: <EditOutlined />, label: <Link href={editorPath(cv.id)}>{tCommon('edit')}</Link> },
-              ...(cv.paidAt ? [{ key: 'download', icon: <DownloadOutlined />, label: tCommon('download'), onClick: () => onDownload(cv) }] : []),
+              cv.paidAt
+                ? { key: 'download', icon: <DownloadOutlined />, label: tCommon('download'), onClick: () => onDownload(cv, 'designed') }
+                : { key: 'download', icon: <DownloadOutlined />, label: tCommon('downloadBasic'), onClick: () => onDownload(cv, 'basic') },
               { key: 'duplicate', icon: <CopyOutlined />, label: tCommon('duplicate'), onClick: () => onDuplicate(cv) },
               { type: 'divider' as const },
               { key: 'delete', icon: <DeleteOutlined />, label: tCommon('delete'), danger: true, onClick: () => onDelete(cv) },

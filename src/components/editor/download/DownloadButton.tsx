@@ -4,6 +4,7 @@ import { type FC, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
 import { useTranslations } from 'next-intl'
+import type { PdfVariant } from '@api/cvs/types'
 import { useCvEditorStore } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
@@ -16,7 +17,7 @@ type Props = {
   autoOpen?: boolean
 }
 
-/** Guest → sign in; unpaid → checkout; paid → the PDF itself. */
+/** Guest → sign in; unpaid → the free black-and-white PDF or checkout; paid → the PDF itself. */
 export const DownloadButton: FC<Props> = ({ autoOpen }) => {
   const t = useTranslations('Editor.download')
   const cvId = useCvEditorStore.use.cvId()
@@ -29,10 +30,10 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
     autoOpen && cvId && cvId !== DRAFT_ID && !paidAt ? 'checkout' : null
   )
 
-  const downloadNow = async () => {
+  const downloadNow = async (variant: PdfVariant = 'designed') => {
     if (!cvId) return
     await flushSave()
-    await download(cvId, title)
+    if ((await download(cvId, title, variant)) && variant === 'basic') setModal(null)
   }
 
   const start = () => {
@@ -62,6 +63,8 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
           setModal(null)
           void downloadNow()
         }}
+        onDownloadBasic={() => void downloadNow('basic')}
+        isDownloading={isDownloading}
       />
     </>
   )
