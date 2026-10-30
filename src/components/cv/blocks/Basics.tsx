@@ -1,6 +1,6 @@
 'use client'
 
-import type { FC, ReactNode } from 'react'
+import { type FC, memo, type ReactNode } from 'react'
 import type { BasicsTextField, CvBasics, CvDesign } from '@store/cvs/single/types'
 import { cn } from '@helpers/cn'
 import { blockStyleVars, initialsOf } from '@helpers/cvStyle'
@@ -28,7 +28,11 @@ export const BasicsFrame: FC<BasicsProps & { className?: string; children: React
   )
 }
 
-export const NameBlock: FC<BasicsProps & { className?: string }> = ({ basics, className }) => {
+/**
+ * The blocks below are `memo`: `basics` keeps its identity while the user types in a section,
+ * so the header does not re-render with every keystroke elsewhere.
+ */
+const NameBlockComponent: FC<BasicsProps & { className?: string }> = ({ basics, className }) => {
   const edit = useCvEdit()
   return (
     <div className={cn('cv-name-block', className)}>
@@ -50,6 +54,8 @@ export const NameBlock: FC<BasicsProps & { className?: string }> = ({ basics, cl
   )
 }
 
+export const NameBlock = memo(NameBlockComponent)
+
 type ContactSpec = { field: BasicsTextField; icon: CvIconName; placeholder: string; href: (value: string) => string | undefined }
 
 const CONTACTS: ContactSpec[] = [
@@ -61,7 +67,7 @@ const CONTACTS: ContactSpec[] = [
 ]
 
 /** `row` wraps inline (headers), `column` stacks (sidebars). */
-export const ContactList: FC<BasicsProps & { design: CvDesign; layout?: 'row' | 'column'; className?: string }> = ({
+const ContactListComponent: FC<BasicsProps & { design: CvDesign; layout?: 'row' | 'column'; className?: string }> = ({
   basics,
   design,
   layout = 'row',
@@ -88,8 +94,10 @@ export const ContactList: FC<BasicsProps & { design: CvDesign; layout?: 'row' | 
   )
 }
 
+export const ContactList = memo(ContactListComponent)
+
 /** The photo, its slot in the editor, or nothing. */
-export const PhotoBlock: FC<BasicsProps & { design: CvDesign; className?: string }> = ({ basics, design, className }) => {
+const PhotoBlockComponent: FC<BasicsProps & { design: CvDesign; className?: string }> = ({ basics, design, className }) => {
   const edit = useCvEdit()
   if (!design.showPhoto) return null
 
@@ -102,3 +110,5 @@ export const PhotoBlock: FC<BasicsProps & { design: CvDesign; className?: string
     </div>
   )
 }
+
+export const PhotoBlock = memo(PhotoBlockComponent)

@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/error.js'
 import { cvsRouter } from './routes/cvs.js'
 import { identityRouter } from './routes/identity.js'
 import { paymentsRouter } from './routes/payments.js'
+import { pdfRouter } from './routes/pdf.js'
 import { CV_PRICE_AMD } from './services/pricing.js'
 
 export function createApp() {
@@ -38,6 +39,7 @@ export function createApp() {
 
   app.use('/identity', identityRouter)
   app.use('/cvs', cvsRouter)
+  app.use('/pdf', pdfRouter)
 
   app.use((_req, res) => fail(res, 'Not found', 404, 404))
   app.use(errorHandler)

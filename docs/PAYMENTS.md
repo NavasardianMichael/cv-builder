@@ -3,10 +3,16 @@
 One product: unlocking **one CV** for **2,000 ֏**, once. A paid CV can be edited and
 downloaded forever, as designed; a duplicate is a new, unpaid CV.
 
-Free, for any signed-in user and any CV: `GET /cvs/:id/pdf/basic`, the same text printed in
-one fixed black-and-white design (Classic layout, GHEA Grapalat, no colours, photo or block
-styles — `server/src/services/basicCv.ts`). The editor's download dialog offers both. Price: `server/src/services/pricing.ts`
-(charged) and `src/constants/pricing.ts` (printed), pinned equal by a test.
+Free, for anyone and any CV: the same text printed in one fixed black-and-white design
+(Classic layout, GHEA Grapalat, no colours, photo or block styles —
+`server/src/services/basicCv.ts`). A server CV prints through `GET /cvs/:id/pdf/basic`; a
+guest's local draft through the public `POST /pdf/basic`, which takes the document as the
+body, prints it and stores nothing (limited per IP, and by the print queue's cap,
+`MAX_WAITING` in `services/pdf.ts`). The editor's download dialog offers both. Price:
+`server/src/services/pricing.ts` (charged) and `src/constants/pricing.ts` (printed), pinned
+equal by a test.
+
+Neither downloading nor buying needs an account.
 
 ## Flow
 
@@ -21,6 +27,26 @@ styles — `server/src/services/basicCv.ts`). The editor's download dialog offer
 A buyer who closes the tab before step 3 is covered by **reconcile-on-read**: `GET /cvs/:id`
 and `GET /cvs/:id/pdf` re-check that CV's pending payments from the last 3 days.
 `Payment` rows outlive their CV and user (`SetNull`) — they are the accounting record.
+
+## Without an account
+
+A guest who pays is warned first, in the dialog (`GuestWarning` in `CheckoutModal`): the CV
+will live only in this browser — not on other devices, and gone if its cookies are cleared —
+unless they sign in, which the warning also offers. Going ahead:
+
+1. `POST /cvs` without a session turns the local draft into a server CV owned by the
+   browser's **guest key** (`server/src/lib/guest.ts`): a random secret in the httpOnly
+   `rezyume_guest` cookie (400 days, renewed on use), stored only as `Cv.guestKeyHash`. A CV
+   has exactly one owner, account or guest key (a CHECK constraint). The editor carries on
+   with the new id in place, and the local draft is cleared.
+2. Checkout, the bank and the result page are the normal flow; every `/cvs` route accepts
+   the guest key in place of a session (`requireCvOwner`), so the guest can edit and download
+   what they bought, and find it on `/dashboard` (the proxy lets a guest cookie through).
+3. Signing in — password, sign-up, Google, or simply `GET /identity/me` with both cookies —
+   moves the guest's CVs and their payments to the account and clears the cookie
+   (`server/src/services/guestCvs.ts`).
+
+Unpaid guest CVs (a checkout abandoned at the bank) are not cleaned up yet.
 
 ## Gateways (`server/src/services/gateways/`)
 

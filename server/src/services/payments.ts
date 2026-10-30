@@ -20,7 +20,8 @@ import { HttpError } from '../middleware/error.js'
 
 const RECONCILE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
 
-export const startCheckout = async (cv: { id: string; title: string; userId: string }): Promise<string> => {
+/** `userId` is null for a guest's CV; the payment is moved to the account if they sign in later. */
+export const startCheckout = async (cv: { id: string; title: string; userId: string | null }): Promise<string> => {
   const gatewayId = config.payments.gateway
   const gateway = GATEWAYS[gatewayId]
 

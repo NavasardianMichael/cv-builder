@@ -33,23 +33,30 @@ model User {
 
 /// One CV document. `content` and `design` are JSON coerced by services/cvDocument.ts on
 /// every write: the shape is the web's `CvContent` / `CvDesign`.
+///
+/// Owned by an account (`userId`) or, when bought without one, by a browser's guest key
+/// (`guestKeyHash`, lib/guest.ts) — exactly one of the two, enforced by a CHECK constraint
+/// in the migration. Signing in moves a guest's CVs to the account.
 model Cv {
-  id         String    @id @default(cuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title      String
+  id           String    @id @default(cuid())
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 of the guest cookie's key; the key itself is never stored.
+  guestKeyHash String?
+  title        String
   /// Denormalised from `design.templateId` for listing without parsing JSON.
-  templateId String
-  content    Json
-  design     Json
+  templateId   String
+  content      Json
+  design       Json
   /// Set once, by a settled payment. A paid CV stays downloadable and editable forever.
-  paidAt     DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  paidAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   payments Payment[]
 
   @@index([userId, updatedAt])
+  @@index([guestKeyHash, updatedAt])
 }
 
 enum PaymentStatus {

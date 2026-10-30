@@ -3,7 +3,7 @@
 import type { FC } from 'react'
 import { ColorPicker } from 'antd'
 import { useTranslations } from 'next-intl'
-import { useCvEditorStore } from '@store/cvs/single/store'
+import { useCvEditorStoreBase } from '@store/cvs/single/store'
 import { PALETTE_PRESETS } from '@constants/palettes'
 
 type Props = {
@@ -20,7 +20,7 @@ type Props = {
  */
 export const ColorField: FC<Props> = ({ label, value, onChange, clearable }) => {
   const t = useTranslations('Editor.design')
-  const palette = useCvEditorStore.use.doc()?.design.palette
+  const palette = useCvEditorStoreBase((state) => state.doc?.design.palette)
 
   const presets = [
     ...(palette ? [{ label: t('colors'), colors: Object.values(palette), defaultOpen: true }] : []),

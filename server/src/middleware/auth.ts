@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express'
 import { config } from '../config.js'
 import { fail } from '../lib/api-response.js'
+import { readGuestKeyHash, renewGuestKey } from '../lib/guest.js'
 import { prisma } from '../lib/prisma.js'
 import { type SessionPayload, verifySession } from '../lib/session.js'
 
@@ -42,6 +43,39 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
   req.session = session
   next()
 }
+
+/**
+ * Who a CV route acts for: the signed-in account, else this browser's guest key (a CV bought
+ * without an account, `lib/guest.ts`). Either shape is also the Prisma `where` fragment that
+ * scopes every query to that owner.
+ */
+export type CvOwner = { userId: string } | { guestKeyHash: string }
+
+/**
+ * The CV routes' gate: a session, or a guest key. A signed-in user is always the account —
+ * their guest CVs were moved to it on sign-in. `optionalAuth`, mounted globally, has already
+ * verified the session cookie.
+ */
+export const requireCvOwner: RequestHandler = (req, res, next) => {
+  if (req.session) {
+    req.cvOwner = { userId: req.session.userId }
+    return next()
+  }
+  const guestKeyHash = readGuestKeyHash(req)
+  if (!guestKeyHash) return fail(res, 'Unauthorized', 401, 401)
+  renewGuestKey(req, res)
+  req.cvOwner = { guestKeyHash }
+  next()
+}
+
+/** For a handler behind `requireCvOwner`. */
+export const cvOwnerOf = (req: Request): CvOwner => {
+  if (!req.cvOwner) throw new Error('cvOwnerOf called outside requireCvOwner')
+  return req.cvOwner
+}
+
+/** A rate-limit key per owner. */
+export const ownerKey = (owner: CvOwner): string => ('userId' in owner ? owner.userId : `guest:${owner.guestKeyHash}`)
 
 /** For a handler behind `requireAuth`, where the session is guaranteed. */
 export const sessionOf = (req: Request): SessionPayload => {

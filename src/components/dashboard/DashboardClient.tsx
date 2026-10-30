@@ -2,13 +2,14 @@
 
 import { type FC, useCallback, useEffect, useState } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
-import { App, Button, Empty, Skeleton } from 'antd'
+import { Alert, App, Button, Empty, Skeleton } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { useAuthStore } from '@store/auth/store'
 import { useCvsListStore } from '@store/cvs/list/store'
 import type { Cv } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
-import { ROUTES } from '@constants/routes'
+import { RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { classifyError, errorCopyKey } from '@helpers/error'
 import { reportError } from '@helpers/reportError'
 import { ErrorState } from '@components/ui/ErrorState'
@@ -19,6 +20,10 @@ export const DashboardClient: FC = () => {
   const tCommon = useTranslations('Common')
   const tErrors = useTranslations('Errors')
   const list = useCvsListStore.use.list()
+  const user = useAuthStore.use.user()
+  const isResolved = useAuthStore.use.isResolved()
+  // Signed out here means a guest whose cookie lists the CVs they bought (src/proxy.ts).
+  const isGuest = isResolved && !user
   const isLoaded = useCvsListStore.use.isLoaded()
   const getCvs = useCvsListStore.use.getCvs()
   const duplicateCv = useCvsListStore.use.duplicateCv()
@@ -59,6 +64,7 @@ export const DashboardClient: FC = () => {
       okText: tCommon('delete'),
       okButtonProps: { danger: true },
       cancelText: tCommon('cancel'),
+      centered: true,
       onOk: () =>
         deleteCv(cv.id)
           .then(() => message.success(t('deleted')))
@@ -117,6 +123,20 @@ export const DashboardClient: FC = () => {
           </Button>
         </Link>
       </div>
+      {isGuest && (
+        <Alert
+          type='warning'
+          showIcon
+          className='mt-6'
+          title={t('guestTitle')}
+          description={t('guestText')}
+          action={
+            <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(ROUTES.dashboard)}`}>
+              <Button size='small'>{t('guestSignIn')}</Button>
+            </Link>
+          }
+        />
+      )}
       {body()}
     </div>
   )

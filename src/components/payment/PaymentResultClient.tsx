@@ -2,14 +2,14 @@
 
 import { type FC, useEffect, useState } from 'react'
 import { CheckCircleFilled, ClockCircleFilled, CloseCircleFilled, DownloadOutlined } from '@ant-design/icons'
-import { Button, Spin } from 'antd'
+import { Alert, Button, Spin } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { getCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
 import type { Cv } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
-import { CHECKOUT_QUERY, editorPath, ROUTES } from '@constants/routes'
+import { CHECKOUT_QUERY, editorPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { reportError } from '@helpers/reportError'
 
 type Props = { cvId?: string; status: 'succeeded' | 'failed' | 'pending' }
@@ -20,7 +20,8 @@ const PENDING_MAX_POLLS = 8
 /**
  * Where the gateway's return trip lands (via the API, which has already asked the bank).
  * The CV is re-read rather than trusting `status`: reading it reconciles a pending payment,
- * so "pending" polls a few times until the bank has answered.
+ * so "pending" polls a few times until the bank has answered. A guest reads it through the
+ * guest cookie, and is reminded that what they bought lives only in this browser.
  */
 export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
   const t = useTranslations('Payment')
@@ -28,19 +29,24 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
   const user = useAuthStore.use.user()
   const isResolved = useAuthStore.use.isResolved()
   const [cv, setCv] = useState<Cv | null>(null)
+  /** The CV could not be read (another browser, a cleared cookie): show the bank's verdict as is. */
+  const [unreadable, setUnreadable] = useState(false)
   const [polls, setPolls] = useState(0)
   const { download, isDownloading } = usePdfDownload()
 
   useEffect(() => {
-    if (!cvId || !isResolved || !user) return
+    if (!cvId || !isResolved) return
     let active = true
     getCvAPI({ id: cvId })
       .then((value) => active && setCv(value))
-      .catch((error: unknown) => reportError(error, 'payment:result'))
+      .catch((error: unknown) => {
+        reportError(error, 'payment:result')
+        if (active) setUnreadable(true)
+      })
     return () => {
       active = false
     }
-  }, [cvId, isResolved, user, polls])
+  }, [cvId, isResolved, polls])
 
   const paid = Boolean(cv?.paidAt)
   const effective = paid ? 'succeeded' : status === 'succeeded' && cv ? 'pending' : status
@@ -51,7 +57,7 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
     return () => clearTimeout(timer)
   }, [effective, polls])
 
-  if (cvId && user && !cv && status !== 'failed') {
+  if (cvId && !cv && !unreadable && status !== 'failed') {
     return <Spin size='large' className='my-20' />
   }
 
@@ -68,6 +74,20 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
       </div>
       <h1 className='mt-6 font-display text-3xl font-extrabold text-ink'>{view.title}</h1>
       <p className='mt-3 text-lg text-muted'>{view.text}</p>
+      {isResolved && !user && cv && effective === 'succeeded' && (
+        <Alert
+          type='warning'
+          showIcon
+          className='mt-6 text-left'
+          title={t('guestTitle')}
+          description={t('guestText')}
+          action={
+            <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(cv.id))}`}>
+              <Button size='small'>{t('guestSignIn')}</Button>
+            </Link>
+          }
+        />
+      )}
       <div className='mt-8 flex flex-wrap justify-center gap-3'>
         {effective === 'succeeded' && cv && (
           <Button type='primary' size='large' icon={<DownloadOutlined />} loading={isDownloading} onClick={() => void download(cv.id, cv.title)}>

@@ -224,6 +224,9 @@ export const coerceDesign = (raw: unknown): CvDesign => {
   }
 }
 
+/** A CV's title when none was given. */
+export const DEFAULT_CV_TITLE = 'Իմ ինքնակենսագրականը'
+
 export const coerceTitle = (raw: unknown, fallback: string): string => {
   const title = typeof raw === 'string' ? raw.replace(/\s+/g, ' ').trim().slice(0, CV_LIMITS.title) : ''
   return title || fallback

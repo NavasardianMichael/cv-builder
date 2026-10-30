@@ -59,11 +59,13 @@ export const EditorCanvas: FC<Props> = ({ zoom, previewing, onPagesChange, onFit
     () => ({
       actions: useCvEditorStoreBase.getState(),
       selectedBlock,
-      sectionToolbar: (section, index, count) => <SectionToolbar section={section} index={index} count={count} />,
+      sectionToolbar: (section, index, count) => (
+        <SectionToolbar sectionId={section.id} title={section.title} style={section.style} hidden={section.hidden} index={index} count={count} />
+      ),
       basicsToolbar: () => <BasicsToolbar />,
-      entryToolbar: (section, entry, index) => <EntryToolbar section={section} entry={entry} index={index} />,
-      tagRemove: (section, tag) => <TagRemoveButton section={section} tag={tag} />,
-      addItemButton: (section) => <AddItemButton section={section} />,
+      entryToolbar: (sectionId, entry, index, count) => <EntryToolbar sectionId={sectionId} entry={entry} index={index} count={count} />,
+      tagRemove: (sectionId, tagId) => <TagRemoveButton sectionId={sectionId} tagId={tagId} />,
+      addItemButton: (section) => <AddItemButton sectionId={section.id} type={section.type} />,
       photoEditor: (photo, initials) => <PhotoEditor photo={photo} initials={initials} />,
     }),
     [selectedBlock]

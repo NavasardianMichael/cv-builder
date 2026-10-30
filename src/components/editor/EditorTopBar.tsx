@@ -19,7 +19,7 @@ import { Button, Input, Tag, Tooltip } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
-import { useCvEditorStore } from '@store/cvs/single/store'
+import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { ROUTES } from '@constants/routes'
 import { BrandMark } from '@components/layout/BrandLogo'
@@ -68,10 +68,11 @@ const SaveIndicator: FC = () => {
 export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, onOpenPanel, autoCheckout, previewing, onPreviewChange }) => {
   const t = useTranslations('Editor')
   const tCommon = useTranslations('Common')
-  const doc = useCvEditorStore.use.doc()
+  // Narrow selectors: this bar must not re-render on every keystroke in the CV.
+  const title = useCvEditorStoreBase((state) => state.doc?.title)
   const paidAt = useCvEditorStore.use.paidAt()
-  const canUndo = useCvEditorStore.use.past().length > 0
-  const canRedo = useCvEditorStore.use.future().length > 0
+  const canUndo = useCvEditorStoreBase((state) => state.past.length > 0)
+  const canRedo = useCvEditorStoreBase((state) => state.future.length > 0)
   const undo = useCvEditorStore.use.undo()
   const redo = useCvEditorStore.use.redo()
   const setTitle = useCvEditorStore.use.setTitle()
@@ -89,7 +90,7 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
       <Input
         variant='borderless'
         className='max-w-56 min-w-0 font-semibold'
-        value={doc?.title ?? ''}
+        value={title ?? ''}
         placeholder={t('untitled')}
         aria-label={t('titleLabel')}
         maxLength={120}

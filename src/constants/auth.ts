@@ -1,6 +1,9 @@
 /** The API's session cookie (`config.cookieName`). Read only by `src/proxy.ts` for presence. */
 export const SESSION_COOKIE = 'rezyume_session'
 
+/** The API's guest cookie (`GUEST_COOKIE` in `server/src/lib/guest.ts`): CVs bought without an account. */
+export const GUEST_COOKIE = 'rezyume_guest'
+
 /** The reset page's query (`PASSWORD_RESET_QUERY` on the server). */
 export const RESET_TOKEN_QUERY = 'token'
 

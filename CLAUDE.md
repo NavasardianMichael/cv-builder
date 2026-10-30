@@ -2,7 +2,7 @@
 
 An Armenian-only CV builder. Users pick one of 12 templates, edit the CV **in place** (text,
 colours, backgrounds and fonts per section), and pay once per CV (2,000 ֏) to download its
-designed PDF; a plain black-and-white PDF of the same text is free. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
+designed PDF; a plain black-and-white PDF of the same text is free. Neither needs an account. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
 Modelled on `../bookie` — same stack and conventions, smaller.
 
 **Stack:** Next.js 16 · React 19 · TypeScript · Ant Design 6 · Tailwind 4 · Zustand (immer) ·
@@ -46,6 +46,7 @@ mock bank's in-memory payments).
 | In-place editing | `src/components/cv/Editable.tsx` + `CvEditContext.tsx`; the editor's controls in `src/components/editor/` |
 | Editor state, undo/redo | `src/store/cvs/single/store.ts` · autosave `src/components/editor/useAutosave.ts` |
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
+| Buying without an account | `server/src/lib/guest.ts` (guest-key cookie) · `services/guestCvs.ts` (moved to the account on sign-in) · `CheckoutModal` · `docs/PAYMENTS.md` |
 | PDF | `server/src/services/pdf.ts` prints the web's `/render` page (`src/app/render/`) in headless Chrome |
 | Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` |
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
@@ -66,10 +67,13 @@ mock bank's in-memory payments).
   autosave runs on every pause. Colours must be `#rrggbb` (they reach `style`), fonts and
   templates must be in the catalogue, the photo a small base64 image data URL.
 - **Twins, pinned by `tests/unit/server/twins.spec.ts`:** template ids, font slugs, section
-  types, the price, the free PDF's design, error codes, and the paths the server links to. Change both sides together.
+  types, the price, the free PDF's design, the default title, the guest cookie's name, error codes, and the paths the server links to. Change both sides together.
 - **Print mechanics** live in `CvPage.tsx`: `@page { margin: 0 }`, a table whose empty
   `thead`/`tfoot` repeat the page padding on every page, and a sidebar strip that is
   `position: fixed` in print so it repeats too. Entries are `break-inside: avoid`.
+- **A CV is owned by an account or a guest key**, never both: every `/cvs` route scopes by
+  `cvOwnerOf(req)` (`requireCvOwner`), which is also the Prisma `where`. Never filter CVs by
+  `userId` alone.
 - **Payment is settled only from the gateway's own record** (`settlePayment`), never from the
   return URL; reading an unpaid CV reconciles its recent pending payments.
 - **Server Components cannot import `@ant-design/icons`** (it reads context): import icons

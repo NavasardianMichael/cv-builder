@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, memo, useEffect, useRef, useState } from 'react'
 import {
   ArrowDownOutlined,
   ArrowUpOutlined,
@@ -15,9 +15,9 @@ import {
 } from '@ant-design/icons'
 import { Button, Input, type InputRef, Popconfirm, Popover } from 'antd'
 import { useTranslations } from 'next-intl'
-import { useCvEditorStore } from '@store/cvs/single/store'
-import type { BlockStyle, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
-import { SECTION_META } from '@constants/sections'
+import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
+import type { BlockStyle, CvEntry } from '@store/cvs/single/types'
+import { SECTION_META, type SectionType } from '@constants/sections'
 import { toWebsiteUrl } from '@helpers/url'
 import { ToolbarShell, ToolButton } from './ToolButton'
 import { BlockStyleForm } from '../controls/BlockStyleForm'
@@ -55,7 +55,10 @@ const StyleButton: FC<{ blockId: string; title: string; style: BlockStyle; onCha
   )
 }
 
-export const SectionToolbar: FC<{ section: CvSection; index: number; count: number }> = ({ section, index, count }) => {
+type SectionToolbarProps = { sectionId: string; title: string; style: BlockStyle; hidden: boolean; index: number; count: number }
+
+/** Plain props and `memo`: typing in one of the section's items must not re-render it. */
+const SectionToolbarComponent: FC<SectionToolbarProps> = ({ sectionId, title, style, hidden, index, count }) => {
   const t = useTranslations('Editor.block')
   const moveSection = useCvEditorStore.use.moveSection()
   const toggleSectionHidden = useCvEditorStore.use.toggleSectionHidden()
@@ -65,28 +68,28 @@ export const SectionToolbar: FC<{ section: CvSection; index: number; count: numb
   return (
     <div className='cv-toolbar'>
       <ToolbarShell>
-        <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveSection(section.id, -1)} />
+        <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveSection(sectionId, -1)} />
         <ToolButton
           icon={<ArrowDownOutlined />}
           label={t('moveDown')}
           disabled={index === count - 1}
-          onClick={() => moveSection(section.id, 1)}
+          onClick={() => moveSection(sectionId, 1)}
         />
         <StyleButton
-          blockId={section.id}
+          blockId={sectionId}
           title={t('styleTitle')}
-          style={section.style}
-          onChange={(style) => setSectionStyle(section.id, style)}
+          style={style}
+          onChange={(next) => setSectionStyle(sectionId, next)}
         />
         <ToolButton
-          icon={section.hidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
-          label={section.hidden ? t('show') : t('hide')}
-          onClick={() => toggleSectionHidden(section.id)}
+          icon={hidden ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+          label={hidden ? t('show') : t('hide')}
+          onClick={() => toggleSectionHidden(sectionId)}
         />
         <Popconfirm
-          title={t('deleteConfirm', { title: section.title || '…' })}
+          title={t('deleteConfirm', { title: title || '…' })}
           okButtonProps={{ danger: true }}
-          onConfirm={() => removeSection(section.id)}
+          onConfirm={() => removeSection(sectionId)}
         >
           <ToolButton icon={<DeleteOutlined />} label={t('delete')} tone='danger' />
         </Popconfirm>
@@ -95,9 +98,11 @@ export const SectionToolbar: FC<{ section: CvSection; index: number; count: numb
   )
 }
 
-export const BasicsToolbar: FC = () => {
+export const SectionToolbar = memo(SectionToolbarComponent)
+
+const BasicsToolbarComponent: FC = () => {
   const t = useTranslations('Editor.block')
-  const style = useCvEditorStore.use.doc()?.content.basics.style
+  const style = useCvEditorStoreBase((state) => state.doc?.content.basics.style)
   const setBasicsStyle = useCvEditorStore.use.setBasicsStyle()
   if (!style) return null
   return (
@@ -108,6 +113,9 @@ export const BasicsToolbar: FC = () => {
     </div>
   )
 }
+
+/** `memo`, no props: it reads its own style, so the header's re-renders need not reach it. */
+export const BasicsToolbar = memo(BasicsToolbarComponent)
 
 /** Attaches a URL to an item: its title becomes a link in the preview and the PDF. */
 const EntryLinkForm: FC<{ entry: CvEntry; onSave: (url: string) => void }> = ({ entry, onSave }) => {
@@ -155,7 +163,7 @@ const EntryLinkForm: FC<{ entry: CvEntry; onSave: (url: string) => void }> = ({ 
   )
 }
 
-export const EntryToolbar: FC<{ section: CvSection; entry: CvEntry; index: number }> = ({ section, entry, index }) => {
+export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number; count: number }> = ({ sectionId, entry, index, count }) => {
   const t = useTranslations('Editor.block')
   const moveEntry = useCvEditorStore.use.moveEntry()
   const duplicateEntry = useCvEditorStore.use.duplicateEntry()
@@ -178,7 +186,7 @@ export const EntryToolbar: FC<{ section: CvSection; entry: CvEntry; index: numbe
             <EntryLinkForm
               entry={entry}
               onSave={(url) => {
-                setEntryField(section.id, entry.id, 'url', url)
+                setEntryField(sectionId, entry.id, 'url', url)
                 setLinkOpen(false)
               }}
             />
@@ -190,21 +198,21 @@ export const EntryToolbar: FC<{ section: CvSection; entry: CvEntry; index: numbe
             className={entry.url ? 'text-accent' : undefined}
           />
         </Popover>
-        <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveEntry(section.id, entry.id, -1)} />
+        <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveEntry(sectionId, entry.id, -1)} />
         <ToolButton
           icon={<ArrowDownOutlined />}
           label={t('moveDown')}
-          disabled={index === section.entries.length - 1}
-          onClick={() => moveEntry(section.id, entry.id, 1)}
+          disabled={index === count - 1}
+          onClick={() => moveEntry(sectionId, entry.id, 1)}
         />
-        <ToolButton icon={<CopyOutlined />} label={t('duplicate')} onClick={() => duplicateEntry(section.id, entry.id)} />
-        <ToolButton icon={<DeleteOutlined />} label={t('removeItem')} tone='danger' onClick={() => removeEntry(section.id, entry.id)} />
+        <ToolButton icon={<CopyOutlined />} label={t('duplicate')} onClick={() => duplicateEntry(sectionId, entry.id)} />
+        <ToolButton icon={<DeleteOutlined />} label={t('removeItem')} tone='danger' onClick={() => removeEntry(sectionId, entry.id)} />
       </ToolbarShell>
     </div>
   )
 }
 
-export const TagRemoveButton: FC<{ section: CvSection; tag: CvTag }> = ({ section, tag }) => {
+export const TagRemoveButton: FC<{ sectionId: string; tagId: string }> = ({ sectionId, tagId }) => {
   const t = useTranslations('Editor.block')
   const removeTag = useCvEditorStore.use.removeTag()
   return (
@@ -213,7 +221,7 @@ export const TagRemoveButton: FC<{ section: CvSection; tag: CvTag }> = ({ sectio
       className='cv-tag-remove size-4.5 cursor-pointer rounded-full border-0 bg-red-500 p-0 text-[9px] text-white shadow'
       aria-label={t('removeItem')}
       title={t('removeItem')}
-      onClick={() => removeTag(section.id, tag.id)}
+      onClick={() => removeTag(sectionId, tagId)}
     >
       {/* An SVG, not the "×" character: a glyph sits on its font's baseline and never centres. */}
       <CloseOutlined />
@@ -221,11 +229,11 @@ export const TagRemoveButton: FC<{ section: CvSection; tag: CvTag }> = ({ sectio
   )
 }
 
-export const AddItemButton: FC<{ section: CvSection }> = ({ section }) => {
+const AddItemButtonComponent: FC<{ sectionId: string; type: SectionType }> = ({ sectionId, type }) => {
   const t = useTranslations('Editor.block')
   const addEntry = useCvEditorStore.use.addEntry()
   const addTag = useCvEditorStore.use.addTag()
-  const kind = SECTION_META[section.type].kind
+  const kind = SECTION_META[type].kind
   if (kind === 'text') return null
 
   return (
@@ -233,9 +241,11 @@ export const AddItemButton: FC<{ section: CvSection }> = ({ section }) => {
       type='button'
       className='cv-add-item mt-2 inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-transparent px-2.5 py-1 font-[inherit] text-xs'
       style={{ color: 'var(--cv-accent)', fontFamily: 'var(--font-ui), sans-serif' }}
-      onClick={() => (kind === 'entries' ? addEntry(section.id) : addTag(section.id))}
+      onClick={() => (kind === 'entries' ? addEntry(sectionId) : addTag(sectionId))}
     >
       <PlusOutlined /> {kind === 'entries' ? t('addEntry') : t('addTag')}
     </button>
   )
 }
+
+export const AddItemButton = memo(AddItemButtonComponent)

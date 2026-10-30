@@ -21,7 +21,9 @@
   font-size: calc(12.5px * var(--cv-scale));
   line-height: var(--cv-lh);
   text-align: left;
-  overflow-wrap: break-word;
+  /* `anywhere`, not `break-word`: it also lowers min-content, so a long unbroken word
+     wraps inside flex and grid items instead of stretching them past the page. */
+  overflow-wrap: anywhere;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -94,11 +96,11 @@
 }
 
 .cv-side-left .cv-body {
-  grid-template-columns: var(--cv-side-w) 1fr;
+  grid-template-columns: var(--cv-side-w) minmax(0, 1fr);
 }
 
 .cv-side-right .cv-body {
-  grid-template-columns: 1fr var(--cv-side-w);
+  grid-template-columns: minmax(0, 1fr) var(--cv-side-w);
 }
 
 @media print {
@@ -124,7 +126,7 @@
 
 .cv-headline {
   margin-top: 0.3em;
-  color: var(--cv-accent);
+  color: var(--cv-block-text, var(--cv-accent));
   font-size: 1.15em;
   font-weight: 500;
 }
@@ -203,10 +205,17 @@
 }
 
 .cv-entry-period {
-  flex-shrink: 0;
   color: var(--cv-muted);
   font-size: 0.9em;
-  white-space: nowrap;
+}
+
+/* They hold their width while the title wraps, but no more than half the row: past that they
+   wrap too rather than push the row off the page. */
+.cv-entry-period,
+.cv-entry-location {
+  flex-shrink: 0;
+  max-width: 50%;
+  text-align: right;
 }
 
 .cv-entry-sub {
@@ -215,7 +224,6 @@
 }
 
 .cv-entry-location {
-  flex-shrink: 0;
   color: var(--cv-muted);
   font-size: 0.9em;
   font-weight: 400;
@@ -407,6 +415,7 @@ button.cv-level-step {
 
 span.cv-editable {
   display: inline-block;
+  max-width: 100%;
 }
 
 .cv-editable:hover {
@@ -708,7 +717,7 @@ span.cv-editable {
 
 .cvt-executive .cvx-columns {
   display: grid;
-  grid-template-columns: 1fr 32%;
+  grid-template-columns: minmax(0, 1fr) 32%;
   gap: 9mm;
 }
 
@@ -1029,7 +1038,7 @@ span.cv-editable {
 
 .cvt-compact .cvx-columns {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8mm;
 }
 
@@ -1131,7 +1140,7 @@ span.cv-editable {
 
 .cvt-academic .cv-section {
   display: grid;
-  grid-template-columns: 44mm 1fr;
+  grid-template-columns: 44mm minmax(0, 1fr);
   gap: 6mm;
 }
 
@@ -1153,7 +1162,7 @@ span.cv-editable {
 
 .cvt-soft .cv-body {
   display: grid;
-  grid-template-columns: 35% 1fr;
+  grid-template-columns: 35% minmax(0, 1fr);
   gap: 5mm;
 }
 

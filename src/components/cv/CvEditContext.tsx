@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, type ReactNode, useContext } from 'react'
-import type { CvEditorActions, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
+import type { CvEditorActions, CvEntry, CvSection } from '@store/cvs/single/types'
 
 /**
  * What turns a rendered CV into an editable one. Absent (null) everywhere a CV is only shown
@@ -9,14 +9,16 @@ import type { CvEditorActions, CvEntry, CvSection, CvTag } from '@store/cvs/sing
  *
  * The CV components own the markup; the editor owns every control around it. The slots below
  * are how the editor puts its toolbars into the CV without the CV importing the editor.
+ * Item slots take the section's id, not the section: a memoised item must not re-render
+ * because a sibling's text changed its section.
  */
 export type CvEditApi = {
   actions: CvEditorActions
   selectedBlock: string | null
   sectionToolbar: (section: CvSection, index: number, count: number) => ReactNode
   basicsToolbar: () => ReactNode
-  entryToolbar: (section: CvSection, entry: CvEntry, index: number) => ReactNode
-  tagRemove: (section: CvSection, tag: CvTag) => ReactNode
+  entryToolbar: (sectionId: string, entry: CvEntry, index: number, count: number) => ReactNode
+  tagRemove: (sectionId: string, tagId: string) => ReactNode
   addItemButton: (section: CvSection) => ReactNode
   photoEditor: (photo: string | null, initials: string) => ReactNode
 }

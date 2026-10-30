@@ -12,12 +12,13 @@ import { DRAFT_ID } from '@store/cvs/single/types'
 import { CHECKOUT_QUERY, editorPath, newCvPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { DEFAULT_TEMPLATE_ID } from '@constants/templates'
 import { dedupe } from '@helpers/dedupe'
+import { classifyError } from '@helpers/error'
 import { clearLocalDraft, readLocalDraft } from '@helpers/localDraft'
 import { ErrorState } from '@components/ui/ErrorState'
 import { EditorCanvas } from './canvas/EditorCanvas'
 import { EditorTopBar } from './EditorTopBar'
 import { EditorPanel } from './panels/EditorPanel'
-import { useAutosave } from './useAutosave'
+import { Autosave } from './useAutosave'
 import { useEditorShortcuts } from './useEditorShortcuts'
 
 type Props = {
@@ -30,9 +31,11 @@ type LoadState = { phase: 'loading' } | { phase: 'importing' } | { phase: 'ready
 /**
  * Opens one CV for editing.
  *
- * - A server CV needs a session; without one the user is sent to sign in and back.
+ * - A server CV needs a session — or, for one bought without an account, this browser's guest
+ *   cookie. Without either the user is sent to sign in and back.
  * - `draft` is a guest's local CV. Once the user is signed in it is imported as a server CV
- *   and the URL replaced — which is how "sign in to download" carries the work across.
+ *   and the URL replaced — which is how "sign in to buy" carries the work across. Buying
+ *   without an account turns it into a server CV in place (CheckoutModal).
  */
 export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   const t = useTranslations('Editor')
@@ -41,6 +44,8 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   const user = useAuthStore.use.user()
   const isResolved = useAuthStore.use.isResolved()
   const loadDocument = useCvEditorStore.use.loadDocument()
+  /** The open document's id: the draft's changes once a guest buys it (`cvId` is the URL's). */
+  const openCvId = useCvEditorStore.use.cvId()
   const [state, setState] = useState<LoadState>({ phase: 'loading' })
   const [zoom, setZoom] = useState<number | null>(null)
   const [fitZoom, setFitZoom] = useState(1)
@@ -49,7 +54,6 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   const [previewing, setPreviewing] = useState(false)
   const selectBlock = useCvEditorStore.use.selectBlock()
 
-  useAutosave()
   useEditorShortcuts()
 
   const load = useCallback(async () => {
@@ -69,11 +73,16 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
       return router.replace(`${editorPath(createdId)}${autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''}`)
     }
 
-    if (!user) {
+    let cv
+    try {
+      cv = await getCvAPI({ id: cvId })
+    } catch (error) {
+      // Signed out and not this browser's guest CV: it may be an account's, so sign in and back.
+      const { kind } = classifyError(error)
+      if (user || (kind !== 'unauthorized' && kind !== 'notFound')) throw error
       const back = `${editorPath(cvId)}${autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''}`
       return router.replace(`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(back)}`)
     }
-    const cv = await getCvAPI({ id: cvId })
     loadDocument({ cvId: cv.id, doc: { title: cv.title, content: cv.content, design: cv.design }, paidAt: cv.paidAt })
     setState({ phase: 'ready' })
   }, [autoCheckout, cvId, loadDocument, router, user])
@@ -119,6 +128,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
 
   return (
     <div className='flex h-dvh flex-col bg-canvas'>
+      <Autosave />
       <EditorTopBar
         zoom={zoom}
         fitZoom={fitZoom}
@@ -132,11 +142,11 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
           setPreviewing(next)
         }}
       />
-      {cvId === DRAFT_ID && (
+      {!user && openCvId && (
         <div className='flex shrink-0 items-center justify-center gap-3 bg-accent-soft px-4 py-1.5 text-center text-xs'>
-          <span>{t('guestBanner')}</span>
+          <span>{t(openCvId === DRAFT_ID ? 'guestBanner' : 'guestCvBanner')}</span>
           <Link
-            href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(DRAFT_ID))}`}
+            href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(openCvId))}`}
             className='font-semibold text-ink underline'
           >
             {t('guestBannerCta')}

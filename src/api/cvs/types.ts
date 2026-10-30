@@ -1,4 +1,4 @@
-import type { Cv, CvDocument } from '@store/cvs/single/types'
+import type { Cv, CvContent, CvDocument } from '@store/cvs/single/types'
 import type { Endpoint } from '@interfaces/api'
 
 export type GetCvsAPI = Endpoint<{ payload: void; response: Cv[]; processed: Cv[] }>
@@ -23,3 +23,6 @@ export type PdfVariant = 'designed' | 'basic'
 
 /** Not enveloped: the API answers the PDF bytes themselves. */
 export type DownloadCvPdfAPI = Endpoint<{ payload: { id: string; variant: PdfVariant }; processed: Blob }>
+
+/** The free PDF of a document only this browser holds (a guest's draft). */
+export type DownloadDraftPdfAPI = Endpoint<{ payload: { title: string; content: CvContent }; processed: Blob }>

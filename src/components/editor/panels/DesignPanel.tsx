@@ -4,7 +4,7 @@ import type { FC, ReactNode } from 'react'
 import { ClearOutlined } from '@ant-design/icons'
 import { App, Button, Segmented, Slider, Switch } from 'antd'
 import { useTranslations } from 'next-intl'
-import { useCvEditorStore } from '@store/cvs/single/store'
+import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import type { CvLevelStyle, CvPalette, CvPhotoShape, CvSpacing } from '@store/cvs/single/types'
 import { PALETTE_PRESETS } from '@constants/palettes'
 import { TEMPLATES_WITH_SIDE_COLORS } from '@constants/templates'
@@ -28,7 +28,7 @@ const SIDE_ROLES: (keyof CvPalette)[] = ['sidebarBackground', 'sidebarText']
 /** Whole-CV design: palette, fonts, sizes, photo and level display. */
 export const DesignPanel: FC = () => {
   const t = useTranslations('Editor.design')
-  const design = useCvEditorStore.use.doc()?.design
+  const design = useCvEditorStoreBase((state) => state.doc?.design)
   const setDesign = useCvEditorStore.use.setDesign()
   const setPalette = useCvEditorStore.use.setPalette()
   const resetBlockStyles = useCvEditorStore.use.resetBlockStyles()

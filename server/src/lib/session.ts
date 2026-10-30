@@ -29,8 +29,11 @@ export const verifySession = (token: string): SessionPayload | null => {
   }
 }
 
-/** Shared by set and clear: a browser only overwrites a cookie whose path and domain match. */
-const sessionCookieOptions = () => ({
+/**
+ * Shared by set and clear: a browser only overwrites a cookie whose path and domain match.
+ * The guest cookie (`lib/guest.ts`) uses them too, so the web's proxy can see it as well.
+ */
+export const sessionCookieOptions = () => ({
   httpOnly: true,
   sameSite: 'lax' as const,
   secure: config.nodeEnv === 'production',

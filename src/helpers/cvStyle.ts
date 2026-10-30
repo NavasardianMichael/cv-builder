@@ -36,6 +36,9 @@ export const blockStyleVars = (style: BlockStyle): CssVars => {
     vars.background = style.background
   }
   if (style.text) {
+    // Set only by an override, so text that is accent-coloured by design (the headline) can
+    // follow it: a header holding just the name and headline would otherwise ignore "Text".
+    vars['--cv-block-text'] = style.text
     vars['--cv-text'] = style.text
     vars['--cv-muted'] = style.text
     vars['--cv-side-text'] = style.text

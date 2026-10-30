@@ -4,6 +4,7 @@ import { config } from '../config.js'
 import { ensureGoogleStrategy, GOOGLE_ERROR, GOOGLE_STRATEGY, type GoogleIdentity, passport } from '../lib/google-oauth.js'
 import { prisma } from '../lib/prisma.js'
 import { buildWebUrl, DASHBOARD_PATH, isSafeReturnPath, SIGN_IN_PATH } from '../lib/return-path.js'
+import { claimGuestCvs } from '../services/guestCvs.js'
 
 /**
  * Google sign-in. Every branch ends in a top-level redirect back to the web app, so these
@@ -80,8 +81,9 @@ googleRouter.get('/callback', (req: Request, res: Response, next: NextFunction) 
       }
 
       upsertGoogleUser(identity)
-        .then((user) => {
+        .then(async (user) => {
           issueSession(res, user)
+          await claimGuestCvs(req, res, user.id)
           const returnPath = req.oauthFlow?.returnPath
           res.redirect(buildWebUrl(config.corsOrigin, isSafeReturnPath(returnPath) ? returnPath : DASHBOARD_PATH))
         })

@@ -1,67 +1,86 @@
 import { Prisma } from '@prisma/client'
-import { type Request, type Response, Router } from 'express'
+import { type Request, Router } from 'express'
 import { isPaymentConfigured } from '../config.js'
 import { fail, ok } from '../lib/api-response.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
+import { ensureGuestKeyHash } from '../lib/guest.js'
+import { sendPdf } from '../lib/pdf-response.js'
 import { prisma } from '../lib/prisma.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import { mapCv } from '../mappers/entities.js'
-import { requireAuth, sessionOf } from '../middleware/auth.js'
+import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware/auth.js'
 import { asyncHandler, HttpError } from '../middleware/error.js'
 import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
-import { coerceContent, coerceDesign, coerceTitle } from '../services/cvDocument.js'
+import { coerceContent, coerceDesign, coerceTitle, DEFAULT_CV_TITLE } from '../services/cvDocument.js'
 import { reconcileCvPayments, startCheckout } from '../services/payments.js'
-import { pdfFileName, renderCvPdf, type RenderDocument } from '../services/pdf.js'
 
 /**
- * A signed-in user's CVs. Every route is scoped to the session's user: a CV id that is not
- * theirs answers 404, the same as one that does not exist.
+ * A user's CVs — or a guest's: the CVs a browser bought without an account, owned by its
+ * guest key (`lib/guest.ts`). Every route is scoped to that owner (`requireCvOwner`): a CV id
+ * that is not theirs answers 404, the same as one that does not exist.
  */
 export const cvsRouter = Router()
 
-cvsRouter.use(requireAuth)
-
 const MAX_CVS_PER_USER = 50
-const DEFAULT_TITLE = 'Իմ ինքնակենսագրականը'
+/** A guest only makes a server CV to buy it; a handful covers that, and caps a script. */
+const MAX_CVS_PER_GUEST = 10
 
+const guestCreateLimiter = createRateLimiter({ limit: 10, windowMs: 60 * 60 * 1000 })
 const checkoutLimiter = createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 })
 const pdfLimiter = createRateLimiter({ limit: 30, windowMs: 10 * 60 * 1000 })
 
+const maxCvs = (owner: CvOwner): number => ('userId' in owner ? MAX_CVS_PER_USER : MAX_CVS_PER_GUEST)
+
 const loadOwnedCv = async (req: Request) => {
-  const cv = await prisma.cv.findFirst({ where: { id: String(req.params.id), userId: sessionOf(req).userId } })
+  const cv = await prisma.cv.findFirst({ where: { id: String(req.params.id), ...cvOwnerOf(req) } })
   if (!cv) throw new HttpError(404, 'Not found', 404)
   return cv
 }
 
+/** One budget for both PDF variants. */
+const pdfAllowed = (req: Request): boolean => pdfLimiter(ownerKey(cvOwnerOf(req))).allowed
+
 const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue
 
-cvsRouter.get(
-  '/',
-  asyncHandler(async (req, res) => {
-    const cvs = await prisma.cv.findMany({ where: { userId: sessionOf(req).userId }, orderBy: { updatedAt: 'desc' } })
-    ok(res, cvs.map(mapCv))
-  })
-)
-
-/** Also how a guest's local draft is imported after sign-in: it arrives as the body. */
+/**
+ * Also how a guest's local draft is imported after sign-in: it arrives as the body. Without a
+ * session it is a guest buying without an account: the request mints the browser's guest key,
+ * which then owns the CV. Registered before `requireCvOwner`, which would refuse that guest.
+ */
 cvsRouter.post(
   '/',
   asyncHandler(async (req, res) => {
-    const userId = sessionOf(req).userId
-    const count = await prisma.cv.count({ where: { userId } })
-    if (count >= MAX_CVS_PER_USER) return fail(res, 'CV limit reached', ERROR_CODE.cvLimitReached, 409)
+    let owner: CvOwner
+    if (req.session) owner = { userId: req.session.userId }
+    else {
+      const verdict = guestCreateLimiter(req.ip ?? 'unknown')
+      if (!verdict.allowed) return fail(res, 'Too many attempts', ERROR_CODE.rateLimited, 429)
+      owner = { guestKeyHash: ensureGuestKeyHash(req, res) }
+    }
+    const count = await prisma.cv.count({ where: owner })
+    if (count >= maxCvs(owner)) return fail(res, 'CV limit reached', ERROR_CODE.cvLimitReached, 409)
 
     const design = coerceDesign(req.body?.design)
     const cv = await prisma.cv.create({
       data: {
-        userId,
-        title: coerceTitle(req.body?.title, DEFAULT_TITLE),
+        ...owner,
+        title: coerceTitle(req.body?.title, DEFAULT_CV_TITLE),
         templateId: design.templateId,
         content: asJson(coerceContent(req.body?.content)),
         design: asJson(design),
       },
     })
     ok(res, mapCv(cv), 201)
+  })
+)
+
+cvsRouter.use(requireCvOwner)
+
+cvsRouter.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    const cvs = await prisma.cv.findMany({ where: cvOwnerOf(req), orderBy: { updatedAt: 'desc' } })
+    ok(res, cvs.map(mapCv))
   })
 )
 
@@ -98,14 +117,14 @@ cvsRouter.post(
   '/:id/duplicate',
   asyncHandler(async (req, res) => {
     const source = await loadOwnedCv(req)
-    const userId = sessionOf(req).userId
-    if ((await prisma.cv.count({ where: { userId } })) >= MAX_CVS_PER_USER) {
+    const owner = cvOwnerOf(req)
+    if ((await prisma.cv.count({ where: owner })) >= maxCvs(owner)) {
       return fail(res, 'CV limit reached', ERROR_CODE.cvLimitReached, 409)
     }
     const copy = await prisma.cv.create({
       data: {
-        userId,
-        title: coerceTitle(`${source.title} (պատճեն)`, DEFAULT_TITLE),
+        ...owner,
+        title: coerceTitle(`${source.title} (պատճեն)`, DEFAULT_CV_TITLE),
         templateId: source.templateId,
         content: asJson(source.content),
         design: asJson(source.design),
@@ -131,37 +150,13 @@ cvsRouter.post(
     if (cv.paidAt) return fail(res, 'This CV is already paid for', ERROR_CODE.cvAlreadyPaid, 409)
     if (!isPaymentConfigured()) return fail(res, 'Payments are unavailable', ERROR_CODE.paymentsUnavailable, 503)
 
-    const verdict = checkoutLimiter(sessionOf(req).userId)
+    const verdict = checkoutLimiter(ownerKey(cvOwnerOf(req)))
     if (!verdict.allowed) return fail(res, 'Too many attempts', ERROR_CODE.rateLimited, 429)
 
     const redirectUrl = await startCheckout({ id: cv.id, title: cv.title, userId: cv.userId })
     ok(res, { redirectUrl })
   })
 )
-
-/** Prints the document and answers it as an attachment; the rate limit covers both variants. */
-const sendPdf = async (req: Request, res: Response, cvId: string, doc: RenderDocument): Promise<void> => {
-  const verdict = pdfLimiter(sessionOf(req).userId)
-  if (!verdict.allowed) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
-
-  let pdf: Uint8Array
-  try {
-    pdf = await renderCvPdf(doc)
-  } catch (error) {
-    console.error(`[pdf] render of ${cvId} failed`, error)
-    return fail(res, 'PDF could not be generated', ERROR_CODE.pdfFailed, 500)
-  }
-
-  const fileName = pdfFileName(doc.title)
-  res.setHeader('Content-Type', 'application/pdf')
-  res.setHeader('Cache-Control', 'private, no-store')
-  // RFC 6266: an ASCII fallback plus the UTF-8 name, which keeps Armenian titles intact.
-  res.setHeader(
-    'Content-Disposition',
-    `attachment; filename="cv.pdf"; filename*=UTF-8''${encodeURIComponent(fileName)}`
-  )
-  res.end(Buffer.from(pdf))
-}
 
 /** The designed PDF: the CV as the user styled it. Paid. */
 cvsRouter.get(
@@ -170,8 +165,9 @@ cvsRouter.get(
     let cv = await loadOwnedCv(req)
     if (!cv.paidAt && (await reconcileCvPayments(cv.id))) cv = await loadOwnedCv(req)
     if (!cv.paidAt) return fail(res, 'Payment required', ERROR_CODE.cvNotPaid, 402)
+    if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
 
-    await sendPdf(req, res, cv.id, {
+    await sendPdf(res, cv.id, {
       title: cv.title,
       content: coerceContent(cv.content),
       design: coerceDesign(cv.design),
@@ -185,7 +181,9 @@ cvsRouter.get(
   '/:id/pdf/basic',
   asyncHandler(async (req, res) => {
     const cv = await loadOwnedCv(req)
-    await sendPdf(req, res, cv.id, {
+    if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
+
+    await sendPdf(res, cv.id, {
       title: cv.title,
       content: basicContent(coerceContent(cv.content)),
       design: BASIC_DESIGN,

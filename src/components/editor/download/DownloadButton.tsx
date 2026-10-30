@@ -5,7 +5,7 @@ import { DownloadOutlined } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
 import { useTranslations } from 'next-intl'
 import type { PdfVariant } from '@api/cvs/types'
-import { useCvEditorStore } from '@store/cvs/single/store'
+import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
 import { CheckoutModal } from './CheckoutModal'
@@ -17,13 +17,17 @@ type Props = {
   autoOpen?: boolean
 }
 
-/** Guest → sign in; unpaid → the free black-and-white PDF or checkout; paid → the PDF itself. */
+/**
+ * Paid → the PDF itself. Otherwise the download dialog: the free black-and-white PDF, or
+ * checkout. Neither needs an account — a guest's draft prints as it is, and buying without
+ * one warns first (CheckoutModal).
+ */
 export const DownloadButton: FC<Props> = ({ autoOpen }) => {
   const t = useTranslations('Editor.download')
   const cvId = useCvEditorStore.use.cvId()
   const paidAt = useCvEditorStore.use.paidAt()
-  const title = useCvEditorStore.use.doc()?.title ?? ''
-  const { download, isDownloading } = usePdfDownload()
+  const title = useCvEditorStoreBase((state) => state.doc?.title) ?? ''
+  const { download, downloadDraft, isDownloading } = usePdfDownload()
   // The bar mounts once the document has loaded, so the returning buyer's checkout can open
   // straight away rather than from an effect.
   const [modal, setModal] = useState<'signIn' | 'checkout' | null>(() =>
@@ -33,13 +37,15 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
   const downloadNow = async (variant: PdfVariant = 'designed') => {
     if (!cvId) return
     await flushSave()
-    if ((await download(cvId, title, variant)) && variant === 'basic') setModal(null)
+    // A draft exists only in this browser, so it is sent to be printed; it can only be the free PDF.
+    const doc = useCvEditorStoreBase.getState().doc
+    const done = cvId === DRAFT_ID ? Boolean(doc) && (await downloadDraft(doc!)) : await download(cvId, title, variant)
+    if (done && variant === 'basic') setModal(null)
   }
 
   const start = () => {
     if (!cvId) return
-    if (cvId === DRAFT_ID) setModal('signIn')
-    else if (paidAt) void downloadNow()
+    if (paidAt) void downloadNow()
     else setModal('checkout')
   }
 
@@ -55,7 +61,7 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
           className='bg-accent hover:bg-accent-strong'
         />
       </Tooltip>
-      <SignInToDownloadModal open={modal === 'signIn'} onClose={() => setModal(null)} />
+      {cvId && <SignInToDownloadModal cvId={cvId} open={modal === 'signIn'} onClose={() => setModal(null)} />}
       <CheckoutModal
         open={modal === 'checkout'}
         onClose={() => setModal(null)}
@@ -64,6 +70,7 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
           void downloadNow()
         }}
         onDownloadBasic={() => void downloadNow('basic')}
+        onSignIn={() => setModal('signIn')}
         isDownloading={isDownloading}
       />
     </>

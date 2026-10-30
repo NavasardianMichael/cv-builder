@@ -3,7 +3,7 @@
 import { type FC, memo, useMemo } from 'react'
 import { CheckCircleFilled } from '@ant-design/icons'
 import { useTranslations } from 'next-intl'
-import { useCvEditorStore } from '@store/cvs/single/store'
+import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { TEMPLATE_LIST, templateDesign, type TemplateId } from '@constants/templates'
 import { cn } from '@helpers/cn'
 import { sampleContent } from '@helpers/cvFactory'
@@ -22,7 +22,7 @@ TemplateThumb.displayName = 'TemplateThumb'
 
 export const TemplatesPanel: FC = () => {
   const t = useTranslations('Editor')
-  const current = useCvEditorStore.use.doc()?.design.templateId
+  const current = useCvEditorStoreBase((state) => state.doc?.design.templateId)
   const applyTemplate = useCvEditorStore.use.applyTemplate()
 
   return (

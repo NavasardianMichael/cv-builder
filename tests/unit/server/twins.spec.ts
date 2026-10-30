@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { RESET_TOKEN_QUERY } from '@constants/auth'
+import { GUEST_COOKIE, RESET_TOKEN_QUERY } from '@constants/auth'
 import { ERROR_CODES } from '@constants/errors'
 import { FONT_SLUGS } from '@constants/fonts'
 import { CV_PRICE_AMD } from '@constants/pricing'
@@ -7,11 +7,13 @@ import { ROUTES } from '@constants/routes'
 import { SECTION_TYPES } from '@constants/sections'
 import { BASIC_DESIGN, TEMPLATE_IDS } from '@constants/templates'
 import { basicContent } from '@helpers/basicCv'
-import { sampleContent } from '@helpers/cvFactory'
+import { DEFAULT_CV_TITLE, sampleContent } from '@helpers/cvFactory'
 import * as serverCatalogue from '../../../server/src/lib/cv-catalogue'
 import { ERROR_CODE } from '../../../server/src/lib/error-codes'
+import * as guest from '../../../server/src/lib/guest'
 import * as returnPath from '../../../server/src/lib/return-path'
 import * as serverBasic from '../../../server/src/services/basicCv'
+import { DEFAULT_CV_TITLE as SERVER_DEFAULT_TITLE } from '../../../server/src/services/cvDocument'
 import { CV_PRICE_AMD as SERVER_PRICE } from '../../../server/src/services/pricing'
 
 /**
@@ -47,6 +49,14 @@ describe('server/web twins', () => {
     }))
     expect(serverBasic.basicContent(content)).toEqual(basicContent(content))
     expect(basicContent(content).basics.photo).toBeNull()
+  })
+
+  it('name the guest cookie the proxy looks for', () => {
+    expect(guest.GUEST_COOKIE).toBe(GUEST_COOKIE)
+  })
+
+  it('title an untitled CV the same way', () => {
+    expect(SERVER_DEFAULT_TITLE).toBe(DEFAULT_CV_TITLE)
   })
 
   it('agree on every error code', () => {

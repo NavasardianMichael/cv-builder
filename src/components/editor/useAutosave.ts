@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { type FC, useEffect } from 'react'
 import { updateCvAPI } from '@api/cvs/main'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
@@ -72,4 +72,13 @@ export const useAutosave = (): void => {
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [saveStatus])
+}
+
+/**
+ * `useAutosave` as a component of its own. It re-renders on every keystroke (it watches
+ * `doc`), so it must not live in a component with children: that would re-render the editor.
+ */
+export const Autosave: FC = () => {
+  useAutosave()
+  return null
 }

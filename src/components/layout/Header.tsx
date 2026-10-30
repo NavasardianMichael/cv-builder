@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState, useSyncExternalStore } from 'react'
 import { MenuOutlined } from '@ant-design/icons'
 import { Button, Drawer } from 'antd'
 import Link from 'next/link'
@@ -9,21 +9,32 @@ import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
 import { ROUTES } from '@constants/routes'
 import { cn } from '@helpers/cn'
+import { clearGuestCvsMark, hasGuestCvs } from '@helpers/guestCvs'
 import { AccountMenu } from './AccountMenu'
 import { BrandLogo } from './BrandLogo'
 
 type NavItem = { href: string; label: string }
 
+/** localStorage has no change event within a tab; the flag only changes on a full navigation. */
+const subscribeNever = (): (() => void) => () => undefined
+
 export const Header: FC = () => {
   const t = useTranslations('Nav')
   const pathname = usePathname()
   const user = useAuthStore.use.user()
+  // A guest who bought without an account gets the way back to those CVs (`helpers/guestCvs`).
+  const guestCvs = useSyncExternalStore(subscribeNever, hasGuestCvs, () => false)
   const [open, setOpen] = useState(false)
+
+  // Signed in: the API has moved this browser's guest CVs to the account.
+  useEffect(() => {
+    if (user) clearGuestCvsMark()
+  }, [user])
 
   const items: NavItem[] = [
     { href: ROUTES.templates, label: t('templates') },
     { href: ROUTES.pricing, label: t('pricing') },
-    ...(user ? [{ href: ROUTES.dashboard, label: t('dashboard') }] : []),
+    ...(user || guestCvs ? [{ href: ROUTES.dashboard, label: t('dashboard') }] : []),
   ]
 
   const isActive = (href: string): boolean => pathname === href || pathname.startsWith(`${href}/`)

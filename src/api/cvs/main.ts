@@ -9,6 +9,7 @@ import type {
   CreateCvAPI,
   DeleteCvAPI,
   DownloadCvPdfAPI,
+  DownloadDraftPdfAPI,
   DuplicateCvAPI,
   GetCvAPI,
   GetCvsAPI,
@@ -59,9 +60,22 @@ export const checkoutCvAPI: CheckoutCvAPI['api'] = async ({ id }) => {
 }
 
 /**
- * The PDF as a Blob. A failure still answers the JSON envelope, which axios hands over as a
- * Blob too; it is parsed back so `classifyError` can read its code (402 = not paid).
+ * A PDF request's failure still answers the JSON envelope, which axios hands over as a Blob
+ * too; it is parsed back so `classifyError` can read its code (402 = not paid).
  */
+const rethrowPdfError = async (error: unknown): Promise<never> => {
+  const response = (error as { response?: { data?: unknown } }).response
+  if (response?.data instanceof Blob) {
+    try {
+      response.data = JSON.parse(await response.data.text())
+    } catch {
+      // Not JSON; leave it for the generic copy.
+    }
+  }
+  throw error
+}
+
+/** The PDF as a Blob. */
 export const downloadCvPdfAPI: DownloadCvPdfAPI['api'] = async ({ id, variant }) => {
   const url =
     variant === 'basic'
@@ -74,14 +88,19 @@ export const downloadCvPdfAPI: DownloadCvPdfAPI['api'] = async ({ id, variant })
     })
     return data
   } catch (error) {
-    const response = (error as { response?: { data?: unknown } }).response
-    if (response?.data instanceof Blob) {
-      try {
-        response.data = JSON.parse(await response.data.text())
-      } catch {
-        // Not JSON; leave it for the generic copy.
-      }
-    }
-    throw error
+    return rethrowPdfError(error)
+  }
+}
+
+/** The free PDF of a guest's draft, sent as the body: the server prints it and keeps nothing. */
+export const downloadDraftPdfAPI: DownloadDraftPdfAPI['api'] = async (payload) => {
+  try {
+    const { data } = await axiosInstance.post<Blob>(ENDPOINTS.draftBasicPdf, payload, {
+      responseType: 'blob',
+      timeout: API_PDF_TIMEOUT_MS,
+    })
+    return data
+  } catch (error) {
+    return rethrowPdfError(error)
   }
 }

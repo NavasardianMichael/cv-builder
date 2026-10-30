@@ -12,6 +12,7 @@ import { hashUrlToken } from '../lib/token.js'
 import { mapUser } from '../mappers/entities.js'
 import { requireAuth, sessionOf } from '../middleware/auth.js'
 import { asyncHandler } from '../middleware/error.js'
+import { claimGuestCvs } from '../services/guestCvs.js'
 
 export const identityRouter = Router()
 
@@ -35,11 +36,15 @@ const limited = (res: Response, retryAfterSeconds: number): void => {
 export const issueSession = (res: Response, user: { id: string; tokenVersion: number }): void =>
   setSessionCookie(res, { userId: user.id, tokenVersion: user.tokenVersion })
 
-/** Anonymous is an answer, not an error: `null` with a 200, so no 401 lands in the console. */
+/**
+ * Anonymous is an answer, not an error: `null` with a 200, so no 401 lands in the console.
+ * Also where a guest's CVs reach an account that was already signed in (in another tab, say).
+ */
 identityRouter.get(
   '/me',
   asyncHandler(async (req, res) => {
     if (!req.session) return ok(res, null)
+    await claimGuestCvs(req, res, req.session.userId)
     const user = await prisma.user.findUnique({ where: { id: req.session.userId } })
     ok(res, user ? mapUser(user) : null)
   })
@@ -65,6 +70,7 @@ identityRouter.post(
       data: { email, fullName, passwordHash: await hashPassword(req.body.password as string) },
     })
     issueSession(res, user)
+    await claimGuestCvs(req, res, user.id)
     ok(res, mapUser(user), 201)
   })
 )
@@ -96,6 +102,7 @@ identityRouter.post(
       await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(password) } })
     }
     issueSession(res, user)
+    await claimGuestCvs(req, res, user.id)
     ok(res, mapUser(user))
   })
 )

@@ -58,6 +58,10 @@ describe('block styles', () => {
     expect(vars['--cv-font-heading']).toContain("'cv-ghea-grapalat'")
     expect(vars['--cv-font-body']).toContain("'cv-ghea-grapalat'")
   })
+
+  it('a text override also reaches the accent-coloured headline', () => {
+    expect(blockStyleVars({ ...emptyStyle(), text: '#8c3f3f' })['--cv-block-text']).toBe('#8c3f3f')
+  })
 })
 
 describe('initialsOf', () => {

@@ -12,12 +12,17 @@ import { config } from '../config.js'
  * request the page makes outside `renderOrigin` is aborted.
  *
  * One browser is shared and relaunched if it dies; `MAX_CONCURRENT` caps the pages printing
- * at once, which is what bounds memory.
+ * at once, which is what bounds memory, and `MAX_WAITING` caps the queue behind them.
  */
 /** `watermark` stamps the free PDF's "made with" link in every page's bottom-right corner. */
 export type RenderDocument = { title: string; content: CvContent; design: CvDesign; watermark: boolean }
 
 const MAX_CONCURRENT = 2
+/**
+ * Beyond this many waiting, a print is refused (`PdfBusyError`) rather than queued: the free
+ * PDF is public, and a script must not be able to stack work in front of paying customers.
+ */
+const MAX_WAITING = 8
 const NAVIGATION_TIMEOUT_MS = 30_000
 
 let browserPromise: Promise<Browser> | null = null
@@ -46,11 +51,15 @@ const getBrowser = async (): Promise<Browser> => {
 let active = 0
 const waiting: (() => void)[] = []
 
+/** The print queue is full; try again shortly. */
+export class PdfBusyError extends Error {}
+
 const acquire = async (): Promise<void> => {
   if (active < MAX_CONCURRENT) {
     active += 1
     return
   }
+  if (waiting.length >= MAX_WAITING) throw new PdfBusyError('PDF queue is full')
   await new Promise<void>((resolve) => waiting.push(resolve))
   active += 1
 }

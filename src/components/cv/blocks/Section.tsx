@@ -1,7 +1,7 @@
 'use client'
 
-import type { FC } from 'react'
-import type { CvDesign, CvSection } from '@store/cvs/single/types'
+import { type FC, memo } from 'react'
+import type { CvDesign, CvEntry, CvLevelStyle, CvSection, CvTag } from '@store/cvs/single/types'
 import { SECTION_META } from '@constants/sections'
 import { cn } from '@helpers/cn'
 import { blockStyleVars, sectionHasContent } from '@helpers/cvStyle'
@@ -39,7 +39,11 @@ export const SectionList: FC<{ sections: CvSection[]; design: CvDesign; tags?: T
   )
 }
 
-const SectionBlock: FC<SectionProps & { index: number; count: number }> = ({ section, design, tags = 'list', index, count }) => {
+/**
+ * Every block below is `memo`: a keystroke replaces only the edited entry's object (and its
+ * section's), so only that block re-renders, not the whole CV and its toolbars.
+ */
+const SectionBlockComponent: FC<SectionProps & { index: number; count: number }> = ({ section, design, tags = 'list', index, count }) => {
   const edit = useCvEdit()
   const kind = SECTION_META[section.type].kind
 
@@ -74,6 +78,8 @@ const SectionBlock: FC<SectionProps & { index: number; count: number }> = ({ sec
   )
 }
 
+const SectionBlock = memo(SectionBlockComponent)
+
 const TextBody: FC<{ section: CvSection }> = ({ section }) => {
   const edit = useCvEdit()
   return (
@@ -83,7 +89,7 @@ const TextBody: FC<{ section: CvSection }> = ({ section }) => {
       className='cv-text'
       linkify
       value={section.text}
-      placeholder='Մի քանի նախադասություն ձեր մասին․ ով եք, ինչում եք ուժեղ, ինչ եք փնտրում։'
+      placeholder='Մի քանի նախադասություն Ձեր մասին․ ով եք, ինչում եք ուժեղ, ինչ եք փնտրում։'
       onChange={(value) => edit?.actions.setSectionField(section.id, 'text', value)}
     />
   )
@@ -99,9 +105,11 @@ const ENTRY_PLACEHOLDERS: Partial<Record<CvSection['type'], { title: string; sub
   references: { title: 'Անուն Ազգանուն', subtitle: 'Պաշտոն, կոնտակտ' },
 }
 
+const DEFAULT_ENTRY_PLACEHOLDERS = { title: 'Վերնագիր', subtitle: 'Ենթավերնագիր' }
+
 const EntryList: FC<{ section: CvSection }> = ({ section }) => {
   const edit = useCvEdit()
-  const placeholders = ENTRY_PLACEHOLDERS[section.type] ?? { title: 'Վերնագիր', subtitle: 'Ենթավերնագիր' }
+  const placeholders = ENTRY_PLACEHOLDERS[section.type] ?? DEFAULT_ENTRY_PLACEHOLDERS
   const entries = edit
     ? section.entries
     : section.entries.filter((entry) => entry.title || entry.subtitle || entry.description || entry.period)
@@ -109,74 +117,93 @@ const EntryList: FC<{ section: CvSection }> = ({ section }) => {
 
   return (
     <ul className='cv-entries'>
-      {entries.map((entry, index) => {
-        const set = (field: 'title' | 'subtitle' | 'period' | 'location' | 'description') => (value: string) =>
-          edit?.actions.setEntryField(section.id, entry.id, field, value)
-        return (
-          <li key={entry.id} className={cn('cv-entry', edit && 'cv-item-editable')}>
-            {edit?.entryToolbar(section, entry, index)}
-            <div className='cv-entry-head'>
-              <div className='cv-entry-title-row'>
-                <Editable
-                  as='h3'
-                  className='cv-entry-title'
-                  value={entry.title}
-                  href={toWebsiteUrl(entry.url)}
-                  placeholder={placeholders.title}
-                  onChange={set('title')}
-                />
-                {toWebsiteUrl(entry.url) && <CvIcon name='link' />}
-              </div>
-              <Editable className='cv-entry-period' value={entry.period} placeholder='2020 – այժմ' onChange={set('period')} />
-            </div>
-            <div className='cv-entry-sub'>
-              <Editable className='cv-entry-subtitle' linkify value={entry.subtitle} placeholder={placeholders.subtitle} onChange={set('subtitle')} />
-              <Editable className='cv-entry-location' value={entry.location} placeholder='Քաղաք' onChange={set('location')} />
-            </div>
-            <Editable
-              as='p'
-              multiline
-              className='cv-entry-description'
-              linkify
-              value={entry.description}
-              placeholder='Նկարագրություն․ ձեռքբերումներ, պարտականություններ (• նոր տողից)'
-              onChange={set('description')}
-            />
-          </li>
-        )
-      })}
+      {entries.map((entry, index) => (
+        <EntryItem key={entry.id} sectionId={section.id} entry={entry} index={index} count={entries.length} placeholders={placeholders} />
+      ))}
     </ul>
   )
 }
 
+type EntryItemProps = { sectionId: string; entry: CvEntry; index: number; count: number; placeholders: { title: string; subtitle: string } }
+
+const EntryItemComponent: FC<EntryItemProps> = ({ sectionId, entry, index, count, placeholders }) => {
+  const edit = useCvEdit()
+  const set = (field: 'title' | 'subtitle' | 'period' | 'location' | 'description') => (value: string) =>
+    edit?.actions.setEntryField(sectionId, entry.id, field, value)
+  return (
+    <li className={cn('cv-entry', edit && 'cv-item-editable')}>
+      {edit?.entryToolbar(sectionId, entry, index, count)}
+      <div className='cv-entry-head'>
+        <div className='cv-entry-title-row'>
+          <Editable
+            as='h3'
+            className='cv-entry-title'
+            value={entry.title}
+            href={toWebsiteUrl(entry.url)}
+            placeholder={placeholders.title}
+            onChange={set('title')}
+          />
+          {toWebsiteUrl(entry.url) && <CvIcon name='link' />}
+        </div>
+        <Editable className='cv-entry-period' value={entry.period} placeholder='2020 – այժմ' onChange={set('period')} />
+      </div>
+      <div className='cv-entry-sub'>
+        <Editable className='cv-entry-subtitle' linkify value={entry.subtitle} placeholder={placeholders.subtitle} onChange={set('subtitle')} />
+        <Editable className='cv-entry-location' value={entry.location} placeholder='Քաղաք' onChange={set('location')} />
+      </div>
+      <Editable
+        as='p'
+        multiline
+        className='cv-entry-description'
+        linkify
+        value={entry.description}
+        placeholder='Նկարագրություն․ ձեռքբերումներ, պարտականություններ (• նոր տողից)'
+        onChange={set('description')}
+      />
+    </li>
+  )
+}
+
+const EntryItem = memo(EntryItemComponent)
+
 const TagList: FC<{ section: CvSection; design: CvDesign; variant: TagVariant }> = ({ section, design, variant }) => {
   const edit = useCvEdit()
-  const hasLevels = SECTION_META[section.type].levels
   const tags = edit ? section.tags : section.tags.filter((tag) => tag.name.trim())
   if (!tags.length) return null
 
   return (
     <ul className={cn('cv-tags', `cv-tags-${variant}`)}>
       {tags.map((tag) => (
-        <li key={tag.id} className={cn('cv-tag', edit && 'cv-item-editable')}>
-          <Editable
-            className='cv-tag-name'
-            linkify
-            value={tag.name}
-            placeholder='Անվանում'
-            onChange={(value) => edit?.actions.setTagName(section.id, tag.id, value)}
-          />
-          {hasLevels && tag.level !== null && variant !== 'inline' && (
-            <Level
-              level={tag.level}
-              style={design.levelStyle}
-              sectionType={section.type}
-              onChange={edit ? (level) => edit.actions.setTagLevel(section.id, tag.id, level) : undefined}
-            />
-          )}
-          {edit?.tagRemove(section, tag)}
-        </li>
+        <TagItem key={tag.id} sectionId={section.id} type={section.type} tag={tag} levelStyle={design.levelStyle} variant={variant} />
       ))}
     </ul>
   )
 }
+
+type TagItemProps = { sectionId: string; type: CvSection['type']; tag: CvTag; levelStyle: CvLevelStyle; variant: TagVariant }
+
+const TagItemComponent: FC<TagItemProps> = ({ sectionId, type, tag, levelStyle, variant }) => {
+  const edit = useCvEdit()
+  return (
+    <li className={cn('cv-tag', edit && 'cv-item-editable')}>
+      <Editable
+        className='cv-tag-name'
+        linkify
+        value={tag.name}
+        placeholder='Անվանում'
+        onChange={(value) => edit?.actions.setTagName(sectionId, tag.id, value)}
+      />
+      {SECTION_META[type].levels && tag.level !== null && variant !== 'inline' && (
+        <Level
+          level={tag.level}
+          style={levelStyle}
+          sectionType={type}
+          onChange={edit ? (level) => edit.actions.setTagLevel(sectionId, tag.id, level) : undefined}
+        />
+      )}
+      {edit?.tagRemove(sectionId, tag.id)}
+    </li>
+  )
+}
+
+const TagItem = memo(TagItemComponent)
