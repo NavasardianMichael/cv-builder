@@ -1,4 +1,6 @@
 import {
+  CONTACT_TYPES,
+  type ContactType,
   FONT_SLUGS,
   type FontSlug,
   SECTION_TYPES,
@@ -42,14 +44,11 @@ export type CvSection = {
   tags: CvTag[]
   style: BlockStyle
 }
+export type CvContact = { id: string; type: ContactType; value: string; url: string }
 export type CvBasics = {
   fullName: string
   headline: string
-  email: string
-  phone: string
-  location: string
-  website: string
-  linkedin: string
+  contacts: CvContact[]
   photo: string | null
   style: BlockStyle
 }
@@ -85,6 +84,8 @@ export const CV_LIMITS = {
   sections: 24,
   entries: 40,
   tags: 60,
+  /** Twin: `MAX_CONTACTS` in the web's `src/constants/contacts.ts`. */
+  contacts: 12,
   /** A 400px JPEG data URL is ~40-80KB; this leaves room for a PNG without letting MBs in. */
   photo: 700_000,
   id: 40,
@@ -165,6 +166,29 @@ const coerceSection = (raw: unknown): CvSection => {
   }
 }
 
+const coerceContact = (raw: unknown): CvContact => {
+  const value = isRecord(raw) ? raw : {}
+  return {
+    id: id(value.id),
+    type: oneOf(value.type, CONTACT_TYPES, 'other'),
+    value: str(value.value, CV_LIMITS.short),
+    url: str(value.url, CV_LIMITS.url),
+  }
+}
+
+/** The five fixed fields a CV had before contacts became a list (`src/constants/contacts.ts`). */
+const LEGACY_CONTACT_TYPES = ['email', 'phone', 'location', 'website', 'linkedin'] as const
+
+/**
+ * A stored CV from before the list has those five fields instead; they become five contacts,
+ * empty ones included so its editor looks as it did. The ids are the types: a CV read twice
+ * before its next save gets the same ids both times.
+ */
+const coerceContacts = (basics: Record<string, unknown>): CvContact[] =>
+  Array.isArray(basics.contacts)
+    ? list(basics.contacts, CV_LIMITS.contacts, coerceContact)
+    : LEGACY_CONTACT_TYPES.map((type) => ({ id: type, type, value: str(basics[type], CV_LIMITS.short), url: '' }))
+
 const coercePhoto = (value: unknown): string | null =>
   typeof value === 'string' && value.length <= CV_LIMITS.photo && PHOTO.test(value) ? value : null
 
@@ -175,11 +199,7 @@ export const coerceContent = (raw: unknown): CvContent => {
     basics: {
       fullName: str(basics.fullName, CV_LIMITS.short),
       headline: str(basics.headline, CV_LIMITS.short),
-      email: str(basics.email, CV_LIMITS.short),
-      phone: str(basics.phone, CV_LIMITS.short),
-      location: str(basics.location, CV_LIMITS.short),
-      website: str(basics.website, CV_LIMITS.short),
-      linkedin: str(basics.linkedin, CV_LIMITS.short),
+      contacts: coerceContacts(basics),
       photo: coercePhoto(basics.photo),
       style: coerceStyle(basics.style),
     },

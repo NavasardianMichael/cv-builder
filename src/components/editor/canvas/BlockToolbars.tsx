@@ -13,11 +13,13 @@ import {
   LinkOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
-import { Button, Input, type InputRef, Popconfirm, Popover } from 'antd'
+import { Button, Dropdown, Input, type InputRef, Popconfirm, Popover } from 'antd'
 import { useTranslations } from 'next-intl'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
-import type { BlockStyle, CvEntry } from '@store/cvs/single/types'
+import type { BlockStyle, CvContact, CvEntry } from '@store/cvs/single/types'
+import { CONTACT_TYPES, MAX_CONTACTS } from '@constants/contacts'
 import { SECTION_META, type SectionType } from '@constants/sections'
+import { contactHref, toLinkHref } from '@helpers/contactLink'
 import { toWebsiteUrl } from '@helpers/url'
 import { ToolbarShell, ToolButton } from './ToolButton'
 import { BlockStyleForm } from '../controls/BlockStyleForm'
@@ -117,15 +119,25 @@ const BasicsToolbarComponent: FC = () => {
 /** `memo`, no props: it reads its own style, so the header's re-renders need not reach it. */
 export const BasicsToolbar = memo(BasicsToolbarComponent)
 
-/** Attaches a URL to an item: its title becomes a link in the preview and the PDF. */
-const EntryLinkForm: FC<{ entry: CvEntry; onSave: (url: string) => void }> = ({ entry, onSave }) => {
+type LinkFormProps = {
+  url: string
+  title: string
+  hint: string
+  placeholder: string
+  /** What the field may hold: a draft it turns into no link is refused. */
+  toHref: (text: string) => string | undefined
+  onSave: (url: string) => void
+}
+
+/** Attaches a URL to an item or a contact: its text becomes a link in the preview and the PDF. */
+const LinkForm: FC<LinkFormProps> = ({ url, title, hint, placeholder, toHref, onSave }) => {
   const t = useTranslations('Editor.block')
   // `?? ''`: an item from a draft saved before links existed has no `url` yet.
-  const [draft, setDraft] = useState(entry.url ?? '')
+  const [draft, setDraft] = useState(url ?? '')
   const inputRef = useRef<InputRef>(null)
   // The popover opened on a click on the link button, so the field taking focus is expected.
   useEffect(() => inputRef.current?.focus(), [])
-  const invalid = Boolean(draft.trim()) && !toWebsiteUrl(draft)
+  const invalid = Boolean(draft.trim()) && !toHref(draft)
 
   const save = () => {
     if (!invalid) onSave(draft.trim())
@@ -133,24 +145,24 @@ const EntryLinkForm: FC<{ entry: CvEntry; onSave: (url: string) => void }> = ({ 
 
   return (
     <div className='flex w-72 flex-col gap-2'>
-      <span className='text-sm font-semibold'>{t('linkTitle')}</span>
+      <span className='text-sm font-semibold'>{title}</span>
       <Input
         ref={inputRef}
         value={draft}
-        placeholder='https://'
+        placeholder={placeholder}
         status={invalid ? 'error' : undefined}
         prefix={<LinkOutlined className='text-muted' />}
         onChange={(event) => setDraft(event.target.value)}
         onPressEnter={save}
-        aria-label={t('linkTitle')}
+        aria-label={title}
       />
       {invalid ? (
         <span className='text-xs text-danger'>{t('linkInvalid')}</span>
       ) : (
-        <span className='text-xs text-muted'>{t('linkHint')}</span>
+        <span className='text-xs break-all text-muted'>{hint}</span>
       )}
       <div className='flex justify-end gap-2'>
-        {entry.url && (
+        {url && (
           <Button size='small' danger onClick={() => onSave('')}>
             {t('linkRemove')}
           </Button>
@@ -183,8 +195,12 @@ export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number
           onOpenChange={setLinkOpen}
           destroyOnHidden
           content={
-            <EntryLinkForm
-              entry={entry}
+            <LinkForm
+              url={entry.url}
+              title={t('linkTitle')}
+              hint={t('linkHint')}
+              placeholder='https://'
+              toHref={toWebsiteUrl}
               onSave={(url) => {
                 setEntryField(sectionId, entry.id, 'url', url)
                 setLinkOpen(false)
@@ -226,6 +242,74 @@ export const TagRemoveButton: FC<{ sectionId: string; tagId: string }> = ({ sect
       {/* An SVG, not the "×" character: a glyph sits on its font's baseline and never centres. */}
       <CloseOutlined />
     </button>
+  )
+}
+
+/** A contact's toolbar: its link (worked out from the text unless one is set here) and remove. */
+export const ContactToolbar: FC<{ contact: CvContact }> = ({ contact }) => {
+  const t = useTranslations('Editor.contacts')
+  const tBlock = useTranslations('Editor.block')
+  const setContactField = useCvEditorStore.use.setContactField()
+  const removeContact = useCvEditorStore.use.removeContact()
+  const [linkOpen, setLinkOpen] = useState(false)
+  const autoHref = contactHref({ ...contact, url: '' })
+
+  return (
+    <div className='cv-item-toolbar' data-open={linkOpen || undefined}>
+      <ToolbarShell className='p-0.5'>
+        <Popover
+          trigger='click'
+          placement='bottomRight'
+          open={linkOpen}
+          onOpenChange={setLinkOpen}
+          destroyOnHidden
+          content={
+            <LinkForm
+              url={contact.url}
+              title={t('linkTitle')}
+              hint={autoHref ? t('linkAuto', { href: autoHref }) : t('linkHint')}
+              placeholder={t('linkPlaceholder')}
+              toHref={toLinkHref}
+              onSave={(url) => {
+                setContactField(contact.id, 'url', url)
+                setLinkOpen(false)
+              }}
+            />
+          }
+        >
+          <ToolButton
+            icon={<LinkOutlined />}
+            label={contact.url ? tBlock('linkEdit') : tBlock('linkAdd')}
+            className={contact.url ? 'text-accent' : undefined}
+          />
+        </Popover>
+        <ToolButton icon={<DeleteOutlined />} label={tBlock('removeItem')} tone='danger' onClick={() => removeContact(contact.id)} />
+      </ToolbarShell>
+    </div>
+  )
+}
+
+/** Ends the contacts row in the editor: a menu of contact types to add one of. */
+export const AddContactButton: FC<{ count: number }> = ({ count }) => {
+  const t = useTranslations('Editor.contacts')
+  const addContact = useCvEditorStore.use.addContact()
+  if (count >= MAX_CONTACTS) return null
+
+  return (
+    <Dropdown
+      trigger={['click']}
+      menu={{
+        items: CONTACT_TYPES.map((type) => ({ key: type, label: t(`types.${type}`), onClick: () => addContact(type) })),
+      }}
+    >
+      <button
+        type='button'
+        className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-transparent px-2.5 py-1 text-xs'
+        style={{ color: 'var(--cv-accent)', fontFamily: 'var(--font-ui), sans-serif' }}
+      >
+        <PlusOutlined /> {t('add')}
+      </button>
+    </Dropdown>
   )
 }
 

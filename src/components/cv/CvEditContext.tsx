@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, type ReactNode, useContext } from 'react'
-import type { CvEditorActions, CvEntry, CvSection } from '@store/cvs/single/types'
+import type { CvContact, CvEditorActions, CvEntry, CvSection } from '@store/cvs/single/types'
 
 /**
  * What turns a rendered CV into an editable one. Absent (null) everywhere a CV is only shown
@@ -19,6 +19,9 @@ export type CvEditApi = {
   basicsToolbar: () => ReactNode
   entryToolbar: (sectionId: string, entry: CvEntry, index: number, count: number) => ReactNode
   tagRemove: (sectionId: string, tagId: string) => ReactNode
+  contactToolbar: (contact: CvContact) => ReactNode
+  /** Takes the current count, so the button can stop at the limit. */
+  addContactButton: (count: number) => ReactNode
   addItemButton: (section: CvSection) => ReactNode
   photoEditor: (photo: string | null, initials: string) => ReactNode
 }

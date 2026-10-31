@@ -14,6 +14,38 @@ describe('coerceContent', () => {
     expect(coerceContent(content)).toEqual(content)
   })
 
+  it('turns the five fixed contact fields of an older CV into five contacts', () => {
+    const { contacts: _contacts, ...basics } = sampleContent().basics
+    const legacy = {
+      basics: { ...basics, email: 'ani@mail.am', phone: '091 123456', location: '', website: '', linkedin: 'anihov' },
+      sections: [],
+    }
+    expect(coerceContent(legacy).basics.contacts).toEqual([
+      { id: 'email', type: 'email', value: 'ani@mail.am', url: '' },
+      { id: 'phone', type: 'phone', value: '091 123456', url: '' },
+      { id: 'location', type: 'location', value: '', url: '' },
+      { id: 'website', type: 'website', value: '', url: '' },
+      { id: 'linkedin', type: 'linkedin', value: 'anihov', url: '' },
+    ])
+  })
+
+  it('coerces contacts: unknown types become "other", the list is capped', () => {
+    const content = sampleContent()
+    const raw = {
+      ...content,
+      basics: { ...content.basics, contacts: [{ id: 'x1', type: 'fax', value: '123', url: 42 }] },
+    }
+    expect(coerceContent(raw).basics.contacts).toEqual([{ id: 'x1', type: 'other', value: '123', url: '' }])
+    const many = {
+      ...content,
+      basics: {
+        ...content.basics,
+        contacts: Array.from({ length: 30 }, (_, i) => ({ id: `c${i}`, type: 'phone', value: '', url: '' })),
+      },
+    }
+    expect(coerceContent(many).basics.contacts).toHaveLength(CV_LIMITS.contacts)
+  })
+
   it('turns garbage into an empty, well-formed document', () => {
     const coerced = coerceContent('nope')
     expect(coerced.sections).toEqual([])

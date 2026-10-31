@@ -6,7 +6,7 @@ import { hashPassword, needsRehash, validatePassword, verifyDummyPassword, verif
 import { buildPasswordResetUrl, issuePasswordResetToken, sendPasswordResetEmail } from '../lib/password-reset.js'
 import { prisma } from '../lib/prisma.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
-import { asFullName, isEmail, MAX_EMAIL_LENGTH } from '../lib/request.js'
+import { asEmail, asFullName } from '../lib/request.js'
 import { clearSessionCookie, setSessionCookie } from '../lib/session.js'
 import { hashUrlToken } from '../lib/token.js'
 import { mapUser } from '../mappers/entities.js'
@@ -21,12 +21,6 @@ identityRouter.use('/google', googleRouter)
 const loginLimiter = createRateLimiter({ limit: 10, windowMs: 15 * 60 * 1000 })
 const registerLimiter = createRateLimiter({ limit: 10, windowMs: 60 * 60 * 1000 })
 const resetLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60 * 1000 })
-
-const asEmail = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null
-  const email = value.trim().toLowerCase()
-  return email.length <= MAX_EMAIL_LENGTH && isEmail(email) ? email : null
-}
 
 const limited = (res: Response, retryAfterSeconds: number): void => {
   res.setHeader('Retry-After', String(retryAfterSeconds))

@@ -49,7 +49,7 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
   isAccessibleForFree: true,
   publisher: { '@id': ORGANIZATION_ID },
   featureList: [
-    '12 ինքնակենսագրականի ձևանմուշ',
+    `${TEMPLATE_LIST.length} ինքնակենսագրականի ձևանմուշ`,
     '20 հայերեն տառատեսակ',
     'Խմբագրում անմիջապես ինքնակենսագրականի վրա',
     'Գույնի, ֆոնի և տառատեսակի կարգավորում ամեն բաժնի համար',

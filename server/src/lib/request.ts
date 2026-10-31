@@ -51,3 +51,10 @@ export const MAX_EMAIL_LENGTH = 254
  */
 export const isEmail = (value: string): boolean =>
   value.length <= MAX_EMAIL_LENGTH && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
+/** A trimmed, lower-cased address that passes `isEmail`, or null. */
+export const asEmail = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null
+  const email = value.trim().toLowerCase()
+  return email.length <= MAX_EMAIL_LENGTH && isEmail(email) ? email : null
+}

@@ -407,10 +407,16 @@ button.cv-level-step {
 
 .cv-editable {
   min-width: 2ch;
+  /* Chrome gives every contenteditable `overflow-wrap: break-word` as its own presentation
+     style, which beats the `anywhere` inherited from .cv-root: a long unbroken word would
+     stretch the field past the page instead of wrapping. */
+  overflow-wrap: anywhere;
   border-radius: 3px;
   outline: none;
   cursor: text;
-  transition: background-color 0.15s, box-shadow 0.15s;
+  transition:
+    background-color 0.15s,
+    box-shadow 0.15s;
 }
 
 span.cv-editable {
@@ -477,7 +483,10 @@ span.cv-editable {
     opacity 0.12s ease 0.25s,
     visibility 0s linear 0.37s;
   color: initial;
-  font: 500 12px/1 var(--font-ui), system-ui, sans-serif;
+  font:
+    500 12px/1 var(--font-ui),
+    system-ui,
+    sans-serif;
   letter-spacing: normal;
   text-transform: none;
 }
@@ -552,7 +561,10 @@ span.cv-editable {
 
 .cv-block-editable:hover .cv-add-item,
 .cv-block-editable.is-selected .cv-add-item,
-.cv-add-item:focus-visible {
+/* Sidebar templates put the contacts outside the header block. */
+.cv-contacts:hover .cv-add-item,
+.cv-add-item:focus-visible,
+.cv-add-item[aria-expanded='true'] {
   opacity: 1;
 }
 
@@ -1202,4 +1214,832 @@ span.cv-editable {
 
 .cvt-soft .cv-name {
   font-size: 2.3em;
+}
+
+/*
+ * A band or tile painted in one palette colour while its own text takes another can't do
+ * both through the same variable: the header's per-block overrides land on that element as
+ * inline variables. So the colours are captured once, on the root, under `--cvx-*` names
+ * that nothing overrides.
+ */
+
+/* ── Corporate ── */
+
+.cvt-corporate {
+  --cv-side-w: 32%;
+  --cvx-band-bg: var(--cv-heading);
+  --cvx-band-text: var(--cv-bg);
+}
+
+.cvt-corporate .cvx-band {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 7mm;
+  margin-top: calc(-1 * var(--cv-pad-y));
+  padding: calc(var(--cv-pad-y) + 3mm) 12mm 8mm 10mm;
+  background: var(--cvx-band-bg);
+  color: var(--cvx-band-text);
+  --cv-heading: var(--cvx-band-text);
+  --cv-text: var(--cvx-band-text);
+  --cv-muted: color-mix(in srgb, var(--cvx-band-text) 72%, transparent);
+  --cv-accent: color-mix(in srgb, var(--cvx-band-text) 82%, transparent);
+}
+
+.cvt-corporate .cvx-band .cv-photo {
+  width: 30mm;
+  border: 3px solid var(--cvx-band-text);
+}
+
+.cvt-corporate .cvx-band .cv-headline {
+  font-size: 0.95em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cvt-corporate .cvx-band .cv-contacts {
+  margin-top: 0.8em;
+  font-size: 0.92em;
+}
+
+.cvt-corporate .cvx-side {
+  padding: 8mm 7mm 0 9mm;
+}
+
+.cvt-corporate .cvx-main {
+  padding: 8mm 12mm 0 9mm;
+}
+
+.cvt-corporate .cv-sections > .cv-section:first-child {
+  margin-top: 0;
+}
+
+.cvt-corporate .cvx-side .cv-section-title {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid color-mix(in srgb, var(--cv-side-text) 25%, transparent);
+  font-size: 0.88em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Shorter bars, so a long skill name keeps its word whole in the narrow column. */
+.cvt-corporate .cvx-side .cv-level-bars {
+  width: 3.6em;
+}
+
+.cvt-corporate .cvx-main .cv-section-title {
+  padding: 0.3em 0.6em;
+  border-left: 4px solid var(--cv-accent);
+  background: color-mix(in srgb, var(--cv-accent) 9%, transparent);
+  font-size: 1em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── ATS (Harvard) ── */
+
+.cvt-ats {
+  --cv-pad-x: 15mm;
+}
+
+.cvt-ats .cvx-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 6mm;
+  align-items: end;
+  padding-bottom: 0.7em;
+  border-bottom: 1.5px solid var(--cv-heading);
+}
+
+.cvt-ats .cv-name-block,
+.cvt-ats .cvx-header .cv-contacts {
+  grid-column: 1;
+}
+
+.cvt-ats .cvx-header .cv-contacts {
+  margin-top: 0.5em;
+}
+
+.cvt-ats .cv-photo {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  width: 26mm;
+}
+
+.cvt-ats .cv-name {
+  font-size: 2.2em;
+}
+
+.cvt-ats .cv-headline {
+  color: var(--cv-block-text, var(--cv-text));
+  font-size: 1.05em;
+}
+
+.cvt-ats .cv-contacts-row {
+  gap: 0.2em 0;
+}
+
+.cvt-ats .cv-contacts-row .cv-contact + .cv-contact:not(.cv-contact-add)::before {
+  content: '|';
+  margin: 0 0.6em;
+  color: var(--cv-muted);
+}
+
+.cvt-ats .cv-section-title {
+  padding-bottom: 0.15em;
+  border-bottom: 1px solid var(--cv-heading);
+  font-size: 1em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.cvt-ats .cv-entry-sub {
+  color: var(--cv-text);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Tags flow on a line, each with its level word, so language levels still show. */
+.cvt-ats .cv-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 1.4em;
+}
+
+.cvt-ats .cv-tags-list .cv-tag {
+  justify-content: flex-start;
+  gap: 0.4em;
+}
+
+.cvt-ats .cv-level-text::before {
+  content: '— ';
+}
+
+/* ── Portrait ── */
+
+.cvt-portrait {
+  --cv-side-w: 30%;
+}
+
+.cvt-portrait .cvx-main {
+  padding: 0 9mm 0 13mm;
+}
+
+.cvt-portrait .cvx-side {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2em;
+  padding: 0 8mm 0 7mm;
+}
+
+/* A square photo becomes a 3×4 portrait running to the sheet's top and right edges. */
+.cvt-portrait .cvx-side .cv-photo-square {
+  width: calc(100% + 15mm);
+  margin: calc(-1 * var(--cv-pad-y)) -8mm 0 -7mm;
+  aspect-ratio: 3 / 4;
+}
+
+.cvt-portrait .cvx-side .cv-photo:not(.cv-photo-square) {
+  width: 36mm;
+  margin: 0 auto;
+}
+
+.cvt-portrait .cvx-side .cv-sections {
+  display: grid;
+  gap: 1.2em;
+}
+
+.cvt-portrait .cvx-side .cv-section {
+  margin-top: 0;
+}
+
+.cvt-portrait .cvx-header {
+  padding-bottom: 0.9em;
+  border-bottom: 1px solid color-mix(in srgb, var(--cv-heading) 25%, transparent);
+}
+
+.cvt-portrait .cv-name {
+  font-size: 2.9em;
+  font-weight: 400;
+}
+
+.cvt-portrait .cv-headline {
+  font-size: 0.95em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cvt-portrait .cvx-main .cv-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.cvt-portrait .cvx-main .cv-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--cv-heading) 25%, transparent);
+}
+
+.cvt-portrait .cvx-side .cv-section-title {
+  font-size: 0.95em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cvt-portrait .cv-level-dots .cv-level-step {
+  width: 0.65em;
+  height: 0.65em;
+  border-radius: 1px;
+}
+
+/* ── Euro ── */
+
+.cvt-euro .cvx-header {
+  display: flex;
+  align-items: center;
+  gap: 7mm;
+  padding-bottom: 1em;
+  border-bottom: 2px solid var(--cv-accent);
+}
+
+.cvt-euro .cvx-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cvt-euro .cv-photo {
+  width: 26mm;
+}
+
+.cvt-euro .cv-name {
+  color: var(--cv-accent);
+  font-size: 2.2em;
+}
+
+.cvt-euro .cv-headline {
+  color: var(--cv-block-text, var(--cv-heading));
+}
+
+.cvt-euro .cv-contacts-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3em 1.5em;
+  margin-top: 0.7em;
+}
+
+.cvt-euro .cv-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  color: var(--cv-accent);
+  font-size: 1em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cvt-euro .cv-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--cv-accent) 40%, transparent);
+}
+
+/* The signature: period and place in a left gutter, the rest beside them. */
+.cvt-euro .cv-entry {
+  display: grid;
+  grid-template-columns: 34mm minmax(0, 1fr);
+  column-gap: 6mm;
+  align-items: baseline;
+}
+
+.cvt-euro .cv-entry-head,
+.cvt-euro .cv-entry-sub {
+  display: contents;
+}
+
+.cvt-euro .cv-entry-period,
+.cvt-euro .cv-entry-location {
+  grid-column: 1;
+  max-width: none;
+  text-align: right;
+}
+
+.cvt-euro .cv-entry-period {
+  grid-row: 1;
+}
+
+.cvt-euro .cv-entry-location {
+  grid-row: 2;
+}
+
+.cvt-euro .cv-entry-title-row {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.cvt-euro .cv-entry-subtitle {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.cvt-euro .cv-entry-description {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.cvt-euro .cv-section-text .cv-section-body,
+.cvt-euro .cv-section-tags .cv-section-body {
+  padding-left: 40mm;
+}
+
+.cvt-euro .cv-tags-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 8mm;
+}
+
+/* ── Ribbon ── */
+
+.cvt-ribbon .cvx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7mm;
+}
+
+.cvt-ribbon .cvx-header-text {
+  min-width: 0;
+}
+
+.cvt-ribbon .cv-headline {
+  display: inline-block;
+  margin-top: 0.5em;
+  padding: 0.25em 0.9em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cv-accent) 12%, transparent);
+  font-size: 1em;
+}
+
+.cvt-ribbon .cv-contacts {
+  margin-top: 0.9em;
+}
+
+.cvt-ribbon .cv-photo {
+  width: 30mm;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cv-accent) 25%, transparent);
+}
+
+/* Runs in from the sheet's left edge: `@page` has no margin, so the bleed prints. */
+.cvt-ribbon .cv-section-title {
+  width: fit-content;
+  max-width: calc(100% + var(--cv-pad-x));
+  margin-left: calc(-1 * var(--cv-pad-x));
+  padding: 0.35em 1.1em 0.35em var(--cv-pad-x);
+  border-radius: 0 999px 999px 0;
+  background: var(--cv-side-bg);
+  color: var(--cv-side-text);
+  font-size: 1.05em;
+}
+
+.cvt-ribbon .cv-entry-title-row::before {
+  content: '';
+  flex-shrink: 0;
+  width: 0.45em;
+  height: 0.45em;
+  border-radius: 50%;
+  background: var(--cv-accent);
+}
+
+/* ── Bento ── */
+
+.cvt-bento {
+  --cv-pad-x: 10mm;
+  --cv-pad-y: 10mm;
+  --cvx-ink: var(--cv-heading);
+  --cvx-paper: var(--cv-side-bg);
+}
+
+.cvt-bento .cvx-header,
+.cvt-bento .cv-section {
+  padding: 5mm 6mm;
+  border-radius: 4mm;
+  background: var(--cv-side-bg);
+  color: var(--cv-side-text);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.cvt-bento .cvx-header {
+  display: flex;
+  align-items: center;
+  gap: 6mm;
+}
+
+.cvt-bento .cvx-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cvt-bento .cv-photo {
+  width: 24mm;
+}
+
+.cvt-bento .cv-contacts-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.3em 1.2em;
+  margin-top: 0.8em;
+}
+
+/* Stories take the full width; short lists pair up, `dense` filling the gaps. */
+.cvt-bento .cv-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  gap: 4mm;
+  margin-top: 4mm;
+}
+
+.cvt-bento .cv-section {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.cvt-bento .cv-section-tags,
+.cvt-bento .cv-section-type-certificates,
+.cvt-bento .cv-section-type-awards {
+  grid-column: auto;
+  break-inside: avoid;
+}
+
+.cvt-bento .cv-section-type-summary {
+  background: var(--cvx-ink);
+  color: var(--cvx-paper);
+  --cv-text: var(--cvx-paper);
+  --cv-heading: var(--cvx-paper);
+  --cv-muted: color-mix(in srgb, var(--cvx-paper) 70%, transparent);
+}
+
+.cvt-bento .cv-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--cv-muted);
+  font-size: 0.8em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cvt-bento .cv-section-title::after {
+  content: '';
+  order: -1;
+  flex-shrink: 0;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 2px;
+  background: var(--cv-accent);
+}
+
+/* ── Midnight ── */
+
+.cvt-midnight .cvx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8mm;
+  padding-bottom: 1.2em;
+}
+
+.cvt-midnight .cvx-header-text {
+  min-width: 0;
+}
+
+.cvt-midnight .cv-name {
+  font-size: 3.3em;
+  font-weight: 200;
+  letter-spacing: -0.02em;
+}
+
+.cvt-midnight .cv-headline {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.cvt-midnight .cv-contacts {
+  margin-top: 1em;
+  font-size: 0.92em;
+}
+
+.cvt-midnight .cv-photo {
+  width: 30mm;
+  box-shadow:
+    0 0 0 2px var(--cv-bg),
+    0 0 0 4px var(--cv-accent);
+}
+
+.cvt-midnight .cv-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  color: var(--cv-accent);
+  font-size: 0.85em;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.cvt-midnight .cv-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: color-mix(in srgb, var(--cv-text) 15%, transparent);
+}
+
+.cvt-midnight .cv-entry {
+  padding: 3.5mm 4mm;
+  border-radius: 2.5mm;
+  background: var(--cv-side-bg);
+}
+
+.cvt-midnight .cv-entry + .cv-entry {
+  margin-top: 3mm;
+}
+
+.cvt-midnight .cv-tags-pills .cv-tag {
+  border: 1px solid color-mix(in srgb, var(--cv-accent) 45%, transparent);
+  background: transparent;
+  color: var(--cv-text);
+}
+
+/* ── Swiss ── */
+
+.cvt-swiss {
+  --cv-pad-x: 18mm;
+}
+
+.cvt-swiss .cvx-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32%;
+  gap: 8mm;
+  align-items: end;
+  padding-bottom: 1.2em;
+  border-bottom: 3px solid var(--cv-heading);
+}
+
+.cvt-swiss .cvx-header-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  font-size: 0.88em;
+}
+
+.cvt-swiss .cv-photo {
+  width: 28mm;
+}
+
+.cvt-swiss .cv-name {
+  font-size: 3.5em;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+}
+
+.cvt-swiss .cv-headline {
+  margin-top: 0.5em;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+/* A hanging number ("01") in a gutter of its own; the title's `::before` is the editor's placeholder. */
+.cvt-swiss .cv-sections {
+  counter-reset: swiss;
+}
+
+.cvt-swiss .cv-section {
+  display: grid;
+  grid-template-columns: 12mm minmax(0, 1fr);
+  padding-top: 0.45em;
+  border-top: 1px solid var(--cv-heading);
+}
+
+.cvt-swiss .cv-section:not(.is-hidden) {
+  counter-increment: swiss;
+}
+
+.cvt-swiss .cv-section::before {
+  content: counter(swiss, decimal-leading-zero);
+  grid-row: 1;
+  color: var(--cv-accent);
+  font-family: var(--cv-font-heading);
+  font-size: 0.95em;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.cvt-swiss .cv-section-title,
+.cvt-swiss .cv-section-body {
+  grid-column: 2;
+}
+
+.cvt-swiss .cv-section-title {
+  font-size: 0.95em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cvt-swiss .cv-tags-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7em 1.2em;
+}
+
+.cvt-swiss .cv-tags-list .cv-tag {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1em;
+}
+
+/* ── Manuscript ── */
+
+.cvt-manuscript .cvx-header {
+  display: flex;
+  align-items: center;
+  gap: 7mm;
+  padding-bottom: 1em;
+  border-bottom: 3px double var(--cv-accent);
+}
+
+.cvt-manuscript .cv-photo {
+  width: 28mm;
+}
+
+.cvt-manuscript .cv-name {
+  font-size: 2.5em;
+}
+
+/* An illuminated initial. */
+.cvt-manuscript .cv-name::first-letter {
+  color: var(--cv-accent);
+  font-size: 1.45em;
+}
+
+.cvt-manuscript .cv-headline {
+  color: var(--cv-block-text, var(--cv-muted));
+  font-style: italic;
+  font-weight: 400;
+}
+
+.cvt-manuscript .cv-contacts {
+  margin-top: 0.7em;
+}
+
+/* Sections lettered Ա, Բ, Գ… in a hanging gutter, as chapters are in a manuscript. */
+.cvt-manuscript .cv-sections {
+  counter-reset: manuscript;
+}
+
+.cvt-manuscript .cv-section {
+  display: grid;
+  grid-template-columns: 13mm minmax(0, 1fr);
+}
+
+.cvt-manuscript .cv-section:not(.is-hidden) {
+  counter-increment: manuscript;
+}
+
+.cvt-manuscript .cv-section::before {
+  content: counter(manuscript, upper-armenian);
+  grid-row: 1 / span 2;
+  color: var(--cv-accent);
+  font-family: var(--cv-font-heading);
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cvt-manuscript .cv-section-title,
+.cvt-manuscript .cv-section-body {
+  grid-column: 2;
+}
+
+.cvt-manuscript .cv-section-title {
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid color-mix(in srgb, var(--cv-accent) 30%, transparent);
+  font-size: 1.1em;
+}
+
+.cvt-manuscript .cv-section-type-summary .cv-text::first-letter {
+  float: left;
+  padding: 0.06em 0.1em 0 0;
+  color: var(--cv-accent);
+  font-family: var(--cv-font-heading);
+  font-size: 3em;
+  font-weight: 700;
+  line-height: 0.85;
+}
+
+.cvt-manuscript .cv-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 1.4em;
+}
+
+.cvt-manuscript .cv-tags-list .cv-tag {
+  justify-content: flex-start;
+  gap: 0.4em;
+}
+
+.cvt-manuscript .cv-level-text::before {
+  content: '— ';
+}
+
+/* ── Gazette ── */
+
+.cvt-gazette .cvx-masthead {
+  display: grid;
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
+  column-gap: 6mm;
+  padding-top: 0.6em;
+  border-top: 5px double var(--cv-heading);
+}
+
+.cvt-gazette .cvx-masthead .cv-name-block {
+  display: contents;
+}
+
+.cvt-gazette .cvx-masthead .cv-photo {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 24mm;
+  margin-bottom: 0.6em;
+}
+
+.cvt-gazette .cv-name {
+  grid-column: 1 / -1;
+  font-size: 3.4em;
+  text-align: center;
+}
+
+/* The dateline: headline left, contacts right, between hairlines. */
+.cvt-gazette .cv-headline,
+.cvt-gazette .cvx-masthead .cv-contacts {
+  margin-top: 0.6em;
+  padding: 0.45em 0;
+  border-block: 1px solid color-mix(in srgb, var(--cv-heading) 40%, transparent);
+  font-size: 0.85em;
+}
+
+.cvt-gazette .cv-headline {
+  display: flex;
+  align-items: center;
+  color: var(--cv-block-text, var(--cv-heading));
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cvt-gazette .cvx-masthead .cv-contacts {
+  align-content: center;
+  justify-content: flex-end;
+  gap: 0.2em 1em;
+}
+
+.cvt-gazette .cvx-lead .cv-text::first-letter {
+  float: left;
+  padding: 0.05em 0.08em 0 0;
+  color: var(--cv-accent);
+  font-family: var(--cv-font-heading);
+  font-size: 3.4em;
+  font-weight: 700;
+  line-height: 0.8;
+}
+
+.cvt-gazette .cvx-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.cvt-gazette .cvx-column:first-child {
+  padding-right: 6mm;
+}
+
+.cvt-gazette .cvx-column:last-child {
+  padding-left: 6mm;
+  border-left: 1px solid color-mix(in srgb, var(--cv-heading) 25%, transparent);
+}
+
+.cvt-gazette .cv-section-title {
+  padding-top: 0.35em;
+  border-top: 2px solid var(--cv-heading);
+  color: var(--cv-accent);
+  font-size: 0.8em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cvt-gazette .cv-entry-title {
+  font-family: var(--cv-font-heading);
+  font-size: 1.12em;
 }

@@ -1,4 +1,5 @@
 import type { StateCommonProps } from '@interfaces/store'
+import type { ContactType } from '@constants/contacts'
 import type { FontSlug } from '@constants/fonts'
 import type { SectionType } from '@constants/sections'
 import type { TemplateId } from '@constants/templates'
@@ -51,14 +52,21 @@ export type CvSection = {
   style: BlockStyle
 }
 
+/** One line of the contacts row; its type picks the icon and, unless `url` is set, the link. */
+export type CvContact = {
+  id: string
+  type: ContactType
+  /** Shown as typed: "091 12 34 56" stays so, its link is `tel:+37491123456` (`helpers/contactLink`). */
+  value: string
+  /** A link attached by hand, which beats the one worked out from the type. '' for none. */
+  url: string
+}
+
 export type CvBasics = {
   fullName: string
   headline: string
-  email: string
-  phone: string
-  location: string
-  website: string
-  linkedin: string
+  /** In the user's order; empty ones show only in the editor. */
+  contacts: CvContact[]
   /** A small base64 JPEG data URL, or null. */
   photo: string | null
   style: BlockStyle
@@ -134,7 +142,7 @@ export type CvEditorState = {
 } & StateCommonProps
 
 export type EntryField = keyof Omit<CvEntry, 'id'>
-export type BasicsTextField = keyof Omit<CvBasics, 'photo' | 'style'>
+export type BasicsTextField = 'fullName' | 'headline'
 export type MoveDirection = -1 | 1
 
 export type CvEditorActions = {
@@ -149,6 +157,9 @@ export type CvEditorActions = {
   setBasicsField: (field: BasicsTextField, value: string) => void
   setPhoto: (photo: string | null) => void
   setBasicsStyle: (style: Partial<BlockStyle>) => void
+  addContact: (type: ContactType) => void
+  setContactField: (contactId: string, field: 'value' | 'url', value: string) => void
+  removeContact: (contactId: string) => void
   setSectionField: (sectionId: string, field: 'title' | 'text', value: string) => void
   setSectionStyle: (sectionId: string, style: Partial<BlockStyle>) => void
   setSectionColumn: (sectionId: string, column: SectionColumn) => void

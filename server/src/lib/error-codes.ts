@@ -15,6 +15,7 @@ export const ERROR_CODE = {
   paymentsUnavailable: 4022,
   paymentInitFailed: 4023,
   pdfFailed: 4030,
+  contactFailed: 4040,
   rateLimited: 4290,
 } as const
 

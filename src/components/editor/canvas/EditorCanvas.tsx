@@ -6,7 +6,7 @@ import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { CvDocument } from '@components/cv/CvDocument'
 import { type CvEditApi, CvEditProvider } from '@components/cv/CvEditContext'
 import { A4_HEIGHT_PX, A4_WIDTH_PX } from '@components/cv/CvPreview'
-import { AddItemButton, BasicsToolbar, EntryToolbar, SectionToolbar, TagRemoveButton } from './BlockToolbars'
+import { AddContactButton, AddItemButton, BasicsToolbar, ContactToolbar, EntryToolbar, SectionToolbar, TagRemoveButton } from './BlockToolbars'
 import { PhotoEditor } from './PhotoEditor'
 
 type Props = {
@@ -65,6 +65,8 @@ export const EditorCanvas: FC<Props> = ({ zoom, previewing, onPagesChange, onFit
       basicsToolbar: () => <BasicsToolbar />,
       entryToolbar: (sectionId, entry, index, count) => <EntryToolbar sectionId={sectionId} entry={entry} index={index} count={count} />,
       tagRemove: (sectionId, tagId) => <TagRemoveButton sectionId={sectionId} tagId={tagId} />,
+      contactToolbar: (contact) => <ContactToolbar contact={contact} />,
+      addContactButton: (count) => <AddContactButton count={count} />,
       addItemButton: (section) => <AddItemButton sectionId={section.id} type={section.type} />,
       photoEditor: (photo, initials) => <PhotoEditor photo={photo} initials={initials} />,
     }),

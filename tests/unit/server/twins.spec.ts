@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { GUEST_COOKIE, RESET_TOKEN_QUERY } from '@constants/auth'
+import { CONTACT_TYPES, MAX_CONTACTS } from '@constants/contacts'
 import { ERROR_CODES } from '@constants/errors'
 import { FONT_SLUGS } from '@constants/fonts'
 import { CV_PRICE_AMD } from '@constants/pricing'
@@ -13,7 +14,7 @@ import { ERROR_CODE } from '../../../server/src/lib/error-codes'
 import * as guest from '../../../server/src/lib/guest'
 import * as returnPath from '../../../server/src/lib/return-path'
 import * as serverBasic from '../../../server/src/services/basicCv'
-import { DEFAULT_CV_TITLE as SERVER_DEFAULT_TITLE } from '../../../server/src/services/cvDocument'
+import { CV_LIMITS as SERVER_CV_LIMITS, DEFAULT_CV_TITLE as SERVER_DEFAULT_TITLE } from '../../../server/src/services/cvDocument'
 import { CV_PRICE_AMD as SERVER_PRICE } from '../../../server/src/services/pricing'
 
 /**
@@ -32,6 +33,11 @@ describe('server/web twins', () => {
 
   it('agree on the section types', () => {
     expect([...serverCatalogue.SECTION_TYPES]).toEqual([...SECTION_TYPES])
+  })
+
+  it('agree on the contact types and their limit', () => {
+    expect([...serverCatalogue.CONTACT_TYPES]).toEqual([...CONTACT_TYPES])
+    expect(SERVER_CV_LIMITS.contacts).toBe(MAX_CONTACTS)
   })
 
   it('charge what the pages print', () => {

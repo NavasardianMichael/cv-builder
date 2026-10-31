@@ -1,10 +1,11 @@
 'use client'
 
 import { type FC, memo, type ReactNode } from 'react'
-import type { BasicsTextField, CvBasics, CvDesign } from '@store/cvs/single/types'
+import type { CvBasics, CvDesign } from '@store/cvs/single/types'
+import { CONTACT_PLACEHOLDERS, type ContactType } from '@constants/contacts'
 import { cn } from '@helpers/cn'
+import { contactHref } from '@helpers/contactLink'
 import { blockStyleVars, initialsOf } from '@helpers/cvStyle'
-import { toWebsiteUrl } from '@helpers/url'
 import { useCvEdit } from '../CvEditContext'
 import { CvIcon, type CvIconName } from '../CvIcons'
 import { Editable } from '../Editable'
@@ -15,11 +16,20 @@ type BasicsProps = { basics: CvBasics }
  * The header block: whatever a template puts around the name and contacts. Carries the
  * basics' own style overrides and, in the editor, their toolbar.
  */
-export const BasicsFrame: FC<BasicsProps & { className?: string; children: ReactNode }> = ({ basics, className, children }) => {
+export const BasicsFrame: FC<BasicsProps & { className?: string; children: ReactNode }> = ({
+  basics,
+  className,
+  children,
+}) => {
   const edit = useCvEdit()
   return (
     <header
-      className={cn('cv-basics', edit && 'cv-block-editable', edit?.selectedBlock === 'basics' && 'is-selected', className)}
+      className={cn(
+        'cv-basics',
+        edit && 'cv-block-editable',
+        edit?.selectedBlock === 'basics' && 'is-selected',
+        className
+      )}
       style={blockStyleVars(basics.style)}
     >
       {edit?.basicsToolbar()}
@@ -56,17 +66,23 @@ const NameBlockComponent: FC<BasicsProps & { className?: string }> = ({ basics, 
 
 export const NameBlock = memo(NameBlockComponent)
 
-type ContactSpec = { field: BasicsTextField; icon: CvIconName; placeholder: string; href: (value: string) => string | undefined }
+/** Each contact type's icon. Its link comes from `helpers/contactLink`. */
+const CONTACT_ICONS: Record<ContactType, CvIconName> = {
+  email: 'email',
+  phone: 'phone',
+  location: 'location',
+  website: 'website',
+  linkedin: 'linkedin',
+  github: 'github',
+  telegram: 'telegram',
+  other: 'info',
+}
 
-const CONTACTS: ContactSpec[] = [
-  { field: 'email', icon: 'email', placeholder: 'էլ. փոստ', href: (value) => `mailto:${value.trim()}` },
-  { field: 'phone', icon: 'phone', placeholder: 'հեռախոս', href: (value) => `tel:${value.replace(/[^\d+]/g, '')}` },
-  { field: 'location', icon: 'location', placeholder: 'քաղաք, երկիր', href: () => undefined },
-  { field: 'website', icon: 'website', placeholder: 'կայք', href: (value) => toWebsiteUrl(value) },
-  { field: 'linkedin', icon: 'linkedin', placeholder: 'LinkedIn', href: (value) => toWebsiteUrl(value) },
-]
-
-/** `row` wraps inline (headers), `column` stacks (sidebars). */
+/**
+ * `row` wraps inline (headers), `column` stacks (sidebars). The editor shows every contact,
+ * empty ones as placeholders, each with a toolbar (link, remove) and an add button at the end; the
+ * preview and the PDF show only the filled ones.
+ */
 const ContactListComponent: FC<BasicsProps & { design: CvDesign; layout?: 'row' | 'column'; className?: string }> = ({
   basics,
   design,
@@ -74,22 +90,24 @@ const ContactListComponent: FC<BasicsProps & { design: CvDesign; layout?: 'row' 
   className,
 }) => {
   const edit = useCvEdit()
-  const items = edit ? CONTACTS : CONTACTS.filter((contact) => basics[contact.field].trim())
-  if (!items.length) return null
+  const items = edit ? basics.contacts : basics.contacts.filter((contact) => contact.value.trim())
+  if (!items.length && !edit) return null
 
   return (
     <ul className={cn('cv-contacts', `cv-contacts-${layout}`, className)}>
       {items.map((contact) => (
-        <li key={contact.field} className='cv-contact'>
-          {design.showIcons && <CvIcon name={contact.icon} />}
+        <li key={contact.id} className={cn('cv-contact', edit && 'cv-item-editable')}>
+          {design.showIcons && <CvIcon name={CONTACT_ICONS[contact.type]} />}
           <Editable
-            value={basics[contact.field]}
-            placeholder={contact.placeholder}
-            href={contact.href(basics[contact.field])}
-            onChange={(value) => edit?.actions.setBasicsField(contact.field, value)}
+            value={contact.value}
+            placeholder={CONTACT_PLACEHOLDERS[contact.type]}
+            href={contactHref(contact)}
+            onChange={(value) => edit?.actions.setContactField(contact.id, 'value', value)}
           />
+          {edit?.contactToolbar(contact)}
         </li>
       ))}
+      {edit && <li className='cv-contact cv-contact-add'>{edit.addContactButton(basics.contacts.length)}</li>}
     </ul>
   )
 }
@@ -97,7 +115,11 @@ const ContactListComponent: FC<BasicsProps & { design: CvDesign; layout?: 'row' 
 export const ContactList = memo(ContactListComponent)
 
 /** The photo, its slot in the editor, or nothing. */
-const PhotoBlockComponent: FC<BasicsProps & { design: CvDesign; className?: string }> = ({ basics, design, className }) => {
+const PhotoBlockComponent: FC<BasicsProps & { design: CvDesign; className?: string }> = ({
+  basics,
+  design,
+  className,
+}) => {
   const edit = useCvEdit()
   if (!design.showPhoto) return null
 

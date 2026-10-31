@@ -21,6 +21,7 @@ export const ROUTES = {
   terms: '/terms',
   privacy: '/privacy',
   refundPolicy: '/refund-policy',
+  contact: '/contact',
 } as const
 
 export const templatePath = (id: TemplateId): string => `${ROUTES.templates}/${id}`

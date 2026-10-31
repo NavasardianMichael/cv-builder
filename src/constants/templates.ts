@@ -21,6 +21,16 @@ export const TEMPLATE_IDS = [
   'bold',
   'academic',
   'soft',
+  'corporate',
+  'ats',
+  'portrait',
+  'euro',
+  'ribbon',
+  'bento',
+  'midnight',
+  'swiss',
+  'manuscript',
+  'gazette',
 ] as const
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number]
@@ -288,6 +298,210 @@ export const TEMPLATES: Record<TemplateId, TemplateMeta> = {
       levelStyle: 'dots',
     },
   },
+  corporate: {
+    id: 'corporate',
+    name: 'Կորպորատիվ',
+    tagline: 'Մուգ գլխագիր լուսանկարով և կոկիկ բաց կողագոտի',
+    description:
+      'Լայն մուգ գլխագրում են լուսանկարը, անունը և կոնտակտները, ձախ բաց սյունակում՝ հմտություններն ու լեզուները, իսկ հիմնական մասում՝ փորձը՝ գունավոր շերտով վերնագրերի տակ։ Ապահով, ժամանակակից և ներկայանալի ընտրություն գրասենյակային ցանկացած պաշտոնի համար։',
+    bestFor: ['Բանկային ոլորտ', 'Վաճառքի մենեջեր', 'Նախագծի համակարգող'],
+    layout: 'side-left',
+    defaults: {
+      palette: { accent: '#1e4f8a', background: '#ffffff', text: '#2b3440', heading: '#0f2540', muted: '#66707c', sidebarBackground: '#edf2f7', sidebarText: '#1f2b3a' },
+      headingFont: 'free-sans',
+      bodyFont: 'mardoto',
+      fontScale: 1,
+      lineHeight: 1.45,
+      spacing: 'normal',
+      photoShape: 'circle',
+      showPhoto: true,
+      levelStyle: 'bars',
+    },
+  },
+  ats: {
+    id: 'ats',
+    name: 'Ստանդարտ',
+    tagline: 'Հարվարդյան ոճ՝ մեկ սյունակ, առավելագույն ընթեռնելիություն',
+    description:
+      'Միջազգային ընկերությունների HR համակարգերի համար ամենաանվտանգ ձևաչափը. մեկ սյունակ, ձախ հավասարեցում, գծերով բաժանված մեծատառ վերնագրեր, կոնտակտները՝ մեկ տողում։ Ոչ մի ավելորդ զարդ, միայն բովանդակություն, որը հեշտ է կարդալ և՛ մարդու, և՛ ծրագրի համար։',
+    bestFor: ['Ծրագրավորող', 'Վերլուծաբան', 'Խորհրդատու'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#2b4c7e', background: '#ffffff', text: '#222222', heading: '#111111', muted: '#5f6368', sidebarBackground: '#ffffff', sidebarText: '#222222' },
+      headingFont: 'arian-amu',
+      bodyFont: 'arian-amu',
+      fontScale: 0.95,
+      lineHeight: 1.35,
+      spacing: 'compact',
+      photoShape: 'square',
+      showPhoto: false,
+      levelStyle: 'text',
+      showIcons: false,
+    },
+  },
+  portrait: {
+    id: 'portrait',
+    name: 'Դիմանկար',
+    tagline: 'Մեծ 3×4 լուսանկար աջ սյունակում, ինչպես սովոր են գործատուները',
+    description:
+      'Աջ սյունակը բացվում է անձնագրային ոճի մեծ լուսանկարով, որի տակ են կոնտակտները, հմտություններն ու լեզուները։ Ձախում՝ անունը և փորձը՝ բարակ գծերով վերնագրերով։ Հարմար է այն պաշտոնների համար, որտեղ գործատուն ուզում է տեսնել, թե ում է հրավիրում հարցազրույցի։',
+    bestFor: ['Հաշվապահ', 'Ադմինիստրատոր', 'Հյուրանոցային մենեջեր'],
+    layout: 'side-right',
+    defaults: {
+      palette: { accent: '#9a3412', background: '#ffffff', text: '#2f2a27', heading: '#1c1917', muted: '#736b66', sidebarBackground: '#f4efe8', sidebarText: '#2f2a27' },
+      headingFont: 'braind-yerevan',
+      bodyFont: 'gaa-gayane',
+      fontScale: 1,
+      lineHeight: 1.45,
+      spacing: 'normal',
+      photoShape: 'square',
+      showPhoto: true,
+      levelStyle: 'dots',
+    },
+  },
+  euro: {
+    id: 'euro',
+    name: 'Եվրոպական',
+    tagline: 'Ամսաթվերը ձախ սյունակում, պաշտոնական և ծանոթ ձևաչափ',
+    description:
+      'Եվրոպական ինքնակենսագրականների ոճով ձևանմուշ. վերևում լուսանկարն ու անձնական տվյալները, իսկ յուրաքանչյուր փորձի ամսաթվերը՝ առանձին ձախ սյունակում, որպեսզի ժամանակագրությունը կարդացվի մեկ հայացքով։ Լավ է միջազգային ծրագրերի, ՀԿ-ների և արտերկրում սովորելու դիմումների համար։',
+    bestFor: ['ՀԿ աշխատակից', 'Պետական ծառայող', 'Շրջանավարտ'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#1f4e9c', background: '#ffffff', text: '#2a2f36', heading: '#13284d', muted: '#66707c', sidebarBackground: '#f3f6fb', sidebarText: '#2a2f36' },
+      headingFont: 'free-sans',
+      bodyFont: 'arian-amu',
+      fontScale: 0.96,
+      lineHeight: 1.4,
+      spacing: 'normal',
+      photoShape: 'square',
+      showPhoto: true,
+      levelStyle: 'text',
+    },
+  },
+  ribbon: {
+    id: 'ribbon',
+    name: 'Սկիզբ',
+    tagline: 'Ժապավենաձև վերնագրեր, ընկերական տեսք առաջին աշխատանքի համար',
+    description:
+      'Բաժինների վերնագրերը ժապավենների պես դուրս են գալիս էջի եզրից, պաշտոնը ընդգծված է փափուկ պիտակով, իսկ ազատ տարածությունը լրացնում է կարճ ինքնակենսագրականը։ Ջերմ, բայց կոկիկ ձևանմուշ ուսանողների և առաջին աշխատանք փնտրողների համար։',
+    bestFor: ['Ուսանող', 'Պրակտիկանտ', 'Սպասարկման ոլորտ'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#0e7490', background: '#ffffff', text: '#2b3a42', heading: '#0b2530', muted: '#66767e', sidebarBackground: '#0e7490', sidebarText: '#ffffff' },
+      headingFont: 'montserrat-armenian',
+      bodyFont: 'gaa-gayane',
+      fontScale: 1.02,
+      lineHeight: 1.5,
+      spacing: 'relaxed',
+      photoShape: 'circle',
+      showPhoto: true,
+      levelStyle: 'dots',
+    },
+  },
+  bento: {
+    id: 'bento',
+    name: 'Բենտո',
+    tagline: 'Մոդուլային քարտեր, ինչպես ժամանակակից թվային արտադրանքներում',
+    description:
+      'Ինքնակենսագրականը բաժանված է կլորացված քարտերի մոխրագույն ֆոնի վրա. փորձը զբաղեցնում է ամբողջ լայնությունը, իսկ հմտություններն ու լեզուները շարվում են կողք կողքի։ «Իմ մասին» բաժինը մուգ քարտ է, որը միանգամից գրավում է հայացքը։',
+    bestFor: ['Արտադրանքի մենեջեր', 'UX դիզայներ', 'Front-end ծրագրավորող'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#2563eb', background: '#eef1f5', text: '#334155', heading: '#0f172a', muted: '#5b6779', sidebarBackground: '#ffffff', sidebarText: '#1e293b' },
+      headingFont: 'gaa-gayane',
+      bodyFont: 'mardoto',
+      fontScale: 0.97,
+      lineHeight: 1.45,
+      spacing: 'normal',
+      photoShape: 'rounded',
+      showPhoto: true,
+      levelStyle: 'bars',
+    },
+  },
+  midnight: {
+    id: 'midnight',
+    name: 'Կեսգիշեր',
+    tagline: 'Ամբողջովին մուգ էջ, նուրբ տառեր և լուսավոր շեշտեր',
+    description:
+      'Մուգ ռեժիմով ինքնակենսագրական՝ բարակ, խոշոր անունով և փիրուզագույն շեշտերով, իսկ յուրաքանչյուր փորձ առանձին բարձրացված վահանակի վրա է։ Ստեղծված է էկրանին դիտելու և էլ. փոստով ուղարկելու համար. տպելիս շատ թանաք կծախսի։',
+    bestFor: ['Ծրագրավորող', 'Մոուշն դիզայներ', 'Տվյալների վերլուծաբան'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#5eead4', background: '#0f1218', text: '#c9d1dc', heading: '#f3f5f8', muted: '#8b95a5', sidebarBackground: '#171c25', sidebarText: '#c9d1dc' },
+      headingFont: 'montserrat-armenian',
+      bodyFont: 'mardoto',
+      fontScale: 1,
+      lineHeight: 1.5,
+      spacing: 'normal',
+      photoShape: 'circle',
+      showPhoto: true,
+      levelStyle: 'bars',
+    },
+  },
+  swiss: {
+    id: 'swiss',
+    name: 'Շվեյցարական',
+    tagline: 'Խոշոր անուն, համարակալված բաժիններ, մեկ կարմիր շեշտ',
+    description:
+      'Միջազգային տիպոգրաֆիկ ոճի ոգով. հսկա անուն, բաժիններ՝ համարակալված և բաժանված սև գծերով, հմտությունները՝ երեք սյունակով ցանցում։ Խիստ կառուցվածք և ազատ օդ, որը դիզայներները կճանաչեն առաջին հայացքից։',
+    bestFor: ['Գրաֆիկ դիզայներ', 'Ճարտարապետ', 'Բրենդ մարքեթոլոգ'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#d7261e', background: '#ffffff', text: '#1a1a1a', heading: '#000000', muted: '#6b6b6b', sidebarBackground: '#f2f2f2', sidebarText: '#1a1a1a' },
+      headingFont: 'montserrat-armenian',
+      bodyFont: 'free-sans',
+      fontScale: 0.98,
+      lineHeight: 1.4,
+      spacing: 'normal',
+      photoShape: 'square',
+      showPhoto: false,
+      levelStyle: 'text',
+      showIcons: false,
+    },
+  },
+  manuscript: {
+    id: 'manuscript',
+    name: 'Մատյան',
+    tagline: 'Կարմիր գլխատառեր և Ա, Բ, Գ համարակալում՝ ձեռագրերի ոգով',
+    description:
+      'Ոգեշնչված Մատենադարանի նկարազարդ ձեռագրերից. անվան առաջին տառը և «Իմ մասին» բաժնի սկիզբը կարմիր գլխատառեր են, իսկ բաժինները համարակալված են հայերեն տառերով։ GHEA Grapalat տառատեսակով՝ ազգային, բայց զուսպ և պրոֆեսիոնալ։',
+    bestFor: ['Թարգմանիչ', 'Պատմաբան', 'Զբոսավար'],
+    layout: 'single',
+    defaults: {
+      palette: { accent: '#a3201c', background: '#ffffff', text: '#2b2622', heading: '#1a1512', muted: '#756c63', sidebarBackground: '#f6efe3', sidebarText: '#2b2622' },
+      headingFont: 'ghea-grapalat',
+      bodyFont: 'ghea-grapalat',
+      fontScale: 1,
+      lineHeight: 1.5,
+      spacing: 'normal',
+      photoShape: 'circle',
+      showPhoto: false,
+      levelStyle: 'text',
+      showIcons: false,
+    },
+  },
+  gazette: {
+    id: 'gazette',
+    name: 'Թերթ',
+    tagline: 'Թերթի գլխագիր, առաջատար պարբերություն և երկու սյունակ',
+    description:
+      'Ինքնակենսագրականը որպես թերթի առաջին էջ. կենտրոնացված մեծ անուն, «Իմ մասին» բաժինը՝ լայն պարբերությամբ և մեծատառ սկզբով, իսկ մնացածը՝ երկու սյունակում՝ բարակ գծով բաժանված։ Լրագրողների և բովանդակություն ստեղծողների ընտրությունը։',
+    bestFor: ['Լրագրող', 'PR մասնագետ', 'Կոնտենտ մենեջեր'],
+    layout: 'split',
+    defaults: {
+      palette: { accent: '#8b1e1e', background: '#fbfaf7', text: '#262421', heading: '#111111', muted: '#6f6a63', sidebarBackground: '#f1eee7', sidebarText: '#262421' },
+      headingFont: 'free-serif',
+      bodyFont: 'ghea-grapalat',
+      fontScale: 0.97,
+      lineHeight: 1.45,
+      spacing: 'normal',
+      photoShape: 'circle',
+      showPhoto: false,
+      levelStyle: 'text',
+      showIcons: false,
+    },
+  },
 }
 
 export const TEMPLATE_LIST: TemplateMeta[] = TEMPLATE_IDS.map((id) => TEMPLATES[id])
@@ -296,7 +510,8 @@ export const DEFAULT_TEMPLATE_ID: TemplateId = 'modern'
 
 /**
  * Templates that paint with the sidebar roles: a sidebar strip, a full-bleed band (executive,
- * bold) or cards (soft). Elsewhere those two colours do nothing, so the panel hides them.
+ * bold), cards or panels (soft, bento, midnight) or ribbons. Elsewhere those two colours do
+ * nothing, so the panel hides them.
  */
 export const TEMPLATES_WITH_SIDE_COLORS: ReadonlySet<TemplateId> = new Set([
   'modern',
@@ -305,6 +520,11 @@ export const TEMPLATES_WITH_SIDE_COLORS: ReadonlySet<TemplateId> = new Set([
   'tech',
   'bold',
   'soft',
+  'corporate',
+  'portrait',
+  'ribbon',
+  'bento',
+  'midnight',
 ])
 
 export const isTemplateId = (value: unknown): value is TemplateId =>

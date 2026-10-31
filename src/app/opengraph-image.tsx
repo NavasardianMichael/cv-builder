@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { APP_NAME } from '@constants/app'
 import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { TEMPLATE_IDS } from '@constants/templates'
 import { APRICOT, CANVAS, INK } from '@styles/tokens'
 import { brandMark } from './brandImage'
 
@@ -36,7 +37,7 @@ export default async function OpengraphImage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <span style={{ fontSize: 68, lineHeight: 1.1 }}>Ինքնակենսագրական, որը նման է Ձեզ</span>
         <span style={{ fontSize: 34, color: INK[500] }}>
-          12 ձևանմուշ · 20 հայերեն տառատեսակ · {formatAmd(CV_PRICE_AMD)} մեկ անգամ
+          {TEMPLATE_IDS.length} ձևանմուշ · 20 հայերեն տառատեսակ · {formatAmd(CV_PRICE_AMD)} մեկ անգամ
         </span>
       </div>
       <div style={{ display: 'flex', width: 220, height: 10, borderRadius: 5, background: APRICOT[500] }} />

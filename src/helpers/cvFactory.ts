@@ -1,4 +1,5 @@
-import type { BlockStyle, CvContent, CvDocument, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
+import type { BlockStyle, CvContact, CvContent, CvDocument, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
+import { type ContactType, LEGACY_CONTACT_TYPES } from '@constants/contacts'
 import { SECTION_DEFAULT_TITLES, SECTION_META, type SectionType } from '@constants/sections'
 import { templateDesign, type TemplateId } from '@constants/templates'
 
@@ -25,6 +26,8 @@ export const newEntry = (fields: Partial<Omit<CvEntry, 'id'>> = {}): CvEntry => 
 
 export const newTag = (name = '', level: number | null = null): CvTag => ({ id: newId(), name, level })
 
+export const newContact = (type: ContactType, value = ''): CvContact => ({ id: newId(), type, value, url: '' })
+
 export const newSection = (type: SectionType, fill: Partial<Pick<CvSection, 'text' | 'entries' | 'tags'>> = {}): CvSection => {
   const meta = SECTION_META[type]
   return {
@@ -45,11 +48,7 @@ export const blankContent = (): CvContent => ({
   basics: {
     fullName: '',
     headline: '',
-    email: '',
-    phone: '',
-    location: '',
-    website: '',
-    linkedin: '',
+    contacts: LEGACY_CONTACT_TYPES.map((type) => newContact(type)),
     photo: null,
     style: emptyStyle(),
   },
@@ -68,11 +67,13 @@ export const sampleContent = (): CvContent => ({
   basics: {
     fullName: 'Անի Հովհաննիսյան',
     headline: 'Ավագ արտադրանքի դիզայներ',
-    email: 'ani.hovhannisyan@mail.am',
-    phone: '+374 91 123 456',
-    location: 'Երևան, Հայաստան',
-    website: 'anihovhannisyan.am',
-    linkedin: 'linkedin.com/in/anihov',
+    contacts: [
+      newContact('email', 'ani.hovhannisyan@mail.am'),
+      newContact('phone', '+374 91 123 456'),
+      newContact('location', 'Երևան, Հայաստան'),
+      newContact('website', 'anihovhannisyan.am'),
+      newContact('linkedin', 'linkedin.com/in/anihov'),
+    ],
     photo: null,
     style: emptyStyle(),
   },

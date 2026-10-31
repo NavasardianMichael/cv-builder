@@ -3,8 +3,9 @@ import { create } from 'zustand'
 import { combine } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { appendSelectors } from '@store/appendSelectors'
+import { MAX_CONTACTS } from '@constants/contacts'
 import { templateDesign } from '@constants/templates'
-import { emptyStyle, newEntry, newId, newSection, newTag } from '@helpers/cvFactory'
+import { emptyStyle, newContact, newEntry, newId, newSection, newTag } from '@helpers/cvFactory'
 import type { CvDocument, CvEditorActions, CvEditorState, CvSection, MoveDirection } from './types'
 
 /**
@@ -116,6 +117,29 @@ export const useCvEditorStoreBase = create<CvEditorState & CvEditorActions>()(
           set((state) =>
             edit(state, 'basics.style', (doc) => {
               doc.content.basics.style = { ...doc.content.basics.style, ...style }
+            })
+          )
+        },
+        addContact: (type) => {
+          set((state) =>
+            edit(state, null, (doc) => {
+              const { contacts } = doc.content.basics
+              if (contacts.length < MAX_CONTACTS) contacts.push(newContact(type))
+            })
+          )
+        },
+        setContactField: (contactId, field, value) => {
+          set((state) =>
+            edit(state, `${contactId}.${field}`, (doc) => {
+              const contact = doc.content.basics.contacts.find((item) => item.id === contactId)
+              if (contact) contact[field] = value
+            })
+          )
+        },
+        removeContact: (contactId) => {
+          set((state) =>
+            edit(state, null, (doc) => {
+              doc.content.basics.contacts = doc.content.basics.contacts.filter((item) => item.id !== contactId)
             })
           )
         },

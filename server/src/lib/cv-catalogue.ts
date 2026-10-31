@@ -1,6 +1,6 @@
 /**
  * The closed sets a CV document may name. Twin of the web's `src/constants/templates.ts`,
- * `src/constants/fonts.ts` and `src/constants/sections.ts`; there is no import path between
+ * `src/constants/fonts.ts`, `src/constants/sections.ts` and `src/constants/contacts.ts`; there is no import path between
  * the packages, so `tests/unit/server/twins.spec.ts` pins them equal.
  */
 export const TEMPLATE_IDS = [
@@ -16,6 +16,16 @@ export const TEMPLATE_IDS = [
   'bold',
   'academic',
   'soft',
+  'corporate',
+  'ats',
+  'portrait',
+  'euro',
+  'ribbon',
+  'bento',
+  'midnight',
+  'swiss',
+  'manuscript',
+  'gazette',
 ] as const
 
 export type TemplateId = (typeof TEMPLATE_IDS)[number]
@@ -61,3 +71,7 @@ export const SECTION_TYPES = [
 ] as const
 
 export type SectionType = (typeof SECTION_TYPES)[number]
+
+export const CONTACT_TYPES = ['email', 'phone', 'location', 'website', 'linkedin', 'github', 'telegram', 'other'] as const
+
+export type ContactType = (typeof CONTACT_TYPES)[number]

@@ -6,6 +6,7 @@ import { fail, ok } from './lib/api-response.js'
 import { optionalAuth } from './middleware/auth.js'
 import { requireSameOrigin } from './middleware/csrf.js'
 import { errorHandler } from './middleware/error.js'
+import { contactRouter } from './routes/contact.js'
 import { cvsRouter } from './routes/cvs.js'
 import { identityRouter } from './routes/identity.js'
 import { paymentsRouter } from './routes/payments.js'
@@ -39,6 +40,7 @@ export function createApp() {
 
   app.use('/identity', identityRouter)
   app.use('/cvs', cvsRouter)
+  app.use('/contact', contactRouter)
   app.use('/pdf', pdfRouter)
 
   app.use((_req, res) => fail(res, 'Not found', 404, 404))
