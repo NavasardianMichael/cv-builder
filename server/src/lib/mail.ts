@@ -23,7 +23,7 @@ import { config } from '../config.js'
  */
 
 /** The engine rejects a request body that omits this; injected here so no caller can forget. */
-const appId = (): string => config.mail.appId
+const APP_ID = 'CV Builder'
 
 /**
  * Every external send goes out as `Ռեզյումե <rezyume@…>` — the engine owns the
@@ -111,10 +111,11 @@ const send = async (path: string, payload: object): Promise<MailResult> => {
     response = await fetch(mailUrl(path), {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        // JSON is UTF-8 by spec; said explicitly so no engine guesses otherwise for Armenian text.
+        'Content-Type': 'application/json; charset=utf-8',
         'x-api-key': config.mail.apiKey,
       },
-      body: JSON.stringify({ appId: appId(), ...payload }),
+      body: JSON.stringify({ appId: APP_ID, ...payload }),
       signal: AbortSignal.timeout(MAIL_TIMEOUT_MS),
     })
   } catch (err) {

@@ -38,7 +38,6 @@ export const config = {
   mail: {
     apiUrl: (process.env.MAIL_API_URL ?? '').replace(/\/+$/, ''),
     apiKey: process.env.MAIL_API_KEY ?? '',
-    appId: process.env.MAIL_APP_ID ?? 'rezyume',
   },
   /** Google OAuth. `clientSecret` is read only by `lib/google-oauth.ts`. Empty disables it. */
   google: {
