@@ -2,7 +2,7 @@
 
 import { type FC, useCallback, useEffect, useState } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Empty, Skeleton } from 'antd'
+import { Alert, App, Button, Empty, Skeleton, Tooltip } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
@@ -112,16 +112,19 @@ export const DashboardClient: FC = () => {
 
   return (
     <div className='mx-auto max-w-7xl px-4 py-12 md:px-6'>
-      <div className='flex flex-wrap items-end justify-between gap-4'>
-        <div>
-          <h1 className='m-0 font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>{t('title')}</h1>
+      <div className='flex items-end justify-between gap-4'>
+        <div className='min-w-0 flex-1'>
+          <h1 className='m-0 font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>{t('title')}</h1>
           <p className='mt-2 mb-0 text-muted'>{t('subtitle')}</p>
         </div>
-        <Link href={ROUTES.templates}>
-          <Button type='primary' size='large' icon={<PlusOutlined />}>
-            {t('new')}
-          </Button>
-        </Link>
+        {/* With no CVs the empty state carries its own button. */}
+        {isLoaded && !loadError && cvs.length > 0 && (
+          <Tooltip title={t('new')}>
+            <Link href={ROUTES.templates} className='shrink-0'>
+              <Button color='primary' variant='dashed' size='large' className='bg-transparent!' shape='circle' icon={<PlusOutlined />} aria-label={t('new')} />
+            </Link>
+          </Tooltip>
+        )}
       </div>
       {isGuest && (
         <Alert

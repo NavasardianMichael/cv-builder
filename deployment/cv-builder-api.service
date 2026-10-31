@@ -1,0 +1,40 @@
+# =============================================================================
+# systemd — API (Express + headless Chrome). Install to /etc/systemd/system/cv-builder-api.service
+# Paths assume APP_DIR=/home/michael/apps/cv-builder.
+#
+# The env file is written by the deploy workflow (mode 600): ENV_API_BASE64 plus the four
+# runtime keys it owns (NODE_ENV, PORT=9009, HOST=127.0.0.1, RENDER_ORIGIN=http://127.0.0.1:7009).
+# systemd's EnvironmentFile is not dotenv — no `export`, no multi-line values.
+# =============================================================================
+[Unit]
+Description=CV builder — API (Express)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=michael
+Group=michael
+WorkingDirectory=/home/michael/apps/cv-builder/api/current
+EnvironmentFile=/home/michael/apps/cv-builder/shared/.env.api
+# Where the deploy's `pnpm install` downloaded Chrome; the same path it exports.
+Environment=PUPPETEER_CACHE_DIR=/home/michael/.cache/puppeteer
+# The home directory is read-only here (ProtectHome), so Chrome's and fontconfig's own
+# config and cache writes go to the service's private /tmp instead.
+Environment=XDG_CONFIG_HOME=/tmp/.config
+Environment=XDG_CACHE_HOME=/tmp/.cache
+ExecStart=/usr/bin/node dist/src/index.js
+Restart=always
+RestartSec=2
+KillSignal=SIGTERM
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+# No ReadWritePaths: the API's state is in Postgres, and Chrome's profile is a temp dir.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

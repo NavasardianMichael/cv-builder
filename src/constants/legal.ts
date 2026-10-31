@@ -15,13 +15,13 @@ const UPDATED = '2026-10-29'
 
 export const TERMS: LegalDocument = {
   title: 'Օգտագործման պայմաններ',
-  description: `${APP_NAME} ծառայության օգտագործման պայմանները։`,
+  description: `«${APP_NAME}» ծառայության օգտագործման պայմանները։`,
   updated: UPDATED,
   sections: [
     {
       heading: '1. Ծառայությունը',
       paragraphs: [
-        `${APP_NAME}-ը առցանց գործիք է, որը թույլ է տալիս ստեղծել, խմբագրել և PDF ձևաչափով ներբեռնել ինքնակենսագրականներ (CV)։ Ինքնակենսագրականի պարզ սև-սպիտակ PDF-ը ներբեռնելն անվճար է։`,
+        `«${APP_NAME}» ծառայությունը առցանց գործիք է, որը թույլ է տալիս ստեղծել, խմբագրել և PDF ձևաչափով ներբեռնել ինքնակենսագրականներ (CV)։ Ինքնակենսագրականի պարզ սև-սպիտակ PDF-ը ներբեռնելն անվճար է։`,
       ],
     },
     {
@@ -61,7 +61,7 @@ export const TERMS: LegalDocument = {
 
 export const PRIVACY: LegalDocument = {
   title: 'Գաղտնիության քաղաքականություն',
-  description: `Ինչ տվյալներ է հավաքում ${APP_NAME}-ը և ինչպես է դրանք օգտագործում։`,
+  description: `Ինչ տվյալներ է հավաքում «${APP_NAME}» ծառայությունը և ինչպես է դրանք օգտագործում։`,
   updated: UPDATED,
   sections: [
     {
@@ -104,7 +104,7 @@ export const PRIVACY: LegalDocument = {
 
 export const REFUND: LegalDocument = {
   title: 'Վերադարձի քաղաքականություն',
-  description: `${APP_NAME}-ի վճարումների վերադարձի պայմանները։`,
+  description: `«${APP_NAME}» ծառայության վճարումների վերադարձի պայմանները։`,
   updated: UPDATED,
   sections: [
     {

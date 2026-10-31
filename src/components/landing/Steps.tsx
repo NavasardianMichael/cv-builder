@@ -8,7 +8,7 @@ export const Steps: FC = async () => {
   return (
     <section className='bg-ink py-20 text-white' aria-labelledby='steps-title'>
       <div className='mx-auto max-w-7xl px-4 md:px-6'>
-        <h2 id='steps-title' className='text-center font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl'>
+        <h2 id='steps-title' className='text-center font-display text-title font-extrabold tracking-tight text-white sm:text-4xl'>
           {t('stepsTitle')}
         </h2>
         <ol className='m-0 mt-14 grid list-none gap-8 p-0 md:grid-cols-3'>

@@ -8,7 +8,7 @@ import { reportError } from './reportError'
  *
  * Wrapped like `localDraft.ts`: storage can throw, and losing the flag only hides a link.
  */
-const KEY = 'rezyume:guest-cvs:v1'
+const KEY = 'cv-builder:guest-cvs:v1'
 
 export const hasGuestCvs = (): boolean => {
   try {

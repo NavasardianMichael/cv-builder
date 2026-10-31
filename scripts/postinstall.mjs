@@ -82,7 +82,7 @@ function ensureEnvFile(relativePath, relativeExample) {
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
 
 /** The container docker-compose.yml names, polled until its healthcheck passes. */
-const POSTGRES_CONTAINER = 'rezyume-postgres'
+const POSTGRES_CONTAINER = 'cv-builder-postgres'
 const POSTGRES_WAIT_MS = 60_000
 
 function startPostgres() {
@@ -104,7 +104,7 @@ function startPostgres() {
 
 stopApiDevServer()
 
-run('Generating Prisma client', 'pnpm', ['--filter', 'rezyume-server', 'run', 'db:generate'])
+run('Generating Prisma client', 'pnpm', ['--filter', 'cv-builder-server', 'run', 'db:generate'])
 
 // A build machine installs too, and must never create env files or start containers.
 if (process.env.CI || process.env.NODE_ENV === 'production' || process.env.SKIP_DB_SETUP) {
@@ -116,7 +116,7 @@ ensureEnvFile('server/.env', 'server/.env.example')
 ensureEnvFile('.env.local', '.env.example')
 
 const deploy = () =>
-  run('Applying pending migrations', 'pnpm', ['--filter', 'rezyume-server', 'run', 'db:deploy'], { allowFailure: true })
+  run('Applying pending migrations', 'pnpm', ['--filter', 'cv-builder-server', 'run', 'db:deploy'], { allowFailure: true })
 
 // The first attempt covers a Postgres that is already up, Docker or not; only when that fails
 // is the compose service started and the deploy retried.
@@ -130,7 +130,7 @@ if (!migrated) {
   process.exit(0)
 }
 
-const seeded = run('Seeding database', 'pnpm', ['--filter', 'rezyume-server', 'run', 'db:seed'], {
+const seeded = run('Seeding database', 'pnpm', ['--filter', 'cv-builder-server', 'run', 'db:seed'], {
   allowFailure: true,
 })
 

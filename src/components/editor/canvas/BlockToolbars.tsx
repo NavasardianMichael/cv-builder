@@ -5,7 +5,6 @@ import {
   ArrowDownOutlined,
   ArrowUpOutlined,
   BgColorsOutlined,
-  CloseOutlined,
   CopyOutlined,
   DeleteOutlined,
   EyeInvisibleOutlined,
@@ -234,13 +233,16 @@ export const TagRemoveButton: FC<{ sectionId: string; tagId: string }> = ({ sect
   return (
     <button
       type='button'
-      className='cv-tag-remove size-4.5 cursor-pointer rounded-full border-0 bg-red-500 p-0 text-[9px] text-white shadow'
+      className='cv-tag-remove size-4.5 cursor-pointer rounded-full border-0 bg-red-500 p-0 text-white shadow ring-2 ring-white'
       aria-label={t('removeItem')}
       title={t('removeItem')}
       onClick={() => removeTag(sectionId, tagId)}
     >
-      {/* An SVG, not the "×" character: a glyph sits on its font's baseline and never centres. */}
-      <CloseOutlined />
+      {/* An SVG, not the "×" character: a glyph sits on its font's baseline and never centres.
+          Drawn here rather than CloseOutlined, whose hairline strokes vanish at this size. */}
+      <svg viewBox='0 0 12 12' className='size-2.5' aria-hidden='true'>
+        <path d='M3 3l6 6M9 3l-6 6' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' />
+      </svg>
     </button>
   )
 }

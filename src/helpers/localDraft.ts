@@ -11,7 +11,7 @@ import { reportError } from './reportError'
  * Every access is wrapped: storage can be full, disabled, or throw in a private window, and
  * none of that may break the editor — the draft simply is not kept.
  */
-const KEY = 'rezyume:draft:v1'
+const KEY = 'cv-builder:draft:v1'
 
 type StoredDraft = { doc: CvDocument; savedAt: string }
 

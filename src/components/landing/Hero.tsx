@@ -28,7 +28,7 @@ export const Hero: FC = async () => {
             <span className='size-2 rounded-full bg-accent' aria-hidden='true' />
             {t('eyebrow')}
           </span>
-          <h1 className='text-balance mt-6 font-display text-4xl leading-[1.08] font-extrabold tracking-tight text-ink sm:text-5xl lg:text-6xl'>
+          <h1 className='text-balance mt-6 font-display text-title leading-[1.08] [--title-em:13] [--title-max:2.25rem] font-extrabold tracking-tight text-ink sm:text-5xl lg:text-6xl'>
             {t('heroTitle')} <span className='text-accent'>{t('heroTitleAccent')}</span>
           </h1>
           <p className='mt-6 max-w-xl text-lg leading-relaxed text-muted'>{t('heroSubtitle', { price })}</p>

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   title: { default: `${APP_NAME} — Հայերեն ինքնակենսագրականի կառուցիչ`, template: `%s | ${APP_NAME}` },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
-  keywords: ['ինքնակենսագրական', 'ռեզյումե', 'CV', 'ինքնակենսագրություն', 'ինքնակենսագրականի ձևանմուշ', 'ռեզյումեի ձևանմուշ', 'CV հայերեն', 'աշխատանք Հայաստանում', 'resume Armenia'],
+  keywords: ['ինքնակենսագրական', 'CV', 'ինքնակենսագրություն', 'ինքնակենսագրականի ձևանմուշ', 'CV հայերեն', 'աշխատանք Հայաստանում', 'resume Armenia'],
   manifest: '/manifest.webmanifest',
   robots: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
   openGraph: {

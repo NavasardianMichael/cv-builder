@@ -519,32 +519,24 @@ span.cv-editable {
 }
 
 /*
- * A tag's remove button floats just outside the tag's right edge, centred on its row, so
- * showing it never shifts the name or the level. `::before` bridges the gap back to the
- * tag (hovering the button hovers the tag), and hiding waits, as with the toolbars.
+ * A tag's remove button sits on the tag's own top-right corner, like a badge: it belongs
+ * visibly to that tag, never covers the next one in the row, and showing it never shifts the
+ * name or the level. It overlaps the tag, so the pointer reaches it without leaving the tag;
+ * hiding still waits, as with the toolbars.
  */
 .cv-tag-remove {
   position: absolute;
-  top: 50%;
+  top: 0;
   right: 0;
   z-index: 22;
   display: grid;
   place-items: center;
   visibility: hidden;
   opacity: 0;
-  transform: translate(calc(100% + 6px), -50%);
+  transform: translate(45%, -45%);
   transition:
     opacity 0.12s ease 0.2s,
     visibility 0s linear 0.32s;
-}
-
-.cv-tag-remove::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  right: 100%;
-  bottom: -4px;
-  width: 10px;
 }
 
 .cv-item-editable:hover > .cv-tag-remove,

@@ -54,7 +54,7 @@ export default async function TemplatePage({ params }: Props) {
     description: template.description,
     url: absoluteUrl(templatePath(templateId)),
     inLanguage: LOCALE,
-    keywords: ['ինքնակենսագրական', 'ռեզյումե', 'CV', ...template.bestFor].join(', '),
+    keywords: ['ինքնակենսագրական', 'CV', ...template.bestFor].join(', '),
     isAccessibleForFree: true,
     creator: { '@id': ORGANIZATION_ID },
     isPartOf: { '@type': 'WebSite', name: APP_NAME, url: absoluteUrl('/') },
@@ -73,7 +73,7 @@ export default async function TemplatePage({ params }: Props) {
           ]),
         ]}
       />
-      <div className='mx-auto grid max-w-7xl gap-12 px-4 pt-10 pb-16 md:px-6 lg:grid-cols-[1fr_1.1fr]'>
+      <div className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 pt-10 pb-16 md:px-6 lg:grid-cols-[1fr_1.1fr]'>
         <div className='lg:sticky lg:top-24 lg:self-start'>
           <nav aria-label='breadcrumb' className='text-sm text-muted'>
             <Link href={ROUTES.templates} className='no-underline hover:text-ink'>
@@ -81,9 +81,9 @@ export default async function TemplatePage({ params }: Props) {
             </Link>{' '}
             / <span className='text-ink'>{template.name}</span>
           </nav>
-          <h1 className='text-balance mt-4 font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl'>{title}</h1>
-          <p className='mt-3 text-lg font-medium text-accent-strong'>{template.tagline}</p>
-          <p className='mt-5 text-lg leading-relaxed text-muted'>{template.description}</p>
+          <h1 className='text-balance mt-4 font-display text-title font-extrabold tracking-tight text-ink sm:text-5xl'>{title}</h1>
+          <p className='mt-3 text-base font-medium text-accent-strong sm:text-lg'>{template.tagline}</p>
+          <p className='mt-5 text-base leading-relaxed text-muted sm:text-lg'>{template.description}</p>
 
           <dl className='mt-8 grid gap-5 sm:grid-cols-2'>
             <div>
@@ -131,7 +131,7 @@ export default async function TemplatePage({ params }: Props) {
         <h2 id='other-templates' className='font-display text-2xl font-extrabold text-ink'>
           {t('otherTemplates')}
         </h2>
-        <div className='mt-8 grid grid-cols-2 gap-6 md:grid-cols-4'>
+        <div className='mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4'>
           {others.map((other) => (
             <TemplateCard key={other.id} template={other} />
           ))}

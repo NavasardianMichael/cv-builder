@@ -6,7 +6,7 @@ export const LegalPage: FC<{ document: LegalDocument }> = async ({ document }) =
   const t = await getTranslations('Legal')
   return (
     <article className='mx-auto max-w-3xl px-4 py-14 md:px-6'>
-      <h1 className='m-0 font-display text-4xl font-extrabold tracking-tight text-ink'>{document.title}</h1>
+      <h1 className='m-0 font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>{document.title}</h1>
       <p className='mt-3 text-sm text-muted'>{t('updated', { date: document.updated })}</p>
       <p className='mt-4 rounded-xl bg-accent-soft px-4 py-3 text-sm'>{t('draftNotice')}</p>
       {document.sections.map((section) => (

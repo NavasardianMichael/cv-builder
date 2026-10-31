@@ -1,5 +1,5 @@
 import { getRequestConfig } from 'next-intl/server'
-import { LOCALE } from '@constants/app'
+import { LOCALE, TIME_ZONE } from '@constants/app'
 
 /**
  * One language. next-intl is here to keep copy out of components (`messages/hy.json`),
@@ -8,5 +8,5 @@ import { LOCALE } from '@constants/app'
 export default getRequestConfig(async () => ({
   locale: LOCALE,
   messages: (await import('../messages/hy.json')).default,
-  timeZone: 'Asia/Yerevan',
+  timeZone: TIME_ZONE,
 }))

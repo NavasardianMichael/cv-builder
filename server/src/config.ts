@@ -23,14 +23,14 @@ export const config = {
   /** Where headless Chrome opens the web app's `/render` page. */
   renderOrigin: (process.env.RENDER_ORIGIN ?? corsOrigin).replace(/\/+$/, ''),
   puppeteerNoSandbox: process.env.PUPPETEER_NO_SANDBOX === 'true',
-  cookieName: 'rezyume_session',
+  cookieName: 'cv-builder-session',
   /**
    * `Domain` on the session cookie. Empty (host-only) in dev; in production the web host's
    * name, so a cookie minted by `api.<web host>` is also visible to the web app's proxy guard.
    * See `lib/cookie-domain.ts`.
    */
   cookieDomain: process.env.COOKIE_DOMAIN ?? deriveCookieDomain(nodeEnv, corsOrigin),
-  oauthCookieName: 'rezyume_oauth',
+  oauthCookieName: 'cv-builder-oauth',
   oauthFlowTtlMs: 10 * 60 * 1000,
   /** A reset link is a full credential, so it lives an hour. */
   passwordResetTtlMs: 60 * 60 * 1000,

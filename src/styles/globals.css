@@ -66,10 +66,38 @@
     color: inherit;
   }
 
+  /*
+   * Armenian words run long (ինքնակենսագրականները), and one wider than a phone pushes the
+   * whole page sideways. `anywhere` breaks inside a word only when it cannot fit a line on its
+   * own, and lets flex and grid items shrink below it. Not inside a CV: that is the document.
+   */
+  :where(h1, h2, h3):not(.cv-root *) {
+    overflow-wrap: anywhere;
+  }
+
+  /* What `text-title` measures against. A container takes no width from its content, so a
+     shrink-to-fit parent (a flex item without `flex-1`) would collapse — give it a width. */
+  :where(*):has(> .text-title) {
+    container-type: inline-size;
+  }
+
   :focus-visible {
     outline: 2px solid var(--brand-accent);
     outline-offset: 2px;
   }
+}
+
+/*
+ * A title that shrinks with the box it sits in, so its longest word always fits one line: on
+ * phones, where a fixed size breaks long Armenian words. Callers pair it with a fixed size
+ * from `sm` up. `--title-em` is the longest word's width in em — ինքնակենսագրականները is
+ * ~15em in the display face, the default — and `--title-max` caps the size. The title's
+ * parent is made a container (base layer), so `cqi` is the width the title really has: a
+ * card, a padded panel, a row it shares with a button.
+ */
+@utility text-title {
+  font-size: min(var(--title-max, 1.875rem), 100cqi / var(--title-em, 15.5));
+  line-height: var(--tw-leading, 1.2);
 }
 
 /* A soft mesh behind the hero and auth cards. */

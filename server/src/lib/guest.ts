@@ -12,7 +12,7 @@ import { hashUrlToken, mintUrlToken } from './token.js'
  *
  * Twin of `GUEST_COOKIE` in `src/constants/auth.ts`, which the web's proxy reads for presence.
  */
-export const GUEST_COOKIE = 'rezyume_guest'
+export const GUEST_COOKIE = 'cv-builder-guest'
 
 /** Browsers cap a cookie's lifetime at 400 days; every guest request renews it. */
 const GUEST_COOKIE_MAX_AGE_MS = 400 * 24 * 60 * 60 * 1000

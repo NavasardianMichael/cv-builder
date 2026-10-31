@@ -24,7 +24,7 @@ export default async function ContactPage() {
         ])}
       />
       <div className='w-full max-w-lg rounded-3xl bg-surface p-8 shadow-[0_30px_70px_-30px_rgba(20,24,45,0.35)] ring-1 ring-line sm:p-10'>
-        <h1 className='m-0 font-display text-3xl font-extrabold tracking-tight text-ink'>{t('title')}</h1>
+        <h1 className='m-0 font-display text-title font-extrabold tracking-tight text-ink sm:text-3xl'>{t('title')}</h1>
         <p className='mt-2 mb-0 text-muted'>{t('subtitle')}</p>
         <div className='mt-8'>
           <ContactForm />

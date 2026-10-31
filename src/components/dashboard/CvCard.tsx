@@ -4,10 +4,11 @@ import type { FC } from 'react'
 import { CopyOutlined, DeleteOutlined, DownloadOutlined, EditOutlined, MoreOutlined } from '@ant-design/icons'
 import { Button, Dropdown } from 'antd'
 import Link from 'next/link'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import type { PdfVariant } from '@api/cvs/types'
 import type { Cv } from '@store/cvs/single/types'
 import { editorPath } from '@constants/routes'
+import { formatDateTime } from '@helpers/date'
 import { CvPreview } from '@components/cv/CvPreview'
 import { PaidBadge } from '@components/ui/PaidBadge'
 
@@ -21,7 +22,6 @@ type Props = {
 export const CvCard: FC<Props> = ({ cv, onDuplicate, onDelete, onDownload }) => {
   const t = useTranslations('Dashboard')
   const tCommon = useTranslations('Common')
-  const format = useFormatter()
 
   return (
     <article className='group'>
@@ -39,7 +39,7 @@ export const CvCard: FC<Props> = ({ cv, onDuplicate, onDelete, onDownload }) => 
         <div className='min-w-0 flex-1'>
           <h2 className='m-0 truncate text-base font-semibold text-ink'>{cv.title}</h2>
           <p className='m-0 mt-0.5 text-xs text-muted'>
-            {t('updated', { date: format.dateTime(new Date(cv.updatedAt), { dateStyle: 'medium', timeStyle: 'short' }) })}
+            {t('updated', { date: formatDateTime(cv.updatedAt) })}
           </p>
         </div>
         <Dropdown

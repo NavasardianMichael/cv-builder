@@ -14,7 +14,7 @@ export const FinalCta: FC = async () => {
           className='pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-accent opacity-30 blur-3xl'
           aria-hidden='true'
         />
-        <h2 className='text-balance relative mx-auto max-w-2xl font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl'>
+        <h2 className='text-balance relative mx-auto max-w-2xl font-display text-title font-extrabold tracking-tight text-white sm:text-4xl'>
           {t('finalTitle')}
         </h2>
         <Link

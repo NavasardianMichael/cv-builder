@@ -20,7 +20,7 @@ export const Faq: FC<{ title?: string }> = async ({ title }) => {
   return (
     <section className='mx-auto max-w-3xl px-4 py-20 md:px-6' aria-labelledby='faq-title'>
       <JsonLd data={faqSchema(items)} />
-      <h2 id='faq-title' className='text-center font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>
+      <h2 id='faq-title' className='text-center font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>
         {title ?? tHome('faqTitle')}
       </h2>
       <div className='mt-10 flex flex-col gap-3'>

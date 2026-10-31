@@ -33,7 +33,7 @@ export const startCheckout = async (cv: { id: string; title: string; userId: str
     const { gatewayPaymentId, redirectUrl } = await gateway.init({
       orderNumber: payment.orderNumber,
       amount: payment.amount,
-      description: `Ռեզյումե — «${cv.title}» CV-ի ներբեռնում`,
+      description: `Ինքնակենսագրական — «${cv.title}» CV-ի ներբեռնում`,
       backUrl: `${config.apiPublicUrl}/payments/return/${gatewayId}`,
       opaque: payment.id,
     })

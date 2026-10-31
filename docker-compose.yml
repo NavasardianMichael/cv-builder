@@ -1,22 +1,22 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: rezyume-postgres
+    container_name: cv-builder-postgres
     restart: unless-stopped
     ports:
       # Host 5009 — never 5432, which a local Postgres or an SSH tunnel often holds.
       - '5009:5432'
     environment:
-      POSTGRES_USER: rezyume
-      POSTGRES_PASSWORD: rezyume
-      POSTGRES_DB: rezyume
+      POSTGRES_USER: cv-builder
+      POSTGRES_PASSWORD: cv-builder
+      POSTGRES_DB: cv-builder
     volumes:
-      - rezyume_pg:/var/lib/postgresql/data
+      - cv-builder-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U rezyume -d rezyume']
+      test: ['CMD-SHELL', 'pg_isready -U cv-builder -d cv-builder']
       interval: 5s
       timeout: 5s
       retries: 5
 
 volumes:
-  rezyume_pg:
+  cv-builder-pg:

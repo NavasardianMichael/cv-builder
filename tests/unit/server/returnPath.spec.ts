@@ -20,8 +20,8 @@ describe('isSafeReturnPath', () => {
 
 describe('buildWebUrl', () => {
   it('joins origin, path and query', () => {
-    expect(buildWebUrl('https://rezyume.am', '/payment/result', { status: 'succeeded', cv: 'c1' })).toBe(
-      'https://rezyume.am/payment/result?status=succeeded&cv=c1'
+    expect(buildWebUrl('https://cv-builder.eapps.site', '/payment/result', { status: 'succeeded', cv: 'c1' })).toBe(
+      'https://cv-builder.eapps.site/payment/result?status=succeeded&cv=c1'
     )
   })
 })

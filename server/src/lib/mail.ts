@@ -26,13 +26,13 @@ import { config } from '../config.js'
 const APP_ID = 'CV Builder'
 
 /**
- * Every external send goes out as `Ռեզյումե <rezyume@…>` — the engine owns the
+ * Every external send goes out as `Ինքնակենսագրական <cv-builder@…>` — the engine owns the
  * domain; only the part before `@` is ours. Mailbox providers build reputation per sender,
  * so these stay fixed: one sender for every kind of mail, never varied per call site.
  * The engine accepts letters, digits and single `.` `_` `-` between them, max 64 chars —
  * anything else answers `400` on every send.
  */
-const EXTERNAL_SENDER = { fromName: 'Ռեզյումե', mailFromPrefix: 'rezyume' } as const
+const EXTERNAL_SENDER = { fromName: 'Ինքնակենսագրական', mailFromPrefix: 'cv-builder' } as const
 
 const MAIL_TIMEOUT_MS = 10_000
 

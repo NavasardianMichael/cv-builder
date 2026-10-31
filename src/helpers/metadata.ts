@@ -16,7 +16,7 @@ export const pageMetadata = ({
   title: string
   description: string
   path: string
-  /** Skip the root layout's "%s | Ռեզյումե" template (the homepage names the brand itself). */
+  /** Skip the root layout's "%s | Ինքնակենսագրական" template (the homepage names the brand itself). */
   absoluteTitle?: boolean
 }): Metadata => ({
   title: absoluteTitle ? { absolute: title } : title,

@@ -33,7 +33,7 @@ export default async function PricingPage() {
       />
       <div className='mx-auto max-w-5xl px-4 pt-14 md:px-6'>
         <div className='text-center'>
-          <h1 className='font-display text-4xl font-extrabold tracking-tight text-ink sm:text-5xl'>{t('title')}</h1>
+          <h1 className='font-display text-title font-extrabold tracking-tight text-ink sm:text-5xl'>{t('title')}</h1>
           <p className='mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted'>{t('subtitle')}</p>
         </div>
 

@@ -19,15 +19,15 @@ export const issuePasswordResetToken = async (userId: string): Promise<string> =
 export const buildPasswordResetUrl = (token: string): string =>
   buildWebUrl(config.corsOrigin, PASSWORD_RESET_PATH, { [PASSWORD_RESET_QUERY]: token })
 
-const SUBJECT = 'Գաղտնաբառի վերականգնում — Ռեզյումե'
+const SUBJECT = 'Գաղտնաբառի վերականգնում — Ինքնակենսագրական'
 
 const text = (url: string): string =>
-  `Ինչ-որ մեկը խնդրել է վերականգնել Ձեր Ռեզյումե հաշվի գաղտնաբառը։\n\n${url}\n\n` +
+  `Ինչ-որ մեկը խնդրել է վերականգնել Ձեր «Ինքնակենսագրական» հաշվի գաղտնաբառը։\n\n${url}\n\n` +
   'Հղումը գործում է մեկ ժամ և կարող է օգտագործվել մեկ անգամ։ Եթե դա Դուք չեք եղել, ' +
   'անտեսեք այս նամակը․ Ձեր գաղտնաբառը չի փոխվել։'
 
 const html = (url: string): string =>
-  '<p>Ինչ-որ մեկը խնդրել է վերականգնել Ձեր Ռեզյումե հաշվի գաղտնաբառը։</p>' +
+  '<p>Ինչ-որ մեկը խնդրել է վերականգնել Ձեր «Ինքնակենսագրական» հաշվի գաղտնաբառը։</p>' +
   `<p><a href="${escapeHtml(url)}">Ընտրել նոր գաղտնաբառ</a></p>` +
   '<p>Հղումը գործում է մեկ ժամ և կարող է օգտագործվել մեկ անգամ։ Եթե դա Դուք չեք եղել, ' +
   'անտեսեք այս նամակը․ Ձեր գաղտնաբառը չի փոխվել։</p>'

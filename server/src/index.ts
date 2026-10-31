@@ -6,7 +6,7 @@ import './load-env.js'
 const app = createApp()
 
 app.listen(config.port, config.host, () => {
-  console.log(`Ռեզյումե API listening on http://${config.host}:${config.port}`)
+  console.log(`CV builder API listening on http://${config.host}:${config.port}`)
   if (!isPaymentConfigured()) {
     console.warn(`[payments] gateway "${config.payments.gateway}" is not configured — checkout answers 503`)
   }

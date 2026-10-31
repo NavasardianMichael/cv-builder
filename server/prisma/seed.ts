@@ -1,11 +1,17 @@
-import { type Prisma, PrismaClient } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { hashPassword } from '../src/lib/password.js'
 import { coerceContent, coerceDesign } from '../src/services/cvDocument.js'
 
-import 'dotenv/config'
+// The API's own loader, so the seed reads the same env files as the API and `prisma migrate`
+// (`.env.development.local` first) — `dotenv/config` reads only `server/.env`.
+import '../src/load-env.js'
+
+// Imported only now, after the env files: on import, @prisma/client loads `server/.env` by
+// itself, and dotenv never overrides — a static import would let that file win.
+const { PrismaClient } = await import('@prisma/client')
 
 /**
  * Local test accounts (docs/DEV_CREDS.md). Runs on every `pnpm install` through
@@ -18,7 +24,7 @@ import 'dotenv/config'
  */
 const prisma = new PrismaClient()
 
-const PASSWORD = 'rezyume-dev-1234'
+const PASSWORD = 'cv-builder-dev-1234'
 
 type Fixture = { title: string; content: unknown; design: unknown }
 type FixtureKey = 'paidModern' | 'unpaidCreative' | 'blankClassic' | 'longTimeline'
@@ -31,17 +37,17 @@ type SeedUser = { email: string; fullName: string; cvs: { fixture: FixtureKey; p
 
 const USERS: SeedUser[] = [
   // A brand-new account: empty dashboard, first-run experience.
-  { email: 'demo@rezyume.local', fullName: 'Արամ Պետրոսյան', cvs: [] },
+  { email: 'demo@cv-builder.local', fullName: 'Արամ Պետրոսյան', cvs: [] },
   // A returning customer: one paid CV (downloadable), one unpaid (checkout), one blank.
   {
-    email: 'ani@rezyume.local',
+    email: 'ani@cv-builder.local',
     fullName: 'Անի Հովհաննիսյան',
     cvs: [{ fixture: 'paidModern', paid: true }, { fixture: 'unpaidCreative' }, { fixture: 'blankClassic' }],
   },
   // A long, two-page CV, for pagination and the page-break guides.
-  { email: 'gor@rezyume.local', fullName: 'Գոռ Մարտիրոսյան', cvs: [{ fixture: 'longTimeline' }] },
+  { email: 'gor@cv-builder.local', fullName: 'Գոռ Մարտիրոսյան', cvs: [{ fixture: 'longTimeline' }] },
   // Every CV paid: the "already paid" paths (download straight away, checkout refused).
-  { email: 'paid@rezyume.local', fullName: 'Լիլիթ Սարգսյան', cvs: [{ fixture: 'paidModern', paid: true }] },
+  { email: 'paid@cv-builder.local', fullName: 'Լիլիթ Սարգսյան', cvs: [{ fixture: 'paidModern', paid: true }] },
 ]
 
 const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue

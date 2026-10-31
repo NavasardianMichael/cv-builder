@@ -17,8 +17,8 @@ export const BrandMark: FC<{ className?: string }> = ({ className }) => (
 )
 
 export const BrandLogo: FC<{ className?: string }> = ({ className }) => (
-  <Link href={ROUTES.home} className={cn('flex items-center gap-2 no-underline', className)} aria-label={APP_NAME}>
-    <BrandMark />
-    <span className='font-display text-xl font-extrabold tracking-tight text-ink'>{APP_NAME}</span>
+  <Link href={ROUTES.home} className={cn('flex min-w-0 items-center gap-2 no-underline', className)} aria-label={APP_NAME}>
+    <BrandMark className='shrink-0' />
+    <span className='truncate font-display text-lg font-extrabold tracking-tight text-ink sm:text-xl'>{APP_NAME}</span>
   </Link>
 )

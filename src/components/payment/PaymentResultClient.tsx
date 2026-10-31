@@ -72,7 +72,7 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
       <div className='text-6xl' aria-hidden='true'>
         {view.icon}
       </div>
-      <h1 className='mt-6 font-display text-3xl font-extrabold text-ink'>{view.title}</h1>
+      <h1 className='mt-6 font-display text-title font-extrabold text-ink sm:text-3xl'>{view.title}</h1>
       <p className='mt-3 text-lg text-muted'>{view.text}</p>
       {isResolved && !user && cv && effective === 'succeeded' && (
         <Alert

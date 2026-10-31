@@ -36,7 +36,7 @@ unless they sign in, which the warning also offers. Going ahead:
 
 1. `POST /cvs` without a session turns the local draft into a server CV owned by the
    browser's **guest key** (`server/src/lib/guest.ts`): a random secret in the httpOnly
-   `rezyume_guest` cookie (400 days, renewed on use), stored only as `Cv.guestKeyHash`. A CV
+   `cv-builder-guest` cookie (400 days, renewed on use), stored only as `Cv.guestKeyHash`. A CV
    has exactly one owner, account or guest key (a CHECK constraint). The editor carries on
    with the new id in place, and the local draft is cleared.
 2. Checkout, the bank and the result page are the normal flow; every `/cvs` route accepts

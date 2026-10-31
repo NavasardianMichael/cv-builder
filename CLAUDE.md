@@ -1,4 +1,4 @@
-# Ռեզյումե (Rezyume)
+# cv-builder (Ինքնակենսագրական)
 
 An Armenian-only CV builder. Users pick one of 12 templates, edit the CV **in place** (text,
 colours, backgrounds and fonts per section), and pay once per CV (2,000 ֏) to download its
@@ -19,9 +19,11 @@ pnpm dev            # web :7009 + api :9009
 pnpm verify         # typecheck → typecheck:server → lint → test → build — run before calling anything done
 pnpm test           # vitest (tests/unit)
 pnpm fonts:css      # public/fonts/manifest.json -> public/fonts/cv-fonts.css
+pnpm build:api      # server/dist -> out/api, the standalone API release the deploy ships
+pnpm env:base64 production | clip   # server/.env.production.local -> the ENV_API_BASE64 secret
 ```
 
-Seeded test accounts (all `rezyume-dev-1234`): `docs/DEV_CREDS.md`. In dev `PAYMENT_GATEWAY=mock`: the
+Seeded test accounts (all `cv-builder-dev-1234`): `docs/DEV_CREDS.md`. In dev `PAYMENT_GATEWAY=mock`: the
 checkout opens a fake bank page served by the API with Pay / Decline buttons.
 
 The API's `dev` script is `node --watch-path=src --import tsx`, **not** `tsx watch`: under
@@ -51,6 +53,7 @@ mock bank's in-memory payments).
 | Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` |
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` |
+| CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
 | SEO / GEO | `src/helpers/metadata.ts`, `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
 | Copy | `src/messages/hy.json` (UI) · `src/constants/legal.ts` (draft legal pages) |
 | App design tokens | `src/styles/tokens.ts` → `theme.ts` → `globals.css` |

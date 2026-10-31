@@ -1,4 +1,4 @@
-# Ռեզյումե — Armenian CV builder
+# cv-builder — Armenian CV builder (Ինքնակենսագրական)
 
 Build an Armenian CV in the browser: 12 templates, 20 Armenian fonts, every text, colour,
 background and font editable in place. Building is free; downloading a CV's PDF is a one-time
@@ -16,7 +16,7 @@ pnpm dev        # http://localhost:7009 (web) · :9009 (api)
 
 Run `pnpm install` again after pulling: it applies any new migrations.
 
-Sign in with a seeded test account (`docs/DEV_CREDS.md`, password `rezyume-dev-1234`), or build as a guest. Payments use a
+Sign in with a seeded test account (`docs/DEV_CREDS.md`, password `cv-builder-dev-1234`), or build as a guest. Payments use a
 mock bank in dev — the checkout shows a fake page with **Վճարել** / **Մերժել**.
 
 `pnpm verify` runs typecheck, lint, tests and the production build.

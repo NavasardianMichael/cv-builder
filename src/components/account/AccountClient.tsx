@@ -49,7 +49,7 @@ export const AccountClient: FC = () => {
 
   return (
     <div className='mx-auto flex max-w-2xl flex-col gap-6 px-4 py-12'>
-      <h1 className='m-0 font-display text-3xl font-extrabold text-ink'>{t('title')}</h1>
+      <h1 className='m-0 font-display text-title font-extrabold text-ink sm:text-3xl'>{t('title')}</h1>
 
       <Card title={t('profile')}>
         <Form

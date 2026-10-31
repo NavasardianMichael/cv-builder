@@ -14,8 +14,8 @@ export const TemplateShowcase: FC = async () => {
   return (
     <section className='mx-auto max-w-7xl px-4 py-20 md:px-6' aria-labelledby='showcase-title'>
       <div className='flex flex-wrap items-end justify-between gap-6'>
-        <div className='max-w-2xl'>
-          <h2 id='showcase-title' className='text-balance font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>
+        <div className='max-w-2xl min-w-0 flex-1 basis-md'>
+          <h2 id='showcase-title' className='text-balance font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>
             {t('templatesTitle')}
           </h2>
           <p className='mt-4 text-lg text-muted'>{t('templatesSubtitle')}</p>
@@ -24,7 +24,7 @@ export const TemplateShowcase: FC = async () => {
           {t('templatesAll')} <ArrowRightOutlined />
         </Link>
       </div>
-      <div className='mt-12 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3'>
+      <div className='mt-12 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 md:grid-cols-3'>
         {FEATURED.map((id) => (
           <TemplateCard key={id} template={TEMPLATES[id]} />
         ))}

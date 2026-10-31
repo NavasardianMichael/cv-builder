@@ -1,5 +1,5 @@
 {
-  "name": "rezyume",
+  "name": "cv-builder",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.28.2",
@@ -14,7 +14,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint-fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "typecheck:server": "pnpm --filter rezyume-server exec tsc --noEmit",
+    "typecheck:server": "pnpm --filter cv-builder-server exec tsc --noEmit",
     "fonts:css": "node scripts/fonts/build-css.mjs",
     "verify": "pnpm typecheck && pnpm typecheck:server && pnpm lint && pnpm test && pnpm build",
     "test": "vitest run",
@@ -23,10 +23,12 @@
     "prepare": "husky",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "db:migrate": "pnpm --filter rezyume-server run db:deploy",
-    "db:seed": "pnpm --filter rezyume-server run db:seed",
+    "db:migrate": "pnpm --filter cv-builder-server run db:deploy",
+    "db:seed": "pnpm --filter cv-builder-server run db:seed",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
-    "server:dev": "pnpm --filter rezyume-server dev"
+    "server:dev": "pnpm --filter cv-builder-server dev",
+    "build:api": "pnpm --filter cv-builder-server build && node scripts/build-api-release.mjs",
+    "env:base64": "node scripts/env-to-base64.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",

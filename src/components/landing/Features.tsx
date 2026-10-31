@@ -23,7 +23,7 @@ export const Features: FC = async () => {
   return (
     <section className='mx-auto max-w-7xl px-4 py-20 md:px-6' aria-labelledby='features-title'>
       <div className='mx-auto max-w-2xl text-center'>
-        <h2 id='features-title' className='text-balance font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl'>
+        <h2 id='features-title' className='text-balance font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>
           {t('featuresTitle')}
         </h2>
         <p className='mt-4 text-lg text-muted'>{t('featuresSubtitle')}</p>
