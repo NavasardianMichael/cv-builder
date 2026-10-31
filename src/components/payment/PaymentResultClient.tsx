@@ -1,7 +1,7 @@
 'use client'
 
 import { type FC, useEffect, useState } from 'react'
-import { CheckCircleFilled, ClockCircleFilled, CloseCircleFilled, DownloadOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, CheckCircleFilled, ClockCircleFilled, CloseCircleFilled, DownloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Spin } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -107,7 +107,7 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
           </Link>
         )}
         <Link href={ROUTES.dashboard}>
-          <Button size='large' type='text'>
+          <Button size='large' type='text' icon={<ArrowLeftOutlined />}>
             {t('toDashboard')}
           </Button>
         </Link>

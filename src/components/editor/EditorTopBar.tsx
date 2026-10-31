@@ -15,7 +15,7 @@ import {
   ZoomInOutlined,
   ZoomOutOutlined,
 } from '@ant-design/icons'
-import { Button, Input, Tag, Tooltip } from 'antd'
+import { Button, Input, Tooltip } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
@@ -23,6 +23,7 @@ import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { ROUTES } from '@constants/routes'
 import { BrandMark } from '@components/layout/BrandLogo'
+import { PaidBadge } from '@components/ui/PaidBadge'
 import { DownloadButton } from './download/DownloadButton'
 
 type Props = {
@@ -96,11 +97,7 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
         maxLength={120}
         onChange={(event) => setTitle(event.target.value)}
       />
-      {paidAt && (
-        <Tag color='success' className='hidden md:inline-block'>
-          {tCommon('paid')}
-        </Tag>
-      )}
+      {paidAt && <PaidBadge className='hidden md:inline-flex' />}
       <div className='hidden md:block'>
         <SaveIndicator />
       </div>
