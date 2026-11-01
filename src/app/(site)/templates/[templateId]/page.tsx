@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: t('detailTitle', { name: template.name }),
     description: t('detailDescription', { name: template.name, tagline: template.tagline }),
     path: templatePath(templateId),
+    ownImage: true,
   })
 }
 

@@ -46,9 +46,10 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | Templates (names, layouts, default palettes/fonts) | `src/constants/templates.ts` |
 | Template markup | `src/components/cv/templates/*.tsx`, composed from `src/components/cv/blocks/` |
 | Template styling | `src/components/cv/cv.css` — reads only `--cv-*` variables (`src/helpers/cvStyle.ts`) |
-| Fonts (20, self-hosted) | `src/constants/fonts.ts` · files in `public/fonts/` · provenance `public/fonts/LICENSES.md` · rebuild `scripts/fonts/` |
+| Fonts (40, self-hosted, all from fonter.am) | `src/constants/fonts.ts` · files in `public/fonts/` · provenance `public/fonts/LICENSES.md` · rebuild `scripts/fonts/` |
 | Section types, default titles, level words | `src/constants/sections.ts` |
 | In-place editing | `src/components/cv/Editable.tsx` + `CvEditContext.tsx`; the editor's controls in `src/components/editor/` |
+| Phones & tablets (< `lg`) | `EditorBottomBar` opens panels as a bottom sheet (`EditorShell`); `panels/ContentPanel` is the CV's text as a form; `EditorCanvas` pinches its own zoom and, below 65%, turns taps into "open this block in the form"; touch rules under `@media (hover: none)` in `cv.css`; `(editor)/layout.tsx` stops page zoom |
 | Editor state, undo/redo | `src/store/cvs/single/store.ts` · autosave `src/components/editor/useAutosave.ts` |
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
 | Buying without an account | `server/src/lib/guest.ts` (guest-key cookie) · `services/guestCvs.ts` (moved to the account on sign-in) · `CheckoutModal` · `docs/PAYMENTS.md` |
@@ -58,6 +59,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` |
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
 | SEO / GEO | `src/helpers/metadata.ts`, `src/constants/seo.ts` (hy/en/ru keywords, verification tags), `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
+| Share cards (OpenGraph / X) | `src/app/socialCard.tsx` draws them; `app/opengraph-image.tsx` (site) and `templates/[templateId]/{opengraph,twitter}-image.tsx` (per template). `pageMetadata` names the site image on every page — a page's own `openGraph` would otherwise drop it — except with `ownImage: true` |
 | Error reporting, analytics | Sentry (web only): `src/helpers/sentry.ts`, `src/instrumentation{,-client}.ts`, `reportError` · GA4: `src/helpers/analytics.ts` (`trackEvent`), `components/analytics/Analytics.tsx` · both off while their `NEXT_PUBLIC_*` is empty, never on `/render` |
 | Copy | `src/messages/hy.json` (UI) · `src/constants/legal.ts` (draft legal pages) |
 | App design tokens | `src/styles/tokens.ts` → `theme.ts` → `globals.css` |
