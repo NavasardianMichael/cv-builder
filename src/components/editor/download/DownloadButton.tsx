@@ -2,12 +2,13 @@
 
 import { type FC, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { Button, Tooltip } from 'antd'
+import { Button } from 'antd'
 import { useTranslations } from 'next-intl'
 import type { PdfVariant } from '@api/cvs/types'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
+import { HintTooltip } from '@components/ui/HintTooltip'
 import { CheckoutModal } from './CheckoutModal'
 import { SignInToDownloadModal } from './SignInToDownloadModal'
 import { flushSave } from '../useAutosave'
@@ -51,7 +52,7 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
 
   return (
     <>
-      <Tooltip title={t('button')}>
+      <HintTooltip title={t('button')}>
         <Button
           type='primary'
           icon={<DownloadOutlined />}
@@ -60,7 +61,7 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
           aria-label={t('button')}
           className='bg-accent hover:bg-accent-strong'
         />
-      </Tooltip>
+      </HintTooltip>
       {cvId && <SignInToDownloadModal cvId={cvId} open={modal === 'signIn'} onClose={() => setModal(null)} />}
       <CheckoutModal
         open={modal === 'checkout'}

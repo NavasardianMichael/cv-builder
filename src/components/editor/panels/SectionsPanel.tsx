@@ -2,13 +2,14 @@
 
 import { type FC, memo } from 'react'
 import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, EyeInvisibleOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Dropdown, Popconfirm, Segmented, Tooltip } from 'antd'
+import { Button, Dropdown, Popconfirm, Segmented } from 'antd'
 import { useTranslations } from 'next-intl'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import type { SectionColumn } from '@store/cvs/single/types'
 import { CV_LIMITS, SECTION_DEFAULT_TITLES, SECTION_META, SECTION_TYPES, type SectionType } from '@constants/sections'
 import { cn } from '@helpers/cn'
 import { hasColumns } from '@helpers/cvStyle'
+import { HintTooltip } from '@components/ui/HintTooltip'
 
 type RowProps = {
   id: string
@@ -37,30 +38,28 @@ const SectionRowComponent: FC<RowProps> = ({ id, label, title, hidden, column, i
     <li className={cn('rounded-xl border border-line bg-surface p-2.5', hidden && 'opacity-60')}>
       <div className='flex items-center gap-1'>
         <span className='min-w-0 flex-1 truncate text-sm font-medium'>{label}</span>
-        <Button size='small' type='text' icon={<ArrowUpOutlined />} aria-label={t('block.moveUp')} disabled={isFirst} onClick={() => moveSection(id, -1)} />
+        <Button type='text' icon={<ArrowUpOutlined />} aria-label={t('block.moveUp')} disabled={isFirst} onClick={() => moveSection(id, -1)} />
         <Button
-          size='small'
           type='text'
           icon={<ArrowDownOutlined />}
           aria-label={t('block.moveDown')}
           disabled={isLast}
           onClick={() => moveSection(id, 1)}
         />
-        <Tooltip title={hidden ? t('sections.show') : t('sections.hide')}>
+        <HintTooltip title={hidden ? t('sections.show') : t('sections.hide')}>
           <Button
-            size='small'
             type='text'
             icon={hidden ? <EyeInvisibleOutlined /> : <EyeOutlined />}
             aria-label={hidden ? t('sections.show') : t('sections.hide')}
             onClick={() => toggleSectionHidden(id)}
           />
-        </Tooltip>
+        </HintTooltip>
         <Popconfirm
           title={t('block.deleteConfirm', { title: title || '…' })}
           okButtonProps={{ danger: true }}
           onConfirm={() => removeSection(id)}
         >
-          <Button size='small' type='text' danger icon={<DeleteOutlined />} aria-label={t('block.delete')} />
+          <Button type='text' danger icon={<DeleteOutlined />} aria-label={t('block.delete')} />
         </Popconfirm>
       </div>
       {columns && (
@@ -101,7 +100,7 @@ const AddSectionComponent: FC<{ addable: string; disabled: boolean }> = ({ addab
   )
 }
 
-const AddSection = memo(AddSectionComponent)
+export const AddSection = memo(AddSectionComponent)
 
 /** Order, visibility, column and the add-section menu. Content is edited on the CV itself. */
 export const SectionsPanel: FC = () => {

@@ -2,7 +2,12 @@
 
 import { type FC, memo } from 'react'
 import type { CvDesign, CvEntry, CvLevelStyle, CvSection, CvTag } from '@store/cvs/single/types'
-import { SECTION_META } from '@constants/sections'
+import {
+  DEFAULT_ENTRY_PLACEHOLDERS,
+  ENTRY_FIELD_PLACEHOLDERS,
+  ENTRY_PLACEHOLDERS,
+  SECTION_META,
+} from '@constants/sections'
 import { cn } from '@helpers/cn'
 import { blockStyleVars, sectionHasContent } from '@helpers/cvStyle'
 import { toWebsiteUrl } from '@helpers/url'
@@ -59,6 +64,7 @@ const SectionBlockComponent: FC<SectionProps & { index: number; count: number }>
         section.hidden && 'is-hidden'
       )}
       style={blockStyleVars(section.style)}
+      data-block={edit ? section.id : undefined}
     >
       {edit?.sectionToolbar(section, index, count)}
       <Editable
@@ -94,18 +100,6 @@ const TextBody: FC<{ section: CvSection }> = ({ section }) => {
     />
   )
 }
-
-const ENTRY_PLACEHOLDERS: Partial<Record<CvSection['type'], { title: string; subtitle: string }>> = {
-  experience: { title: 'Պաշտոն', subtitle: 'Ընկերություն' },
-  education: { title: 'Մասնագիտություն, աստիճան', subtitle: 'Ուսումնական հաստատություն' },
-  projects: { title: 'Նախագծի անվանում', subtitle: 'Դեր կամ տեխնոլոգիաներ' },
-  certificates: { title: 'Վկայական կամ դասընթաց', subtitle: 'Կազմակերպիչ' },
-  awards: { title: 'Մրցանակ', subtitle: 'Շնորհող կազմակերպություն' },
-  volunteering: { title: 'Դեր', subtitle: 'Կազմակերպություն' },
-  references: { title: 'Անուն Ազգանուն', subtitle: 'Պաշտոն, կոնտակտ' },
-}
-
-const DEFAULT_ENTRY_PLACEHOLDERS = { title: 'Վերնագիր', subtitle: 'Ենթավերնագիր' }
 
 const EntryList: FC<{ section: CvSection }> = ({ section }) => {
   const edit = useCvEdit()
@@ -145,11 +139,11 @@ const EntryItemComponent: FC<EntryItemProps> = ({ sectionId, entry, index, count
           />
           {toWebsiteUrl(entry.url) && <CvIcon name='link' />}
         </div>
-        <Editable className='cv-entry-period' value={entry.period} placeholder='2020 – այժմ' onChange={set('period')} />
+        <Editable className='cv-entry-period' value={entry.period} placeholder={ENTRY_FIELD_PLACEHOLDERS.period} onChange={set('period')} />
       </div>
       <div className='cv-entry-sub'>
         <Editable className='cv-entry-subtitle' linkify value={entry.subtitle} placeholder={placeholders.subtitle} onChange={set('subtitle')} />
-        <Editable className='cv-entry-location' value={entry.location} placeholder='Քաղաք' onChange={set('location')} />
+        <Editable className='cv-entry-location' value={entry.location} placeholder={ENTRY_FIELD_PLACEHOLDERS.location} onChange={set('location')} />
       </div>
       <Editable
         as='p'
@@ -157,7 +151,7 @@ const EntryItemComponent: FC<EntryItemProps> = ({ sectionId, entry, index, count
         className='cv-entry-description'
         linkify
         value={entry.description}
-        placeholder='Նկարագրություն․ ձեռքբերումներ, պարտականություններ (• նոր տողից)'
+        placeholder={ENTRY_FIELD_PLACEHOLDERS.description}
         onChange={set('description')}
       />
     </li>
@@ -190,7 +184,7 @@ const TagItemComponent: FC<TagItemProps> = ({ sectionId, type, tag, levelStyle, 
         className='cv-tag-name'
         linkify
         value={tag.name}
-        placeholder='Անվանում'
+        placeholder={ENTRY_FIELD_PLACEHOLDERS.tag}
         onChange={(value) => edit?.actions.setTagName(sectionId, tag.id, value)}
       />
       {SECTION_META[type].levels && tag.level !== null && variant !== 'inline' && (

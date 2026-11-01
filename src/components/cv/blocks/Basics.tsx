@@ -31,6 +31,7 @@ export const BasicsFrame: FC<BasicsProps & { className?: string; children: React
         className
       )}
       style={blockStyleVars(basics.style)}
+      data-block={edit ? 'basics' : undefined}
     >
       {edit?.basicsToolbar()}
       {children}

@@ -12,8 +12,9 @@ import { reportError } from '@helpers/reportError'
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 
 /**
- * The photo slot in the editor: click to choose and crop, hover to remove. The cropped
- * image is shrunk to a ~50KB JPEG data URL and stored in the document — no upload endpoint.
+ * The photo slot in the editor: click to choose and crop, hover to remove (a touch screen,
+ * which has no hover, always shows the remove button). The cropped image is shrunk to a ~50KB
+ * JPEG data URL and stored in the document — no upload endpoint.
  */
 export const PhotoEditor: FC<{ photo: string | null; initials: string }> = ({ photo, initials }) => {
   const t = useTranslations('Editor.photo')
@@ -77,7 +78,7 @@ export const PhotoEditor: FC<{ photo: string | null; initials: string }> = ({ ph
       {photo && (
         <button
           type='button'
-          className='absolute right-1 bottom-1 hidden size-7 cursor-pointer place-items-center rounded-full border-0 bg-red-500 text-white shadow group-hover:grid'
+          className='absolute right-1 bottom-1 hidden size-7 cursor-pointer place-items-center rounded-full border-0 bg-red-500 text-white shadow group-hover:grid [@media(hover:none)]:grid'
           aria-label={t('remove')}
           title={t('remove')}
           onClick={() => setPhoto(null)}

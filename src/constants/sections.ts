@@ -81,3 +81,27 @@ export const CV_LIMITS = {
 } as const
 
 export const MAX_LEVEL = 5
+
+/**
+ * What an empty entry's fields say, by section type: document copy, like the default titles
+ * (it renders on the sheet). The editor's content form uses the same words as field labels.
+ */
+export const ENTRY_PLACEHOLDERS: Partial<Record<SectionType, { title: string; subtitle: string }>> = {
+  experience: { title: 'Պաշտոն', subtitle: 'Ընկերություն' },
+  education: { title: 'Մասնագիտություն, աստիճան', subtitle: 'Ուսումնական հաստատություն' },
+  projects: { title: 'Նախագծի անվանում', subtitle: 'Դեր կամ տեխնոլոգիաներ' },
+  certificates: { title: 'Վկայական կամ դասընթաց', subtitle: 'Կազմակերպիչ' },
+  awards: { title: 'Մրցանակ', subtitle: 'Շնորհող կազմակերպություն' },
+  volunteering: { title: 'Դեր', subtitle: 'Կազմակերպություն' },
+  references: { title: 'Անուն Ազգանուն', subtitle: 'Պաշտոն, կոնտակտ' },
+}
+
+export const DEFAULT_ENTRY_PLACEHOLDERS = { title: 'Վերնագիր', subtitle: 'Ենթավերնագիր' }
+
+/** The placeholders every entry shares, whatever its section. */
+export const ENTRY_FIELD_PLACEHOLDERS = {
+  period: '2020 – այժմ',
+  location: 'Քաղաք',
+  description: 'Նկարագրություն․ ձեռքբերումներ, պարտականություններ (• նոր տողից)',
+  tag: 'Անվանում',
+} as const

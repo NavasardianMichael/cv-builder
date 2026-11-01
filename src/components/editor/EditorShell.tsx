@@ -9,15 +9,18 @@ import { createCvAPI, getCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
+import { COMPACT_QUERY, useMediaQuery } from '@hooks/useMediaQuery'
 import { CHECKOUT_QUERY, editorPath, newCvPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { DEFAULT_TEMPLATE_ID } from '@constants/templates'
 import { dedupe } from '@helpers/dedupe'
 import { classifyError } from '@helpers/error'
 import { clearLocalDraft, readLocalDraft } from '@helpers/localDraft'
 import { ErrorState } from '@components/ui/ErrorState'
+import { CanvasZoomControl } from './canvas/CanvasZoomControl'
 import { EditorCanvas } from './canvas/EditorCanvas'
+import { EditorBottomBar } from './EditorBottomBar'
 import { EditorTopBar } from './EditorTopBar'
-import { EditorPanel } from './panels/EditorPanel'
+import { EditorPanel, type EditorTab, PanelBody } from './panels/EditorPanel'
 import { Autosave } from './useAutosave'
 import { useEditorShortcuts } from './useEditorShortcuts'
 
@@ -27,6 +30,12 @@ type Props = {
 }
 
 type LoadState = { phase: 'loading' } | { phase: 'importing' } | { phase: 'ready' } | { phase: 'error'; error: unknown }
+
+/** Below this zoom the sheet's text is too small to type into: taps open the content form. */
+const DIRECT_EDIT_ZOOM = 0.65
+
+/** The text form takes most of the screen; the others leave the sheet in view above them. */
+const SHEET_SIZES: Record<EditorTab, string> = { content: '88dvh', templates: '62dvh', design: '62dvh', sections: '62dvh' }
 
 /**
  * Opens one CV for editing.
@@ -50,11 +59,21 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   const [zoom, setZoom] = useState<number | null>(null)
   const [fitZoom, setFitZoom] = useState(1)
   const [pages, setPages] = useState(1)
-  const [panelOpen, setPanelOpen] = useState(false)
+  /** The bottom sheet's panel; kept after closing, so it does not empty while sliding away. */
+  const [sheet, setSheet] = useState<{ tab: EditorTab; focusBlock: string | null }>({ tab: 'content', focusBlock: null })
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const selectBlock = useCvEditorStore.use.selectBlock()
+  const compact = useMediaQuery(COMPACT_QUERY)
+  const tapToEdit = compact && (zoom ?? fitZoom) < DIRECT_EDIT_ZOOM
+  const tSheet = useTranslations('Editor.tabs')
 
   useEditorShortcuts()
+
+  const openSheet = (tab: EditorTab, focusBlock: string | null = null) => {
+    setSheet({ tab, focusBlock })
+    setSheetOpen(true)
+  }
 
   const load = useCallback(async () => {
     if (cvId === DRAFT_ID) {
@@ -134,7 +153,6 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
         fitZoom={fitZoom}
         pages={pages}
         onZoomChange={setZoom}
-        onOpenPanel={() => setPanelOpen(true)}
         autoCheckout={autoCheckout}
         previewing={previewing}
         onPreviewChange={(next) => {
@@ -143,11 +161,11 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
         }}
       />
       {!user && openCvId && (
-        <div className='flex shrink-0 items-center justify-center gap-3 bg-accent-soft px-4 py-1.5 text-center text-xs'>
+        <div className='flex shrink-0 items-center justify-center gap-3 bg-accent-soft px-3 py-1 text-center text-[11px] leading-snug sm:px-4 sm:py-1.5 sm:text-xs'>
           <span>{t(openCvId === DRAFT_ID ? 'guestBanner' : 'guestCvBanner')}</span>
           <Link
             href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(openCvId))}`}
-            className='font-semibold text-ink underline'
+            className='shrink-0 font-semibold text-ink underline'
           >
             {t('guestBannerCta')}
           </Link>
@@ -157,20 +175,46 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
         <aside className='hidden w-90 shrink-0 overflow-y-auto border-r border-line bg-surface lg:block' aria-label={t('panelOpen')}>
           <EditorPanel />
         </aside>
-        <div className='min-w-0 flex-1 overflow-auto bg-[color-mix(in_srgb,var(--brand-ink)_7%,var(--brand-canvas))]'>
-          <EditorCanvas zoom={zoom} previewing={previewing} onPagesChange={setPages} onFitZoomChange={setFitZoom} />
+        <div className='relative flex min-w-0 flex-1'>
+          <EditorCanvas
+            zoom={zoom}
+            onZoomChange={setZoom}
+            previewing={previewing}
+            onBlockTap={tapToEdit ? (focusBlock) => openSheet('content', focusBlock) : undefined}
+            onPagesChange={setPages}
+            onFitZoomChange={setFitZoom}
+          />
+          {compact && <CanvasZoomControl zoom={zoom} fitZoom={fitZoom} onZoomChange={setZoom} showTapHint={tapToEdit && !previewing} />}
         </div>
       </div>
-      <Drawer
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        placement='left'
-        title={t('panelOpen')}
-        className='lg:hidden'
-        styles={{ body: { padding: 0 } }}
-      >
-        <EditorPanel />
-      </Drawer>
+      <EditorBottomBar
+        openTab={sheetOpen ? sheet.tab : null}
+        onOpenTab={(tab) => openSheet(tab)}
+        previewing={previewing}
+        onPreviewChange={(next) => {
+          if (next) selectBlock(null)
+          setPreviewing(next)
+        }}
+      />
+      {compact && (
+        <Drawer
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          placement='bottom'
+          size={SHEET_SIZES[sheet.tab]}
+          title={tSheet(sheet.tab)}
+          destroyOnHidden
+          styles={{
+            wrapper: { borderRadius: '16px 16px 0 0', overflow: 'hidden' },
+            header: { padding: '12px 16px' },
+            body: { padding: '16px 16px calc(32px + env(safe-area-inset-bottom))' },
+            // A light veil: design and template changes are watched on the sheet above.
+            mask: { background: 'rgba(20, 24, 45, 0.18)' },
+          }}
+        >
+          <PanelBody tab={sheet.tab} focusBlock={sheet.focusBlock} />
+        </Drawer>
+      )}
     </div>
   )
 }

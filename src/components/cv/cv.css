@@ -491,18 +491,40 @@ span.cv-editable {
   text-transform: none;
 }
 
+/*
+ * The canvas is the A4 sheet scaled to the screen; `--cv-ui-scale` (set by the editor's
+ * canvas, 1/zoom) scales the controls back, so they stay finger- and mouse-sized on a phone
+ * showing the sheet at 45% and do not balloon at 160%. Anchored at the bottom right, where
+ * they meet their block.
+ */
+.cv-toolbar,
+.cv-item-toolbar,
+.cv-tag-remove {
+  --cv-ui: var(--cv-ui-scale, 1);
+}
+
+@media (pointer: coarse) {
+  .cv-toolbar,
+  .cv-item-toolbar,
+  .cv-tag-remove {
+    --cv-ui: calc(var(--cv-ui-scale, 1) * 1.25);
+  }
+}
+
 .cv-toolbar {
   top: 6px;
   right: -4px;
   padding-bottom: 10px;
-  transform: translateY(-100%);
+  transform: translateY(-100%) scale(var(--cv-ui));
+  transform-origin: right bottom;
 }
 
 .cv-item-toolbar {
   top: 6px;
   right: 0;
   padding-bottom: 8px;
-  transform: translateY(-100%);
+  transform: translateY(-100%) scale(var(--cv-ui));
+  transform-origin: right bottom;
   z-index: 21;
 }
 
@@ -533,7 +555,7 @@ span.cv-editable {
   place-items: center;
   visibility: hidden;
   opacity: 0;
-  transform: translate(45%, -45%);
+  transform: translate(45%, -45%) scale(var(--cv-ui));
   transition:
     opacity 0.12s ease 0.2s,
     visibility 0s linear 0.32s;
@@ -558,6 +580,58 @@ span.cv-editable {
 .cv-add-item:focus-visible,
 .cv-add-item[aria-expanded='true'] {
   opacity: 1;
+}
+
+/*
+ * A touch screen has no hover: a tap on a text focuses it, and that reveals its block's and
+ * its item's controls instead. The add buttons stay faintly visible, since nothing would
+ * otherwise tell a finger that they are there.
+ */
+@media (hover: none) {
+  .cv-block-editable:focus-within > .cv-toolbar,
+  .cv-item-editable:focus-within > .cv-item-toolbar,
+  .cv-item-editable:focus-within > .cv-tag-remove {
+    z-index: 30;
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 0s;
+  }
+
+  .cv-block-editable:focus-within {
+    outline: 1px dashed color-mix(in srgb, var(--cv-accent) 55%, transparent);
+    outline-offset: 4px;
+  }
+
+  /* Only the innermost toolbar: an entry's would otherwise sit on top of its section's.
+     (Outranks the hover rule above, which a tap also triggers.) */
+  .cv-block-editable:focus-within:has(.cv-item-editable:focus-within) > .cv-toolbar {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  /* At the left, where the text starts: a phone zoomed in to type shows a block's start, and
+     its right edge is often off-screen. */
+  .cv-toolbar,
+  .cv-item-toolbar {
+    right: auto;
+    left: 0;
+    transform-origin: left bottom;
+  }
+
+  .cv-add-item {
+    opacity: 0.55;
+  }
+
+  .cv-block-editable:focus-within .cv-add-item,
+  .cv-contacts:focus-within .cv-add-item {
+    opacity: 1;
+  }
+}
+
+/* While a tap opens the content form instead (a phone, zoomed out), the sheet's own buttons
+   cannot be reached, so they are not shown either. */
+.cv-canvas-tap .cv-add-item {
+  visibility: hidden;
 }
 
 /* ═══ Templates ═════════════════════════════════════════════════════════════ */

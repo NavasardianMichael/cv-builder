@@ -10,19 +10,20 @@ import {
   EyeOutlined,
   LaptopOutlined,
   RedoOutlined,
-  SettingOutlined,
   UndoOutlined,
   ZoomInOutlined,
   ZoomOutOutlined,
 } from '@ant-design/icons'
-import { Button, Input, Tooltip } from 'antd'
+import { Button, Input } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { ROUTES } from '@constants/routes'
+import { stepZoom } from '@helpers/canvasZoom'
 import { BrandMark } from '@components/layout/BrandLogo'
+import { HintTooltip } from '@components/ui/HintTooltip'
 import { PaidBadge } from '@components/ui/PaidBadge'
 import { DownloadButton } from './download/DownloadButton'
 
@@ -31,14 +32,12 @@ type Props = {
   fitZoom: number
   pages: number
   onZoomChange: (zoom: number | null) => void
-  onOpenPanel: () => void
   autoCheckout: boolean
   previewing: boolean
   onPreviewChange: (previewing: boolean) => void
 }
 
-const ZOOM_STEP = 0.1
-
+/** The save state; under `md` the icon alone, its words left to screen readers. */
 const SaveIndicator: FC = () => {
   const t = useTranslations('Editor.status')
   const status = useCvEditorStore.use.saveStatus()
@@ -46,27 +45,27 @@ const SaveIndicator: FC = () => {
 
   if (status === 'error') {
     return (
-      <span className='flex items-center gap-1.5 text-xs text-danger'>
-        <ExclamationCircleFilled /> {t('error')}
+      <span className='flex shrink-0 items-center gap-1.5 text-xs text-danger' title={t('error')}>
+        <ExclamationCircleFilled /> <span className='sr-only md:not-sr-only'>{t('error')}</span>
       </span>
     )
   }
   if (status === 'saved') {
     return (
-      <span className='flex items-center gap-1.5 text-xs text-muted'>
+      <span className='flex shrink-0 items-center gap-1.5 text-xs text-muted' title={isDraft ? t('local') : t('saved')}>
         {isDraft ? <LaptopOutlined /> : <CheckCircleFilled className='text-success' />}
-        {isDraft ? t('local') : t('saved')}
+        <span className='sr-only md:not-sr-only'>{isDraft ? t('local') : t('saved')}</span>
       </span>
     )
   }
   return (
-    <span className='flex items-center gap-1.5 text-xs text-muted'>
-      <CloudSyncOutlined spin={status === 'saving'} /> {t(status)}
+    <span className='flex shrink-0 items-center gap-1.5 text-xs text-muted' title={t(status)}>
+      <CloudSyncOutlined spin={status === 'saving'} /> <span className='sr-only md:not-sr-only'>{t(status)}</span>
     </span>
   )
 }
 
-export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, onOpenPanel, autoCheckout, previewing, onPreviewChange }) => {
+export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, autoCheckout, previewing, onPreviewChange }) => {
   const t = useTranslations('Editor')
   const tCommon = useTranslations('Common')
   // Narrow selectors: this bar must not re-render on every keystroke in the CV.
@@ -80,7 +79,7 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
   const user = useAuthStore.use.user()
 
   const current = zoom ?? fitZoom
-  const step = (direction: 1 | -1) => onZoomChange(Math.min(1.6, Math.max(0.4, Math.round((current + direction * ZOOM_STEP) * 10) / 10)))
+  const step = (direction: 1 | -1) => onZoomChange(stepZoom(current, direction))
 
   return (
     <header className='flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:px-3'>
@@ -90,7 +89,7 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
       </Link>
       <Input
         variant='borderless'
-        className='max-w-56 min-w-0 font-semibold'
+        className='max-w-56 min-w-0 flex-1 px-1 font-semibold sm:px-2.5'
         value={title ?? ''}
         placeholder={t('untitled')}
         aria-label={t('titleLabel')}
@@ -98,17 +97,15 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
         onChange={(event) => setTitle(event.target.value)}
       />
       {paidAt && <PaidBadge className='hidden md:inline-flex' />}
-      <div className='hidden md:block'>
-        <SaveIndicator />
-      </div>
+      <SaveIndicator />
 
-      <div className='ml-auto flex items-center gap-1'>
-        <Tooltip title={t('undo')}>
+      <div className='ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1'>
+        <HintTooltip title={t('undo')}>
           <Button type='text' icon={<UndoOutlined />} disabled={!canUndo} onClick={undo} aria-label={t('undo')} />
-        </Tooltip>
-        <Tooltip title={t('redo')}>
+        </HintTooltip>
+        <HintTooltip title={t('redo')}>
           <Button type='text' icon={<RedoOutlined />} disabled={!canRedo} onClick={redo} aria-label={t('redo')} />
-        </Tooltip>
+        </HintTooltip>
         <div className='mx-1 hidden items-center gap-0.5 rounded-lg bg-canvas px-1 lg:flex'>
           <Button type='text' size='small' icon={<ZoomOutOutlined />} onClick={() => step(-1)} aria-label={t('zoomOut')} />
           <button
@@ -122,16 +119,19 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, on
           <Button type='text' size='small' icon={<ZoomInOutlined />} onClick={() => step(1)} aria-label={t('zoomIn')} />
         </div>
         <span className='mr-1 hidden text-xs text-muted xl:inline'>{t('pages', { count: pages })}</span>
-        <Tooltip title={previewing ? t('previewExitHint') : t('previewHint')}>
-          <Button
-            type={previewing ? 'primary' : 'default'}
-            icon={previewing ? <EditOutlined /> : <EyeOutlined />}
-            aria-pressed={previewing}
-            aria-label={previewing ? t('previewExit') : t('preview')}
-            onClick={() => onPreviewChange(!previewing)}
-          />
-        </Tooltip>
-        <Button className='lg:hidden' icon={<SettingOutlined />} onClick={onOpenPanel} aria-label={t('panelOpen')} />
+        {/* Phones and tablets switch preview from the bottom bar. A wrapper hides it: antd's
+            own `display` on the button outranks a utility class. */}
+        <span className='hidden lg:flex'>
+          <HintTooltip title={previewing ? t('previewExitHint') : t('previewHint')}>
+            <Button
+              type={previewing ? 'primary' : 'default'}
+              icon={previewing ? <EditOutlined /> : <EyeOutlined />}
+              aria-pressed={previewing}
+              aria-label={previewing ? t('previewExit') : t('preview')}
+              onClick={() => onPreviewChange(!previewing)}
+            />
+          </HintTooltip>
+        </span>
         <DownloadButton autoOpen={autoCheckout} />
       </div>
     </header>
