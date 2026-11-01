@@ -1,5 +1,6 @@
 import type { BreadcrumbList, FAQPage, ItemList, Organization, WebApplication, WebSite, WithContext } from 'schema-dts'
 import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN, LOCALE, SUPPORT_EMAIL } from '@constants/app'
+import { FONT_SLUGS } from '@constants/fonts'
 import { CURRENCY, CV_PRICE_AMD } from '@constants/pricing'
 import { templatePath } from '@constants/routes'
 import { ALTERNATE_NAMES, SEARCH_KEYWORDS } from '@constants/seo'
@@ -54,7 +55,7 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
   publisher: { '@id': ORGANIZATION_ID },
   featureList: [
     `${TEMPLATE_LIST.length} ինքնակենսագրականի ձևանմուշ`,
-    '20 հայերեն տառատեսակ',
+    `${FONT_SLUGS.length} հայերեն տառատեսակ`,
     'Խմբագրում անմիջապես ինքնակենսագրականի վրա',
     'Գույնի, ֆոնի և տառատեսակի կարգավորում ամեն բաժնի համար',
     'PDF ներբեռնում ներկառուցված տառատեսակներով',

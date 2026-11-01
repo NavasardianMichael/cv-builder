@@ -1,6 +1,6 @@
 # cv-builder — Armenian CV builder (Ինքնակենսագրական)
 
-Build an Armenian CV in the browser: 12 templates, 20 Armenian fonts, every text, colour,
+Build an Armenian CV in the browser: 22 templates, 40 Armenian fonts, every text, colour,
 background and font editable in place. Building is free; downloading a CV's PDF is a one-time
 2,000 ֏ payment (Ameriabank vPOS), after which that CV is the user's forever.
 

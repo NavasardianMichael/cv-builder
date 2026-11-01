@@ -1,9 +1,10 @@
 import type { CSSProperties, FC } from 'react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { FONT_SLUGS } from '@constants/fonts'
 import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
 import { newCvPath, ROUTES } from '@constants/routes'
-import { DEFAULT_TEMPLATE_ID, templateDesign,type TemplateId } from '@constants/templates'
+import { DEFAULT_TEMPLATE_ID, TEMPLATE_IDS, templateDesign,type TemplateId } from '@constants/templates'
 import { sampleContent } from '@helpers/cvFactory'
 import { CvPreview } from '@components/cv/CvPreview'
 import { ArrowRightOutlined } from '@components/ui/icons'
@@ -49,8 +50,8 @@ export const Hero: FC = async () => {
           <p className='mt-4 text-sm text-muted'>{t('heroNote')}</p>
           <dl className='mt-10 grid max-w-lg grid-cols-3 gap-4'>
             {[
-              { value: '12', label: t('stats.templates') },
-              { value: '20', label: t('stats.fonts') },
+              { value: String(TEMPLATE_IDS.length), label: t('stats.templates') },
+              { value: String(FONT_SLUGS.length), label: t('stats.fonts') },
               { value: price, label: t('stats.price') },
             ].map((stat) => (
               <div key={stat.label}>
