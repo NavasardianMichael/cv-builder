@@ -1,7 +1,14 @@
 'use client'
 
-import { type FC, useEffect, useState, useSyncExternalStore } from 'react'
-import { MenuOutlined } from '@ant-design/icons'
+import { type FC, type ReactNode, useEffect, useState, useSyncExternalStore } from 'react'
+import {
+  AppstoreOutlined,
+  HomeOutlined,
+  MenuOutlined,
+  PlusOutlined,
+  SnippetsOutlined,
+  WalletOutlined,
+} from '@ant-design/icons'
 import { Button, Drawer } from 'antd'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -13,7 +20,8 @@ import { clearGuestCvsMark, hasGuestCvs } from '@helpers/guestCvs'
 import { AccountMenu } from './AccountMenu'
 import { BrandLogo } from './BrandLogo'
 
-type NavItem = { href: string; label: string }
+/** `icon` shows only in the mobile drawer; the desktop bar stays text. */
+type NavItem = { href: string; label: string; icon: ReactNode }
 
 /** localStorage has no change event within a tab; the flag only changes on a full navigation. */
 const subscribeNever = (): (() => void) => () => undefined
@@ -32,9 +40,9 @@ export const Header: FC = () => {
   }, [user])
 
   const items: NavItem[] = [
-    { href: ROUTES.templates, label: t('templates') },
-    { href: ROUTES.pricing, label: t('pricing') },
-    ...(user || guestCvs ? [{ href: ROUTES.dashboard, label: t('dashboard') }] : []),
+    { href: ROUTES.templates, label: t('templates'), icon: <AppstoreOutlined /> },
+    { href: ROUTES.pricing, label: t('pricing'), icon: <WalletOutlined /> },
+    ...(user || guestCvs ? [{ href: ROUTES.dashboard, label: t('dashboard'), icon: <SnippetsOutlined /> }] : []),
   ]
 
   const isActive = (href: string): boolean => pathname === href || pathname.startsWith(`${href}/`)
@@ -76,18 +84,25 @@ export const Header: FC = () => {
       </div>
       <Drawer open={open} onClose={() => setOpen(false)} placement='right' size='default' title={t('menu')}>
         <nav className='flex flex-col gap-1'>
-          {[{ href: ROUTES.home, label: t('home') }, ...items].map((item) => (
+          {[{ href: ROUTES.home, label: t('home'), icon: <HomeOutlined /> }, ...items].map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className='rounded-lg px-3 py-2.5 text-base font-medium no-underline hover:bg-canvas'
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium no-underline hover:bg-canvas',
+                isActive(item.href) && 'bg-canvas'
+              )}
             >
+              <span className='flex text-lg text-muted' aria-hidden='true'>
+                {item.icon}
+              </span>
               {item.label}
             </Link>
           ))}
           <Link href={ROUTES.templates} onClick={() => setOpen(false)} className='mt-4'>
-            <Button type='primary' block size='large'>
+            <Button type='primary' block size='large' icon={<PlusOutlined />}>
               {t('createCv')}
             </Button>
           </Link>

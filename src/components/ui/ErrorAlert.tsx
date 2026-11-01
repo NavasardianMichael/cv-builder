@@ -30,20 +30,23 @@ export const ErrorAlert: FC<Props> = ({ error, onRetry, className }) => {
     )
   }
 
+  // `className` goes on a wrapper: antd's Alert styles are unlayered and reset `margin`, so a
+  // Tailwind spacing utility (`mb-4`) on the Alert itself would lose.
   return (
-    <Alert
-      type='error'
-      showIcon
-      className={className}
-      title={t(errorCopyKey(classified))}
-      description={description}
-      action={
-        onRetry && classified.retryable ? (
-          <Button size='small' onClick={onRetry}>
-            {tCommon('retry')}
-          </Button>
-        ) : undefined
-      }
-    />
+    <div className={className}>
+      <Alert
+        type='error'
+        showIcon
+        title={t(errorCopyKey(classified))}
+        description={description}
+        action={
+          onRetry && classified.retryable ? (
+            <Button size='small' onClick={onRetry}>
+              {tCommon('retry')}
+            </Button>
+          ) : undefined
+        }
+      />
+    </div>
   )
 }
