@@ -4,9 +4,13 @@ The one-time, app-specific steps to run the CV builder on the server, in order. 
 in place already, so nothing here creates a user or installs them:
 
 - the existing `michael` user, with sudo
-- Node 24, and pnpm in `/home/michael/.local/bin`
-- Docker, with `michael` in the `docker` group: the deploy runs `docker compose` as `michael`,
-  without sudo, to create the database (`groups michael` lists `docker`)
+- an x86-64 server (`uname -m` prints `x86_64`): Puppeteer has no Linux ARM build of Chrome
+- Node 24 at **`/usr/bin/node`** (`command -v node`, `node -v`): both systemd units start that
+  exact path, so a Node installed only through nvm is not enough. pnpm is optional: the
+  deploy installs it into `~/.local/bin` if it cannot find it
+- Docker with the compose plugin (`docker compose version`), and `michael` in the `docker`
+  group: the deploy runs `docker compose` as `michael`, without sudo, to create the database
+  (`groups michael` lists `docker`)
 - nginx and certbot
 
 How the pipeline works is in [DEPLOYMENT.md](DEPLOYMENT.md).
@@ -51,8 +55,9 @@ credentials.
 | A     | `api.cv-builder.eapps.site` | `<SERVER_IPV4>`         | the API, HTTPS only                         |
 | AAAA  | `api.cv-builder.eapps.site` | `<SERVER_IPV6>`         | the API, HTTPS only                         |
 
-The IPv6 address must really reach the server: Let's Encrypt checks over IPv6 first, so a wrong
-AAAA record makes certbot fail. If the zone is on Cloudflare, set every record to **DNS only**.
+The two AAAA records only if the server has a public IPv6 address (`ip -6 addr show scope
+global`); otherwise leave them out. The IPv6 address must really reach the server: Let's
+Encrypt checks over IPv6 first, so a wrong AAAA record makes certbot fail. If the zone is on Cloudflare, set every record to **DNS only**.
 
 ## 2. Chrome's system libraries and sandbox **[SRV]** (once)
 
@@ -83,14 +88,18 @@ libraries before it switches anything over, and if one is missing it stops and n
 Install that one and re-run the deploy.
 
 Then the sandbox. Chrome isolates each page in a sandbox built on user namespaces, which
-Ubuntu 23.10 and newer allow only to programs AppArmor names. Check:
+Ubuntu 23.10 and newer allow only to programs AppArmor names. Ubuntu 22.04 and Debian have no
+such restriction, so there the sandbox needs nothing. Check:
 
 ```bash
 sysctl kernel.apparmor_restrict_unprivileged_userns
 ```
 
-If it prints `= 0`, or `cannot stat`, the restriction is off and the sandbox needs nothing:
-go to step 3. If it prints `= 1`, name Chrome to AppArmor:
+If it prints `cannot stat` (Ubuntu 22.04, Debian) or `= 0`, the restriction is off: skip the
+rest of this step and go to step 3. Do not create the profile below there — its
+`abi <abi/4.0>` line needs AppArmor 4, which 22.04 does not have, so it would not even load.
+
+Only if it prints `= 1` (Ubuntu 23.10 or newer), name Chrome to AppArmor:
 
 ```bash
 sudo nano /etc/apparmor.d/cv-builder-chrome
@@ -102,7 +111,7 @@ Paste this, then save and exit:
 abi <abi/4.0>,
 include <tunables/global>
 
-profile cv-builder-chrome /home/michael/.cache/puppeteer/chrome/linux-*/chrome-linux64/chrome flags=(unconfined) {
+profile cv-builder-chrome /home/michael/.cache/puppeteer/chrome-headless-shell/linux-*/chrome-headless-shell-linux64/chrome-headless-shell flags=(unconfined) {
   userns,
 }
 ```
@@ -113,8 +122,10 @@ And load it:
 sudo apparmor_parser -r /etc/apparmor.d/cv-builder-chrome
 ```
 
-The `*` covers every Chrome version a later Puppeteer upgrade downloads, and the profile can be
-loaded before Chrome is there.
+The path is `chrome-headless-shell`, the lighter build the API prints with, not full Chrome.
+The `*` covers every version a later Puppeteer upgrade downloads, and the profile can be
+loaded before Chrome is there. A host that already has the profile with the older
+`chrome/linux-*/chrome-linux64/chrome` path needs this one pasted over it and loaded again.
 
 If a PDF still fails with "No usable sandbox" in `journalctl -u cv-builder-api`, the fallback is
 to run Chrome without its sandbox: add `PUPPETEER_NO_SANDBOX="true"` in step 6. That is
@@ -164,8 +175,11 @@ The path must be where `systemctl` really is; `command -v systemctl` prints it, 
 sudo -n systemctl restart cv-builder-api
 ```
 
-Before the first deploy that restart fails because the service has nothing to run yet; what
-matters is that sudo does not ask for a password.
+Before the first deploy that restart fails with "Job for cv-builder-api.service failed because
+of unavailable resources or another system error": its working directory (`api/current`) and
+env file (`shared/.env.api`) do not exist until the deploy creates them. That is expected;
+what matters is that sudo does not ask for a password (`sudo: a password is required` means
+the rule does not match).
 
 If a `.service` file changes in the repo later, paste it again, then run
 `sudo systemctl daemon-reload && sudo systemctl restart <that unit>`.
@@ -305,7 +319,8 @@ redeploy (step 9's **Run workflow**).
 
 ## 7. Google consent screen and the bank's pages **[EXT]** (once)
 
-- Google Cloud console → OAuth consent screen: add `eapps.site` to the authorized domains, and
+- Only with Google sign-in (step 6's `GOOGLE_*` filled): Google Cloud console → OAuth consent
+  screen: add `eapps.site` to the authorized domains, and
   `https://cv-builder.eapps.site/privacy` and `/terms` as the privacy-policy and terms links.
 - Ameriabank needs no return address from you: the API builds its BackURL from
   `API_PUBLIC_URL` (`/payments/return/ameria`). The bank does ask for the Terms, Privacy and
@@ -324,6 +339,7 @@ empty, and the build stops with "NEXT_PUBLIC_API_URL is empty").
 | `SSH_HOST`             | `<SERVER_IPV4>`                                          |
 | `SSH_USER`             | `michael`                                                |
 | `SSH_KEY`              | your existing private key (its public half is already in `/home/michael/.ssh/authorized_keys`), BEGIN to END lines |
+| `SSH_PORT`             | only if SSH is not on port 22                            |
 | `APP_DIR`              | `/home/michael/apps/cv-builder`                          |
 | `ENV_API_BASE64`       | output of step 6                                         |
 | `NEXT_PUBLIC_API_URL`  | `https://api.cv-builder.eapps.site`                      |
@@ -355,3 +371,7 @@ curl.exe -sI https://www.cv-builder.eapps.site           # 301 -> https://cv-bui
 
 Then in a browser: make a CV without signing in, download the free black-and-white PDF, sign
 up, and (once the bank is live) buy one.
+
+After a few downloads, see what the API really uses on the server: `systemctl status
+cv-builder-api` (its `Memory:` line counts Node and the Chrome each PDF launches, against the
+unit's `MemoryHigh=512M` / `MemoryMax=768M`).

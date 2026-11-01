@@ -1,4 +1,4 @@
-import puppeteer, { type Browser, type Page } from 'puppeteer'
+import puppeteer, { type Browser } from 'puppeteer'
 import type { CvContent, CvDesign } from './cvDocument.js'
 import { config } from '../config.js'
 
@@ -11,13 +11,17 @@ import { config } from '../config.js'
  * `/render` has no API of its own and no URL that could print someone else's CV. Every
  * request the page makes outside `renderOrigin` is aborted.
  *
- * One browser is shared and relaunched if it dies; `MAX_CONCURRENT` caps the pages printing
- * at once, which is what bounds memory, and `MAX_WAITING` caps the queue behind them.
+ * Every print launches its own browser and closes it, so between downloads Chrome holds no
+ * memory at all, and a crash or leak dies with the one print it happened in. It is
+ * `chrome-headless-shell`, which Puppeteer downloads beside Chrome: the same PDF on about
+ * two-thirds of the memory, and a launch under 100ms — about half a second per download in
+ * all, against a browser kept warm. `MAX_CONCURRENT` caps the browsers alive at once, which
+ * is what bounds memory, and `MAX_WAITING` caps the queue behind them.
  */
 /** `watermark` stamps the free PDF's "made with" link in every page's bottom-right corner. */
 export type RenderDocument = { title: string; content: CvContent; design: CvDesign; watermark: boolean }
 
-const MAX_CONCURRENT = 2
+const MAX_CONCURRENT = 1
 /**
  * Beyond this many waiting, a print is refused (`PdfBusyError`) rather than queued: the free
  * PDF is public, and a script must not be able to stack work in front of paying customers.
@@ -25,28 +29,12 @@ const MAX_CONCURRENT = 2
 const MAX_WAITING = 8
 const NAVIGATION_TIMEOUT_MS = 30_000
 
-let browserPromise: Promise<Browser> | null = null
-
 const launch = (): Promise<Browser> =>
   puppeteer.launch({
-    headless: true,
-    args: config.puppeteerNoSandbox ? ['--no-sandbox', '--disable-setuid-sandbox'] : [],
+    headless: 'shell',
+    // A PDF is drawn as vectors, never on a GPU: this only spares the GPU helper process.
+    args: ['--disable-gpu', ...(config.puppeteerNoSandbox ? ['--no-sandbox', '--disable-setuid-sandbox'] : [])],
   })
-
-const getBrowser = async (): Promise<Browser> => {
-  browserPromise ??= launch().then((browser) => {
-    browser.on('disconnected', () => {
-      browserPromise = null
-    })
-    return browser
-  })
-  try {
-    return await browserPromise
-  } catch (error) {
-    browserPromise = null
-    throw error
-  }
-}
 
 let active = 0
 const waiting: (() => void)[] = []
@@ -71,10 +59,11 @@ const release = (): void => {
 
 export const renderCvPdf = async (cv: RenderDocument): Promise<Uint8Array> => {
   await acquire()
-  let page: Page | null = null
+  let browser: Browser | null = null
 
   try {
-    page = await (await getBrowser()).newPage()
+    browser = await launch()
+    const page = await browser.newPage()
     await page.setRequestInterception(true)
     page.on('request', (request) => {
       const url = request.url()
@@ -92,7 +81,7 @@ export const renderCvPdf = async (cv: RenderDocument): Promise<Uint8Array> => {
 
     return await page.pdf({ printBackground: true, preferCSSPageSize: true })
   } finally {
-    await page?.close().catch(() => undefined)
+    await browser?.close().catch(() => undefined)
     release()
   }
 }

@@ -52,7 +52,10 @@ here, say so in the PR: someone has to re-copy it.
   password; the release does not even contain it.
 - **`shared/.env.api` lives outside the releases** — rotation deletes everything under
   `releases/`.
-- **One API process.** Rate limits, the PDF print queue and the shared Chrome are in-memory
+- **Chrome is launched per print and is `chrome-headless-shell`** (`services/pdf.ts`). The
+  deploy's `ensure_chrome` and the AppArmor profile (PRODUCTION_SETUP.md step 2) must name
+  that binary, and the API unit's `MemoryMax` covers it: same cgroup.
+- **One API process.** Rate limits and the PDF print queue are in-memory
   and per-process; `trust proxy` = 1 assumes exactly one hop.
 - **Ports 7009 / 9009 / 5009** sit beside bookie (7004/9004/5004) and crossword
   (7007/9007/5007) on the same host. Changing one means editing every file listed in

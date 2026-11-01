@@ -446,7 +446,8 @@ jobs:
           # it stops the deploy here, before the symlink moves.
           ensure_chrome() {
             local chrome missing
-            chrome=$(node -e "import('puppeteer').then((p) => console.log(p.default.executablePath()))")
+            # The binary services/pdf.ts launches: chrome-headless-shell, not full Chrome.
+            chrome=$(node -e "import('puppeteer').then((p) => console.log(p.default.executablePath({ headless: 'shell' })))")
             if [ ! -x "$chrome" ]; then
               echo "::error::no Chrome at $chrome — puppeteer's postinstall did not download it"
               return 1

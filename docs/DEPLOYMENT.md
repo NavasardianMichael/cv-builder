@@ -182,8 +182,8 @@ assistants.
   the nginx authenticator. If the zone is on Cloudflare, all three records stay **DNS only**:
   Universal SSL does not cover two-label names like `api.cv-builder…`, and proxying would break
   HTTP-01 renewal.
-- **`/health` green does not mean PDFs work.** Chrome starts on the first print, not at boot —
-  which is why the deploy ends with `check_pdf`. "No usable sandbox" there means the host's
+- **`/health` green does not mean PDFs work.** Chrome starts for each print and exits with it,
+  never at boot — which is why the deploy ends with `check_pdf`. "No usable sandbox" there means the host's
   AppArmor blocks Chrome's sandbox: PRODUCTION_SETUP.md step 2.
 - **The mock bank is refused in production** (`isPaymentConfigured`). Until
   `PAYMENT_GATEWAY=ameria` and its credentials are in `ENV_API_BASE64`, the designed PDF cannot

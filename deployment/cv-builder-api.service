@@ -28,6 +28,12 @@ Restart=always
 RestartSec=2
 KillSignal=SIGTERM
 TimeoutStopSec=30
+# The cgroup holds Node and the headless Chrome each PDF launches (one at a time, ~150MB at
+# its peak), so this bounds both: the host's other apps cannot be starved. Past MemoryHigh the
+# kernel reclaims and throttles; at MemoryMax it kills the largest process — normally Chrome,
+# failing that one print. Check `systemctl status cv-builder-api` before lowering either.
+MemoryHigh=512M
+MemoryMax=768M
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
