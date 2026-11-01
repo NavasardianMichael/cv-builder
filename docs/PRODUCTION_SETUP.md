@@ -268,9 +268,12 @@ Then the outside services:
 - **Google sign-in** (optional; empty hides the button): Google Cloud console → APIs & Services
   → Credentials → Create OAuth client ID → Web application. Authorized redirect URI, exactly:
   `https://api.cv-builder.eapps.site/identity/google/callback`. Scopes: email, profile.
-- **Mail engine** (password-reset links and the contact form): `MAIL_API_URL` and
-  `MAIL_API_KEY` of the engine the app uses (`server/src/lib/mail.ts`). Empty in production,
-  both answer with an error.
+- **Mail engine** (password-reset links and the contact form): `MAIL_API_URL` is the engine's
+  base URL from its [API docs](https://github.com/NavasardianMichael/api-mail-engine/blob/master/API_DOCS.md),
+  bare — no `/mail`, no trailing path (the client appends `/mail/internal/send` itself).
+  `MAIL_API_KEY` is the engine's `API_KEY`, the same one the other apps use
+  (`server/src/lib/mail.ts`). Empty in production, both answer with an error; a wrong value
+  answers the contact form with 502 and logs `[mail] … failed: <status> <reason>`.
 - **Ameriabank vPOS** (paid PDFs): the steps and the test-then-live sequence are in
   [PAYMENTS.md](PAYMENTS.md). Until the bank's credentials are here nobody can pay: the mock
   bank is refused in production. The free black-and-white PDF works without it.
@@ -283,8 +286,8 @@ JWT_SECRET="<session key>"
 CORS_ORIGIN="https://cv-builder.eapps.site"
 API_PUBLIC_URL="https://api.cv-builder.eapps.site"
 
-MAIL_API_URL=""
-MAIL_API_KEY=""
+MAIL_API_URL="https://api-mail-engine.mnavasardian.com"
+MAIL_API_KEY="<the mail engine's API_KEY>"
 
 GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
@@ -345,6 +348,9 @@ empty, and the build stops with "NEXT_PUBLIC_API_URL is empty").
 | `NEXT_PUBLIC_API_URL`  | `https://api.cv-builder.eapps.site`                      |
 | `NEXT_PUBLIC_SITE_URL` | `https://cv-builder.eapps.site` (must equal `CORS_ORIGIN` in step 6) |
 
+Optional ones, for analytics, error tracking and search engines, come from step 10; each one
+left out simply turns its feature off.
+
 A saved secret cannot be viewed again, and logs show it as `***`. To check or fix one, overwrite
 it with the right value.
 
@@ -375,3 +381,42 @@ up, and (once the bank is live) buy one.
 After a few downloads, see what the API really uses on the server: `systemctl status
 cv-builder-api` (its `Memory:` line counts Node and the Chrome each PDF launches, against the
 unit's `MemoryHigh=512M` / `MemoryMax=768M`).
+
+## 10. Analytics, error tracking, search engines **[EXT]** + **[GH]** (once, each optional)
+
+Each item ends in a GitHub secret (step 8's page) or a DNS record. The secrets are built into
+the bundle, so after adding any of them redeploy the web (**Deploy to Production** → **Run
+workflow**).
+
+**Google Analytics 4.** [analytics.google.com](https://analytics.google.com) → Admin → Create
+property (time zone Armenia, currency AMD) → Web data stream for
+`https://cv-builder.eapps.site` → copy the Measurement ID `G-…` into the secret
+`NEXT_PUBLIC_GA_ID`. Page views come by themselves; the app also sends `cv_download`,
+`begin_checkout`, `purchase`, `sign_up` and `login`. In Admin → Events, mark `purchase` and
+`sign_up` as key events.
+
+**Sentry** (errors in the web app). [sentry.io](https://sentry.io) → Create project, platform
+Next.js → copy its DSN into the secret `NEXT_PUBLIC_SENTRY_DSN`. For readable stack traces
+also add `SENTRY_AUTH_TOKEN` (Settings → Auth Tokens → an organization token), `SENTRY_ORG`
+and `SENTRY_PROJECT` (the two slugs in the project's URL); without them errors still arrive,
+with minified frames.
+
+**Google Search Console.** [search.google.com/search-console](https://search.google.com/search-console)
+→ Add property → **Domain** → `cv-builder.eapps.site` → add the TXT record it shows at the DNS
+provider (step 1's zone) → Verify. No secret, no redeploy. (A **URL prefix** property works too:
+choose "HTML tag" and put only its `content="…"` value in `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`.)
+Then Sitemaps → submit `https://cv-builder.eapps.site/sitemap.xml`, and URL Inspection → the
+homepage → Request indexing.
+
+**Bing Webmaster Tools.** [bing.com/webmasters](https://www.bing.com/webmasters) → Import from
+Google Search Console: verified with the sitemap included, nothing else to add. Worth doing
+for answer engines too: Bing's index feeds ChatGPT search, Copilot and DuckDuckGo.
+(Without the import: the meta-tag method, value in `NEXT_PUBLIC_BING_VERIFICATION`.)
+
+**Yandex Webmaster** (Russian-language search). [webmaster.yandex.com](https://webmaster.yandex.com)
+→ Add site `https://cv-builder.eapps.site` → Meta tag → its `content` value into
+`NEXT_PUBLIC_YANDEX_VERIFICATION` → redeploy → Check. Then Indexing → Sitemap files → add the
+sitemap, and Site information → Regional settings → Armenia.
+
+Nothing to submit for AI engines: `robots.txt` welcomes their crawlers by name, and
+`/llms.txt` describes the service in Armenian, English and Russian.
