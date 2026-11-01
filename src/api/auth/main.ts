@@ -5,7 +5,6 @@ import { getApiUrl } from '@helpers/url'
 import { ENDPOINTS } from './endpoints'
 import { processGetMeResponse, processUserResponse } from './processors'
 import type {
-  ChangePasswordAPI,
   DeleteMeAPI,
   ForgotPasswordAPI,
   GetMeAPI,
@@ -13,6 +12,7 @@ import type {
   LogoutAPI,
   RegisterAPI,
   ResetPasswordAPI,
+  SendPasswordLinkAPI,
   UpdateMeAPI,
 } from './types'
 import { axiosInstance } from '../axiosInstance'
@@ -45,9 +45,9 @@ export const deleteMeAPI: DeleteMeAPI['api'] = async () => {
   await axiosInstance.delete(ENDPOINTS.deleteMe)
 }
 
-export const changePasswordAPI: ChangePasswordAPI['api'] = async (payload) => {
-  const { data } = await axiosInstance.post<APIResponse<User>>(ENDPOINTS.changePassword, payload)
-  return processUserResponse(data)
+/** Emails the signed-in account a link to set a new password. */
+export const sendPasswordLinkAPI: SendPasswordLinkAPI['api'] = async () => {
+  await axiosInstance.post(ENDPOINTS.passwordLink)
 }
 
 export const forgotPasswordAPI: ForgotPasswordAPI['api'] = async (payload) => {

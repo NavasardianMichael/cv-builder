@@ -117,28 +117,23 @@ identityRouter.patch(
   })
 )
 
-/** Sets a password, or changes one. A Google-only account sets its first without a current one. */
+/**
+ * Sets a password, or changes one, only through the account's mailbox: the same one-hour,
+ * single-use link as a forgotten password. A Google-only account sets its first one this way.
+ */
 identityRouter.post(
-  '/password/change',
+  '/password/link',
   requireAuth,
   asyncHandler(async (req, res) => {
-    const user = await prisma.user.findUniqueOrThrow({ where: { id: sessionOf(req).userId } })
-    if (user.passwordHash) {
-      const current = typeof req.body?.currentPassword === 'string' ? (req.body.currentPassword as string) : ''
-      if (!(await verifyPassword(user.passwordHash, current))) {
-        return fail(res, 'Current password is wrong', ERROR_CODE.invalidCredentials, 400)
-      }
-    }
-    const check = validatePassword(req.body?.newPassword, { email: user.email })
-    if (!check.ok) return fail(res, check.message, ERROR_CODE.weakPassword, 400)
+    const { userId } = sessionOf(req)
+    const verdict = resetLimiter(userId)
+    if (!verdict.allowed) return limited(res, verdict.retryAfterSeconds)
 
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: { passwordHash: await hashPassword(req.body.newPassword as string), tokenVersion: { increment: 1 } },
-    })
-    // Every other device is signed out by the bump; this one gets a fresh cookie.
-    issueSession(res, updated)
-    ok(res, mapUser(updated))
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } })
+    const token = await issuePasswordResetToken(user.id)
+    const sent = await sendPasswordResetEmail(user.email, buildPasswordResetUrl(token))
+    if (!sent.ok) return fail(res, 'Email could not be sent', 503, 503)
+    ok(res, null)
   })
 )
 

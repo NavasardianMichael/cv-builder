@@ -16,8 +16,7 @@ export type UpdateMeAPI = Endpoint<{ payload: UpdateMePayload; response: User; p
 
 export type DeleteMeAPI = Endpoint<{ payload: void; response: null; processed: void }>
 
-export type ChangePasswordPayload = { currentPassword?: string; newPassword: string }
-export type ChangePasswordAPI = Endpoint<{ payload: ChangePasswordPayload; response: User; processed: User }>
+export type SendPasswordLinkAPI = Endpoint<{ payload: void; response: null; processed: void }>
 
 export type ForgotPasswordPayload = { email: string }
 export type ForgotPasswordAPI = Endpoint<{ payload: ForgotPasswordPayload; response: null; processed: void }>

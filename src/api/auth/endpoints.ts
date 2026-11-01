@@ -5,7 +5,7 @@ export const ENDPOINTS = {
   logout: '/identity/logout',
   updateMe: '/identity/me',
   deleteMe: '/identity/me',
-  changePassword: '/identity/password/change',
+  passwordLink: '/identity/password/link',
   forgotPassword: '/identity/password/forgot',
   resetPassword: '/identity/password/reset',
   google: '/identity/google',

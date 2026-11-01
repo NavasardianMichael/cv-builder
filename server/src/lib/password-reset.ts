@@ -35,7 +35,10 @@ const html = (url: string): string =>
 /** Unconfigured is normal in dev (the link prints here) and an outage in production. */
 export const sendPasswordResetEmail = async (to: string, url: string): Promise<MailResult> => {
   if (!isMailConfigured()) {
-    if (config.nodeEnv === 'production') return { ok: false, status: 0, message: 'Mail engine is not configured' }
+    if (config.nodeEnv === 'production') {
+      console.error('[mail] Password reset not sent: MAIL_API_URL or MAIL_API_KEY is empty')
+      return { ok: false, status: 0, message: 'Mail engine is not configured' }
+    }
     console.log(`[mail] Password reset for ${to}\n${url}`)
     return { ok: true }
   }
