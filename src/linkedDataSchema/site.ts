@@ -2,6 +2,7 @@ import type { BreadcrumbList, FAQPage, ItemList, Organization, WebApplication, W
 import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN, LOCALE, SUPPORT_EMAIL } from '@constants/app'
 import { CURRENCY, CV_PRICE_AMD } from '@constants/pricing'
 import { templatePath } from '@constants/routes'
+import { ALTERNATE_NAMES, SEARCH_KEYWORDS } from '@constants/seo'
 import { TEMPLATE_LIST } from '@constants/templates'
 import { absoluteUrl } from '@helpers/url'
 
@@ -30,6 +31,7 @@ export const websiteSchema = (): WithContext<WebSite> => ({
   '@type': 'WebSite',
   '@id': WEBSITE_ID,
   name: APP_NAME,
+  alternateName: ALTERNATE_NAMES,
   url: absoluteUrl('/'),
   inLanguage: LOCALE,
   publisher: { '@id': ORGANIZATION_ID },
@@ -41,8 +43,10 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
   '@type': 'WebApplication',
   '@id': APP_ID,
   name: APP_NAME,
+  alternateName: ALTERNATE_NAMES,
   url: absoluteUrl('/'),
   description: APP_DESCRIPTION,
+  keywords: SEARCH_KEYWORDS.join(', '),
   applicationCategory: 'BusinessApplication',
   operatingSystem: 'Any (web browser)',
   inLanguage: LOCALE,

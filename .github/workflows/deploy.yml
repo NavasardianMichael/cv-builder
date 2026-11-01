@@ -14,6 +14,11 @@
 #   NEXT_PUBLIC_API_URL    https://api.cv-builder.eapps.site
 #   NEXT_PUBLIC_SITE_URL   https://cv-builder.eapps.site
 #
+# OPTIONAL (empty = that feature off): NEXT_PUBLIC_SENTRY_DSN, NEXT_PUBLIC_GA_ID,
+#   NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION, NEXT_PUBLIC_YANDEX_VERIFICATION,
+#   NEXT_PUBLIC_BING_VERIFICATION; SENTRY_AUTH_TOKEN + SENTRY_ORG + SENTRY_PROJECT upload
+#   source maps to Sentry. All build-time: change one, redeploy the web.
+#
 # The NEXT_PUBLIC_* values are inlined into the browser bundle, so they are public by
 # construction. They are kept as Secrets, but this workflow also accepts Variables: it
 # reads secrets.* first, then vars.*. Those are different stores: a value in one is
@@ -140,6 +145,16 @@ jobs:
     env:
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || vars.NEXT_PUBLIC_API_URL }}
       NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || vars.NEXT_PUBLIC_SITE_URL }}
+      # Optional; each one empty turns its feature off (Sentry, GA, a verification tag).
+      NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.NEXT_PUBLIC_SENTRY_DSN || vars.NEXT_PUBLIC_SENTRY_DSN }}
+      NEXT_PUBLIC_GA_ID: ${{ secrets.NEXT_PUBLIC_GA_ID || vars.NEXT_PUBLIC_GA_ID }}
+      NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION: ${{ secrets.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || vars.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }}
+      NEXT_PUBLIC_YANDEX_VERIFICATION: ${{ secrets.NEXT_PUBLIC_YANDEX_VERIFICATION || vars.NEXT_PUBLIC_YANDEX_VERIFICATION }}
+      NEXT_PUBLIC_BING_VERIFICATION: ${{ secrets.NEXT_PUBLIC_BING_VERIFICATION || vars.NEXT_PUBLIC_BING_VERIFICATION }}
+      # Source maps to Sentry (next.config.ts): uploaded only when the token is set.
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG || vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT || vars.SENTRY_PROJECT }}
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v5

@@ -20,6 +20,11 @@ const AI_CRAWLERS = [
   'Applebot',
   'Applebot-Extended',
   'CCBot',
+  'DuckAssistBot',
+  'Amazonbot',
+  'meta-externalagent',
+  'MistralAI-User',
+  'YandexAdditional',
 ]
 
 export default function robots(): MetadataRoute.Robots {

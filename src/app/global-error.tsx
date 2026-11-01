@@ -1,10 +1,15 @@
 'use client'
 
+import { useEffect } from 'react'
+import { reportError } from '@helpers/reportError'
+
 /**
  * The root layout itself failed, so there are no providers (no translations, no antd): plain
  * markup and literal Armenian copy only.
  */
-export default function GlobalError({ reset }: { error: Error; reset: () => void }) {
+export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => reportError(error, 'global'), [error])
+
   return (
     <html lang='hy'>
       <body style={{ fontFamily: 'system-ui, sans-serif', display: 'grid', placeItems: 'center', minHeight: '100dvh', margin: 0 }}>

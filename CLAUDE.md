@@ -33,7 +33,10 @@ mock bank's in-memory payments).
 
 ## Path alias
 
-`@*` → `./src/*` (not `@/`): `@helpers/cvStyle`, `@store/cvs/single/store`. `@test/*` → `./tests/*`.
+`@<folder>/*` → `./src/<folder>/*` (not `@/`): `@helpers/cvStyle`, `@store/cvs/single/store`. `@test/*` → `./tests/*`.
+One entry per `src/` folder in `tsconfig.json`, never a bare `@*`: Next compiles `next.config.ts` with
+these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./src/sentry/…`). A new
+`src/` folder needs its line there.
 
 ## Where things live
 
@@ -54,7 +57,8 @@ mock bank's in-memory payments).
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` |
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
-| SEO / GEO | `src/helpers/metadata.ts`, `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
+| SEO / GEO | `src/helpers/metadata.ts`, `src/constants/seo.ts` (hy/en/ru keywords, verification tags), `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
+| Error reporting, analytics | Sentry (web only): `src/helpers/sentry.ts`, `src/instrumentation{,-client}.ts`, `reportError` · GA4: `src/helpers/analytics.ts` (`trackEvent`), `components/analytics/Analytics.tsx` · both off while their `NEXT_PUBLIC_*` is empty, never on `/render` |
 | Copy | `src/messages/hy.json` (UI) · `src/constants/legal.ts` (draft legal pages) |
 | App design tokens | `src/styles/tokens.ts` → `theme.ts` → `globals.css` |
 

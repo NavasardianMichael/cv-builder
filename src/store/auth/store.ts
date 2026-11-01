@@ -3,6 +3,7 @@ import { combine } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import { getMeAPI, loginAPI, logoutAPI, registerAPI } from '@api/auth/main'
 import { appendSelectors } from '@store/appendSelectors'
+import { trackEvent } from '@helpers/analytics'
 import { processError } from '@helpers/error'
 import type { AuthActions, AuthState } from './types'
 
@@ -40,6 +41,7 @@ export const useAuthStoreBase = create<AuthState & AuthActions>()(
           try {
             const user = await loginAPI(payload)
             set({ user, isResolved: true })
+            trackEvent('login', { method: 'password' })
             return user
           } finally {
             set({ isPending: false })
@@ -50,6 +52,7 @@ export const useAuthStoreBase = create<AuthState & AuthActions>()(
           try {
             const user = await registerAPI(payload)
             set({ user, isResolved: true })
+            trackEvent('sign_up', { method: 'password' })
             return user
           } finally {
             set({ isPending: false })

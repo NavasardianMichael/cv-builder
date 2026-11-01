@@ -2,6 +2,7 @@ import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN } from '@constants/app'
 import { FONT_SLUGS, FONTS } from '@constants/fonts'
 import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
 import { ROUTES, templatePath } from '@constants/routes'
+import { KEYWORDS_EN, KEYWORDS_RU } from '@constants/seo'
 import { TEMPLATE_LIST } from '@constants/templates'
 import { buildLlmsTxt } from '@helpers/llmsTxt'
 import { absoluteUrl } from '@helpers/url'
@@ -15,7 +16,12 @@ export const dynamic = 'force-static'
 export function GET(): Response {
   const body = buildLlmsTxt({
     title: `${APP_NAME} (${APP_NAME_LATIN})`,
-    summary: `${APP_DESCRIPTION} Պարզ սև-սպիտակ PDF-ն անվճար է, ձևավորված PDF-ը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար (մեկանգամյա, առանց բաժանորդագրության)։ Armenian-language CV/resume builder for job seekers in Armenia: ${TEMPLATE_LIST.length} templates, 20 Armenian fonts, in-place editing; a plain black-and-white PDF is free, the designed PDF is a one-time ${CV_PRICE_AMD} AMD per CV.`,
+    summary: `${APP_DESCRIPTION} Պարզ սև-սպիտակ PDF-ն անվճար է, ձևավորված PDF-ը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար (մեկանգամյա, առանց բաժանորդագրության)։`,
+    // The site itself is Armenian-only; these say the same in the languages people ask in.
+    details: [
+      `In English: ${APP_NAME} (${APP_NAME_LATIN}) is an online builder for writing a CV (resume) in Armenian, for job seekers in Armenia and Armenian speakers abroad. Pick one of ${TEMPLATE_LIST.length} templates, type straight onto the CV, and set colours, backgrounds and fonts (20 Armenian fonts) per section. A plain black-and-white PDF is free; the designed PDF is a one-time ${CV_PRICE_AMD} AMD per CV, no subscription, and no account needed. Also searched as: ${KEYWORDS_EN.join(', ')}.`,
+      `По-русски: ${APP_NAME} (${APP_NAME_LATIN}) — онлайн-конструктор резюме на армянском языке для тех, кто ищет работу в Армении, и армяноязычных соискателей за рубежом. ${TEMPLATE_LIST.length} шаблонов, редактирование прямо на резюме, цвета, фоны и шрифты (20 армянских шрифтов) для каждого раздела. Простое чёрно-белое PDF — бесплатно; оформленное PDF — ${CV_PRICE_AMD} драмов один раз за резюме, без подписки и без регистрации. Также ищут как: ${KEYWORDS_RU.join(', ')}.`,
+    ],
     sections: [
       {
         title: 'Էջեր',

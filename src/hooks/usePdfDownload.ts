@@ -6,8 +6,11 @@ import { useTranslations } from 'next-intl'
 import { downloadCvPdfAPI, downloadDraftPdfAPI } from '@api/cvs/main'
 import type { PdfVariant } from '@api/cvs/types'
 import type { CvDocument } from '@store/cvs/single/types'
+import { trackEvent } from '@helpers/analytics'
 import { classifyError, errorCopyKey } from '@helpers/error'
 import { saveBlob } from '@helpers/image'
+
+type AnalyticsVariant = PdfVariant | 'draft'
 
 /**
  * Downloads a CV's PDF (the paid, designed one unless asked for the free `basic` one) and
@@ -26,12 +29,13 @@ export const usePdfDownload = (): {
   const [isDownloading, setIsDownloading] = useState(false)
 
   const run = useCallback(
-    async (key: string, title: string, fetchPdf: () => Promise<Blob>): Promise<boolean> => {
+    async (key: string, title: string, variant: AnalyticsVariant, fetchPdf: () => Promise<Blob>): Promise<boolean> => {
       setIsDownloading(true)
       message.loading({ key, content: t('preparing'), duration: 0 })
       try {
         saveBlob(await fetchPdf(), `${title.trim() || 'CV'}.pdf`)
         message.success({ key, content: t('done') })
+        trackEvent('cv_download', { variant })
         return true
       } catch (error) {
         message.error({ key, content: tErrors(errorCopyKey(classifyError(error))) })
@@ -45,12 +49,13 @@ export const usePdfDownload = (): {
 
   const download = useCallback(
     (id: string, title: string, variant: PdfVariant = 'designed') =>
-      run(`pdf-${id}`, title, () => downloadCvPdfAPI({ id, variant })),
+      run(`pdf-${id}`, title, variant, () => downloadCvPdfAPI({ id, variant })),
     [run]
   )
 
   const downloadDraft = useCallback(
-    (doc: CvDocument) => run('pdf-draft', doc.title, () => downloadDraftPdfAPI({ title: doc.title, content: doc.content })),
+    (doc: CvDocument) =>
+      run('pdf-draft', doc.title, 'draft', () => downloadDraftPdfAPI({ title: doc.title, content: doc.content })),
     [run]
   )
 

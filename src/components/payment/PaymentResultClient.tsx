@@ -9,7 +9,9 @@ import { getCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
 import type { Cv } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
+import { CURRENCY, CV_PRICE_AMD } from '@constants/pricing'
 import { CHECKOUT_QUERY, editorPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
+import { trackEvent } from '@helpers/analytics'
 import { reportError } from '@helpers/reportError'
 
 type Props = { cvId?: string; status: 'succeeded' | 'failed' | 'pending' }
@@ -50,6 +52,11 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
 
   const paid = Boolean(cv?.paidAt)
   const effective = paid ? 'succeeded' : status === 'succeeded' && cv ? 'pending' : status
+
+  // Revisiting this page repeats the event; GA counts one purchase per transaction_id.
+  useEffect(() => {
+    if (paid && cvId) trackEvent('purchase', { currency: CURRENCY, value: CV_PRICE_AMD, transaction_id: cvId })
+  }, [paid, cvId])
 
   useEffect(() => {
     if (effective !== 'pending' || polls >= PENDING_MAX_POLLS) return

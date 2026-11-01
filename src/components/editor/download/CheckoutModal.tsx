@@ -12,9 +12,10 @@ import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { useCapabilities } from '@hooks/useCapabilities'
 import { ERROR_CODES } from '@constants/errors'
-import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { CURRENCY, CV_PRICE_AMD, formatAmd } from '@constants/pricing'
 import { editorPath, ROUTES } from '@constants/routes'
 import { BASIC_DESIGN } from '@constants/templates'
+import { trackEvent } from '@helpers/analytics'
 import { basicContent } from '@helpers/basicCv'
 import { classifyError } from '@helpers/error'
 import { markGuestCvs } from '@helpers/guestCvs'
@@ -144,7 +145,9 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
     try {
       await flushSave()
       const id = cvId === DRAFT_ID ? await moveDraftToServer(setCvId) : cvId
-      window.location.assign(await checkoutCvAPI({ id }))
+      const checkoutUrl = await checkoutCvAPI({ id })
+      trackEvent('begin_checkout', { currency: CURRENCY, value: CV_PRICE_AMD })
+      window.location.assign(checkoutUrl)
     } catch (failure) {
       setRedirecting(false)
       if (classifyError(failure).code === ERROR_CODES.cvAlreadyPaid) {
