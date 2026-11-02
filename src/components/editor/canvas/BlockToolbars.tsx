@@ -30,12 +30,12 @@ import { BlockStyleForm } from '../controls/BlockStyleForm'
  */
 
 /** The style button: opening it selects the block, so its toolbar stays put while editing. */
-const StyleButton: FC<{ blockId: string; title: string; style: BlockStyle; onChange: (style: Partial<BlockStyle>) => void }> = ({
-  blockId,
-  title,
-  style,
-  onChange,
-}) => {
+const StyleButton: FC<{
+  blockId: string
+  title: string
+  style: BlockStyle
+  onChange: (style: Partial<BlockStyle>) => void
+}> = ({ blockId, title, style, onChange }) => {
   const t = useTranslations('Editor.block')
   const selectBlock = useCvEditorStore.use.selectBlock()
   const [open, setOpen] = useState(false)
@@ -56,7 +56,14 @@ const StyleButton: FC<{ blockId: string; title: string; style: BlockStyle; onCha
   )
 }
 
-type SectionToolbarProps = { sectionId: string; title: string; style: BlockStyle; hidden: boolean; index: number; count: number }
+type SectionToolbarProps = {
+  sectionId: string
+  title: string
+  style: BlockStyle
+  hidden: boolean
+  index: number
+  count: number
+}
 
 /** Plain props and `memo`: typing in one of the section's items must not re-render it. */
 const SectionToolbarComponent: FC<SectionToolbarProps> = ({ sectionId, title, style, hidden, index, count }) => {
@@ -69,7 +76,12 @@ const SectionToolbarComponent: FC<SectionToolbarProps> = ({ sectionId, title, st
   return (
     <div className='cv-toolbar'>
       <ToolbarShell>
-        <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveSection(sectionId, -1)} />
+        <ToolButton
+          icon={<ArrowUpOutlined />}
+          label={t('moveUp')}
+          disabled={index === 0}
+          onClick={() => moveSection(sectionId, -1)}
+        />
         <ToolButton
           icon={<ArrowDownOutlined />}
           label={t('moveDown')}
@@ -174,7 +186,12 @@ const LinkForm: FC<LinkFormProps> = ({ url, title, hint, placeholder, toHref, on
   )
 }
 
-export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number; count: number }> = ({ sectionId, entry, index, count }) => {
+export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number; count: number }> = ({
+  sectionId,
+  entry,
+  index,
+  count,
+}) => {
   const t = useTranslations('Editor.block')
   const moveEntry = useCvEditorStore.use.moveEntry()
   const duplicateEntry = useCvEditorStore.use.duplicateEntry()
@@ -213,15 +230,29 @@ export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number
             className={entry.url ? 'text-accent' : undefined}
           />
         </Popover>
-        <ToolButton icon={<ArrowUpOutlined />} label={t('moveUp')} disabled={index === 0} onClick={() => moveEntry(sectionId, entry.id, -1)} />
+        <ToolButton
+          icon={<ArrowUpOutlined />}
+          label={t('moveUp')}
+          disabled={index === 0}
+          onClick={() => moveEntry(sectionId, entry.id, -1)}
+        />
         <ToolButton
           icon={<ArrowDownOutlined />}
           label={t('moveDown')}
           disabled={index === count - 1}
           onClick={() => moveEntry(sectionId, entry.id, 1)}
         />
-        <ToolButton icon={<CopyOutlined />} label={t('duplicate')} onClick={() => duplicateEntry(sectionId, entry.id)} />
-        <ToolButton icon={<DeleteOutlined />} label={t('removeItem')} tone='danger' onClick={() => removeEntry(sectionId, entry.id)} />
+        <ToolButton
+          icon={<CopyOutlined />}
+          label={t('duplicate')}
+          onClick={() => duplicateEntry(sectionId, entry.id)}
+        />
+        <ToolButton
+          icon={<DeleteOutlined />}
+          label={t('removeItem')}
+          tone='danger'
+          onClick={() => removeEntry(sectionId, entry.id)}
+        />
       </ToolbarShell>
     </div>
   )
@@ -285,7 +316,12 @@ export const ContactToolbar: FC<{ contact: CvContact }> = ({ contact }) => {
             className={contact.url ? 'text-accent' : undefined}
           />
         </Popover>
-        <ToolButton icon={<DeleteOutlined />} label={tBlock('removeItem')} tone='danger' onClick={() => removeContact(contact.id)} />
+        <ToolButton
+          icon={<DeleteOutlined />}
+          label={tBlock('removeItem')}
+          tone='danger'
+          onClick={() => removeContact(contact.id)}
+        />
       </ToolbarShell>
     </div>
   )
@@ -306,7 +342,7 @@ export const AddContactButton: FC<{ count: number }> = ({ count }) => {
     >
       <button
         type='button'
-        className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-(--cv-bg) px-2.5 py-0.5 text-xs whitespace-nowrap'
+        className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-(--cv-bg) px-2.5 py-1 text-xs whitespace-nowrap'
         style={{ color: 'var(--cv-accent)', fontFamily: 'var(--font-ui), sans-serif' }}
       >
         <PlusOutlined /> {t('add')}
@@ -325,7 +361,7 @@ const AddItemButtonComponent: FC<{ sectionId: string; type: SectionType }> = ({ 
   return (
     <button
       type='button'
-      className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-(--cv-bg) px-2.5 py-0.5 text-xs whitespace-nowrap'
+      className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-(--cv-bg) px-2.5 py-1 text-xs whitespace-nowrap'
       style={{ color: 'var(--cv-accent)', fontFamily: 'var(--font-ui), sans-serif' }}
       onClick={() => (kind === 'entries' ? addEntry(sectionId) : addTag(sectionId))}
     >

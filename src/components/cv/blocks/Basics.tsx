@@ -97,7 +97,7 @@ const ContactListComponent: FC<BasicsProps & { design: CvDesign; layout?: 'row' 
   return (
     <ul className={cn('cv-contacts', `cv-contacts-${layout}`, className)}>
       {items.map((contact) => (
-        <li key={contact.id} className={cn('cv-contact', edit && 'cv-item-editable')}>
+        <li key={contact.id} className={cn('cv-contact', edit && 'cv-item-editable')} data-cv-key={contact.id}>
           {design.showIcons && <CvIcon name={CONTACT_ICONS[contact.type]} />}
           <Editable
             value={contact.value}

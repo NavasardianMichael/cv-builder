@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, type FC, type MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, type FC, type MouseEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AppstoreOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -13,6 +13,7 @@ import { CvDocument } from '@components/cv/CvDocument'
 import { type CvEditApi, CvEditProvider } from '@components/cv/CvEditContext'
 import { A4_HEIGHT_PX, A4_WIDTH_PX } from '@components/cv/CvPreview'
 import { AddContactButton, AddItemButton, BasicsToolbar, ContactToolbar, EntryToolbar, SectionToolbar, TagRemoveButton } from './BlockToolbars'
+import { measurePageBreaks, NO_PAGE_BREAKS, type PageBreaks, samePageBreaks } from './pageBreaks'
 import { PhotoEditor } from './PhotoEditor'
 
 type Props = {
@@ -41,11 +42,9 @@ const distanceOf = (touches: TouchPoints): number =>
 
 /**
  * The editable CV. The document is drawn at true A4 size and scaled to the zoom; dashed
- * guides mark where the PDF's pages break. The PDF repeats the sheet's vertical padding at
- * the top and bottom of every page (CvPage), so each page holds A4 minus twice that padding
- * of the CV, and the breaks fall at `padding + n × that`. Still approximate: the PDF keeps
- * entries whole, so an entry the guide cuts starts the next page, and the editor alone shows
- * hidden and empty sections.
+ * guides mark where the PDF's pages break. The sheet shows more than the PDF prints (empty
+ * fields, items and sections), so the breaks are measured on an invisible copy rendered the
+ * way the PDF is, then carried over to the sheet (`pageBreaks.ts`).
  *
  * Touch screens pinch to zoom the sheet, not the page: the scroller takes only pans
  * (`touch-action`), and two fingers set the zoom, keeping the point between them in place.
@@ -58,32 +57,44 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
 
   const scrollerRef = useRef<HTMLDivElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
+  /** The print-like copy the page breaks are measured on. */
+  const printedRef = useRef<HTMLDivElement>(null)
   const [fitZoom, setFitZoom] = useState(1)
   const [sheetHeight, setSheetHeight] = useState(A4_HEIGHT_PX)
-  /** The template's vertical page padding, which the PDF repeats on every page. */
-  const [pagePad, setPagePad] = useState(0)
+  const [pageBreaks, setPageBreaks] = useState<PageBreaks>(NO_PAGE_BREAKS)
   const scale = zoom ?? fitZoom
+
+  const measureBreaks = useCallback(() => {
+    const sheet = sheetRef.current?.querySelector<HTMLElement>('.cv-root')
+    const printed = printedRef.current?.querySelector<HTMLElement>('.cv-root')
+    if (!sheet || !printed) return
+    const next = measurePageBreaks(printed, sheet, A4_HEIGHT_PX)
+    setPageBreaks((current) => (samePageBreaks(current, next) ? current : next))
+  }, [])
 
   useEffect(() => {
     const scroller = scrollerRef.current
     const sheet = sheetRef.current
-    if (!scroller || !sheet) return
+    const printed = printedRef.current
+    if (!scroller || !sheet || !printed) return
     const observer = new ResizeObserver(() => {
       const width = scroller.clientWidth
       const next = Math.min(1.1, Math.max(0.35, (width - gutterFor(width)) / A4_WIDTH_PX))
       setFitZoom(next)
       onFitZoomChange(next)
       setSheetHeight(sheet.offsetHeight)
-      setPagePad(sheet.querySelector<HTMLElement>('.cv-flow-pad')?.offsetHeight ?? 0)
+      measureBreaks()
     })
     observer.observe(scroller)
     observer.observe(sheet)
+    observer.observe(printed)
     return () => observer.disconnect()
-  }, [onFitZoomChange])
+  }, [onFitZoomChange, measureBreaks])
 
-  const pageContent = A4_HEIGHT_PX - 2 * pagePad
-  const pages = Math.max(1, Math.ceil((sheetHeight - 2 * pagePad - 2) / pageContent))
-  useEffect(() => onPagesChange(pages), [pages, onPagesChange])
+  // Not only on a resize: filling a placeholder changes the PDF but not the sheet's height.
+  useLayoutEffect(measureBreaks, [doc, measureBreaks])
+
+  useEffect(() => onPagesChange(pageBreaks.pages), [pageBreaks.pages, onPagesChange])
 
   // The pinch reads the zoom it starts from and reports through refs, so its listeners are
   // attached once rather than on every frame of the gesture.
@@ -163,6 +174,9 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
     [selectedBlock]
   )
 
+  // Its own element, so a re-render of the canvas (a zoom, a selection) leaves the copy alone.
+  const printed = useMemo(() => doc && <CvDocument content={doc.content} design={doc.design} />, [doc])
+
   if (!doc) return null
 
   const tapBlock = (event: MouseEvent) => {
@@ -223,22 +237,30 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
               // for fingers on a sheet too small to read; the panels carry the same edits.
               <div className='absolute inset-0 z-40 cursor-pointer' aria-hidden='true' onClick={tapBlock} />
             )}
-            {Array.from({ length: pages - 1 }, (_, index) => (
-              <div
-                key={index}
-                className='pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-accent/70'
-                style={{ top: pagePad + pageContent * (index + 1) }}
-                aria-hidden='true'
-              >
-                {/* Beside the sheet where there is room for it; on a phone, just inside its edge. */}
-                <span
-                  className='absolute -top-3 right-2 origin-top-right rounded bg-accent px-1.5 py-0.5 text-[11px] font-semibold text-white sm:-right-2 sm:origin-top-left sm:translate-x-full'
-                  style={{ scale: 'var(--cv-ui-scale)' }}
+            {/* The PDF's render path, laid out but never seen: what the page breaks are measured on. */}
+            <div className='invisible absolute inset-x-0 top-0 h-0 overflow-hidden' aria-hidden='true' inert>
+              <div ref={printedRef}>{printed}</div>
+            </div>
+            {pageBreaks.breaks.map((segments, index) =>
+              segments.map((segment, segmentIndex) => (
+                <div
+                  key={`${index}-${segmentIndex}`}
+                  className='pointer-events-none absolute border-t-2 border-dashed border-accent/70'
+                  style={{ top: segment.top, left: segment.left, width: segment.right - segment.left }}
+                  aria-hidden='true'
                 >
-                  {t('pageBreak', { number: index + 2 })}
-                </span>
-              </div>
-            ))}
+                  {/* Beside the sheet where there is room for it; on a phone, just inside its edge. */}
+                  {segmentIndex === segments.length - 1 && (
+                    <span
+                      className='absolute -top-3 right-2 origin-top-right rounded bg-accent px-1.5 py-0.5 text-[11px] font-semibold text-white sm:-right-2 sm:origin-top-left sm:translate-x-full'
+                      style={{ scale: 'var(--cv-ui-scale)' }}
+                    >
+                      {t('pageBreak', { number: index + 2 })}
+                    </span>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

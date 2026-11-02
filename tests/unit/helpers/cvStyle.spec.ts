@@ -29,6 +29,14 @@ describe('splitSections', () => {
     expect(splitSections(templateDesign('classic'), withHidden, { includeHidden: false }).main).toHaveLength(sections.length)
     expect(splitSections(templateDesign('classic'), withHidden, { includeHidden: true }).main).toHaveLength(sections.length + 1)
   })
+
+  it('keeps the columns of a split template as printed while the editor shows a hidden section', () => {
+    const withHidden = [sections[0], { ...newSection('awards'), hidden: true }, ...sections.slice(1)]
+    const printed = splitSections(templateDesign('compact'), withHidden, { includeHidden: false })
+    const edited = splitSections(templateDesign('compact'), withHidden, { includeHidden: true })
+    expect(edited.side.filter((section) => !section.hidden)).toEqual(printed.side)
+    expect(edited.main.filter((section) => !section.hidden)).toEqual(printed.main)
+  })
 })
 
 describe('sectionHasContent', () => {

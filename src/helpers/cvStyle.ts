@@ -71,7 +71,8 @@ export const splitSections = (
   const isSide = (section: CvSection): boolean => {
     if (section.column === 'main') return false
     if (section.column === 'side') return true
-    if (layout === 'split') return visible.indexOf(section) % 2 === 1
+    // Hidden sections take no turn, so the editor, which shows them, alternates as the PDF does.
+    if (layout === 'split') return visible.slice(0, visible.indexOf(section)).filter((other) => !other.hidden).length % 2 === 1
     return SECTION_META[section.type].prefersSide
   }
   return { main: visible.filter((section) => !isSide(section)), side: visible.filter(isSide) }

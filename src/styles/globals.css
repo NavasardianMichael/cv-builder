@@ -155,3 +155,14 @@
 @utility animate-float {
   animation: float-slow 7s ease-in-out infinite;
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* A pending state that only shows if the wait is noticeable. */
+@utility animate-fade-in-late {
+  animation: fade-in 0.2s ease-out 0.12s both;
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, useEffect, useRef, useState } from 'react'
+import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import type { CvContent, CvDesign } from '@store/cvs/single/types'
 import { cn } from '@helpers/cn'
 import { CvDocument } from './CvDocument'
@@ -29,6 +29,9 @@ export const CvPreview: FC<Props> = ({ content, design, className, firstPageOnly
   const sheetRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0)
   const [sheetHeight, setSheetHeight] = useState(A4_HEIGHT_PX)
+  // The same element across renders, so measuring (a re-render per preview) never re-renders
+  // the CV itself — a page of template cards would otherwise redraw every CV once on load.
+  const cv = useMemo(() => <CvDocument content={content} design={design} />, [content, design])
 
   useEffect(() => {
     const frame = frameRef.current
@@ -60,7 +63,7 @@ export const CvPreview: FC<Props> = ({ content, design, className, firstPageOnly
         className='absolute top-0 left-0 origin-top-left'
         style={{ width: A4_WIDTH_PX, transform: `scale(${scale})`, visibility: scale ? 'visible' : 'hidden' }}
       >
-        <CvDocument content={content} design={design} />
+        {cv}
       </div>
     </div>
   )

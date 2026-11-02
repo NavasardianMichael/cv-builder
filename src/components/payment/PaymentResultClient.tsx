@@ -85,19 +85,21 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
       </div>
       <h1 className='mt-6 font-display text-title font-extrabold text-ink sm:text-3xl'>{view.title}</h1>
       <p className='mt-3 text-lg text-muted'>{view.text}</p>
+      {/* Margin on a wrapper: antd's Alert styles are unlayered and reset `margin`. */}
       {isResolved && !user && cv && effective === 'succeeded' && (
-        <Alert
-          type='warning'
-          showIcon
-          className='mt-6 text-left'
-          title={t('guestTitle')}
-          description={t('guestText')}
-          action={
-            <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(cv.id))}`}>
-              <Button size='small'>{t('guestSignIn')}</Button>
-            </Link>
-          }
-        />
+        <div className='mt-6 text-left'>
+          <Alert
+            type='warning'
+            showIcon
+            title={t('guestTitle')}
+            description={t('guestText')}
+            action={
+              <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(cv.id))}`}>
+                <Button size='small'>{t('guestSignIn')}</Button>
+              </Link>
+            }
+          />
+        </div>
       )}
       <div className='mt-8 flex flex-wrap justify-center gap-3'>
         {effective === 'succeeded' && cv && (

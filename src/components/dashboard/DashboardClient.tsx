@@ -126,19 +126,21 @@ export const DashboardClient: FC = () => {
           </Tooltip>
         )}
       </div>
+      {/* Margin on a wrapper: antd's Alert styles are unlayered and reset `margin`. */}
       {isGuest && (
-        <Alert
-          type='warning'
-          showIcon
-          className='mt-6'
-          title={t('guestTitle')}
-          description={t('guestText')}
-          action={
-            <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(ROUTES.dashboard)}`}>
-              <Button size='small'>{t('guestSignIn')}</Button>
-            </Link>
-          }
-        />
+        <div className='mt-6'>
+          <Alert
+            type='warning'
+            showIcon
+            title={t('guestTitle')}
+            description={t('guestText')}
+            action={
+              <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(ROUTES.dashboard)}`}>
+                <Button size='small'>{t('guestSignIn')}</Button>
+              </Link>
+            }
+          />
+        </div>
       )}
       {body()}
     </div>

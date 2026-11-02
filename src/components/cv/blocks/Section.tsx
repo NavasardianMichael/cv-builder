@@ -65,6 +65,7 @@ const SectionBlockComponent: FC<SectionProps & { index: number; count: number }>
       )}
       style={blockStyleVars(section.style)}
       data-block={edit ? section.id : undefined}
+      data-cv-key={section.id}
     >
       {edit?.sectionToolbar(section, index, count)}
       <Editable
@@ -125,7 +126,7 @@ const EntryItemComponent: FC<EntryItemProps> = ({ sectionId, entry, index, count
   const set = (field: 'title' | 'subtitle' | 'period' | 'location' | 'description') => (value: string) =>
     edit?.actions.setEntryField(sectionId, entry.id, field, value)
   return (
-    <li className={cn('cv-entry', edit && 'cv-item-editable')}>
+    <li className={cn('cv-entry', edit && 'cv-item-editable')} data-cv-key={entry.id}>
       {edit?.entryToolbar(sectionId, entry, index, count)}
       <div className='cv-entry-head'>
         <div className='cv-entry-title-row'>
@@ -179,7 +180,7 @@ type TagItemProps = { sectionId: string; type: CvSection['type']; tag: CvTag; le
 const TagItemComponent: FC<TagItemProps> = ({ sectionId, type, tag, levelStyle, variant }) => {
   const edit = useCvEdit()
   return (
-    <li className={cn('cv-tag', edit && 'cv-item-editable')}>
+    <li className={cn('cv-tag', edit && 'cv-item-editable')} data-cv-key={tag.id}>
       <Editable
         className='cv-tag-name'
         linkify
