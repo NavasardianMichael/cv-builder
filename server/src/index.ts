@@ -3,6 +3,7 @@ import { config, isPaymentConfigured } from './config.js'
 
 import './load-env.js'
 
+// The API process: one Express app, listening on the configured host and port.
 const app = createApp()
 
 app.listen(config.port, config.host, () => {
