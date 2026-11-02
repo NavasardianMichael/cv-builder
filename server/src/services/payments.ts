@@ -33,7 +33,7 @@ export const startCheckout = async (cv: { id: string; title: string; userId: str
     const { gatewayPaymentId, redirectUrl } = await gateway.init({
       orderNumber: payment.orderNumber,
       amount: payment.amount,
-      description: `Ինքնակենսագրական — «${cv.title}» CV-ի ներբեռնում`,
+      description: `Իմ ինքնակենսագրականը — «${cv.title}» CV-ի ներբեռնում`,
       backUrl: `${config.apiPublicUrl}/payments/return/${gatewayId}`,
       opaque: payment.id,
     })
@@ -75,6 +75,36 @@ export const settlePayment = async (payment: Payment): Promise<PaymentStatus> =>
     }
   })
   return 'succeeded'
+}
+
+/**
+ * Whether a paid CV is still paid, asked before its designed PDF is printed: a refund or void
+ * made later in the bank's panel takes the PDF back from that CV's owner. Each `succeeded`
+ * payment of the CV is re-read from its gateway; a reversed one becomes `refunded`, and the CV
+ * loses `paidAt` once none is left (a CV paid twice and refunded once stays paid). A gateway
+ * that cannot answer counts as still paid — an outage must not lock a buyer out — and a CV
+ * with no gateway payment (the seed's) is left as it is.
+ */
+export const revalidatePaidCv = async (cvId: string): Promise<boolean> => {
+  const payments = await prisma.payment.findMany({ where: { cvId, status: 'succeeded', gatewayPaymentId: { not: null } } })
+
+  const reversed: string[] = []
+  for (const payment of payments) {
+    try {
+      if (await GATEWAYS[payment.gateway].isReversed(payment.gatewayPaymentId!)) reversed.push(payment.id)
+    } catch (error) {
+      console.error(`[payments] revalidate of ${payment.id} failed`, error instanceof Error ? error.message : error)
+    }
+  }
+  if (reversed.length === 0) return true
+
+  return prisma.$transaction(async (tx) => {
+    await tx.payment.updateMany({ where: { id: { in: reversed }, status: 'succeeded' }, data: { status: 'refunded' } })
+    if ((await tx.payment.count({ where: { cvId, status: 'succeeded' } })) > 0) return true
+    await tx.cv.updateMany({ where: { id: cvId }, data: { paidAt: null } })
+    console.info(`[payments] CV ${cvId} locked again: its payment was refunded at the bank`)
+    return false
+  })
 }
 
 /** True when the CV is (now) paid. Gateway failures are logged, never thrown at a reader. */

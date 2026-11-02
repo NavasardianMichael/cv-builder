@@ -65,7 +65,11 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
   }, [effective, polls])
 
   if (cvId && !cv && !unreadable && status !== 'failed') {
-    return <Spin size='large' className='my-20' />
+    return (
+      <div className='grid flex-1 place-items-center'>
+        <Spin size='large' />
+      </div>
+    )
   }
 
   const view = {
@@ -75,7 +79,7 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
   }[effective]
 
   return (
-    <div className='mx-auto max-w-lg text-center'>
+    <div className='mx-auto my-auto w-full max-w-lg text-center'>
       <div className='text-6xl' aria-hidden='true'>
         {view.icon}
       </div>

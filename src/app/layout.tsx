@@ -9,7 +9,7 @@ import { getSiteUrl } from '@helpers/url'
 import { Analytics } from '@components/analytics/Analytics'
 import { App } from '@components/App'
 import '@styles/globals.css'
-import { fontDisplay, fontUi } from '@styles/fonts'
+import { fontUi } from '@styles/fonts'
 import { BRAND_CSS_VARS, CSS_VAR_SCOPE, INK } from '@styles/tokens'
 
 export const viewport: Viewport = {
@@ -57,7 +57,7 @@ export default function RootLayout({ children }: Props) {
   return (
     <html
       lang={LOCALE}
-      className={cn(fontUi.variable, fontDisplay.variable, CSS_VAR_SCOPE)}
+      className={cn(fontUi.variable, CSS_VAR_SCOPE)}
       style={BRAND_CSS_VARS as CSSProperties}
     >
       <body>

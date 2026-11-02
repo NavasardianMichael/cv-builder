@@ -22,7 +22,8 @@ Neither downloading nor buying needs an account.
 4. That route calls `settlePayment`, which asks the gateway **server to server** and moves the
    row `pending → succeeded|failed` by compare-and-set, setting `Cv.paidAt` in the same
    transaction. Then it redirects to the web's `/payment/result?status=…&cv=…`.
-5. `GET /cvs/:id/pdf` (the designed PDF) answers 402 until `paidAt` is set.
+5. `GET /cvs/:id/pdf` (the designed PDF) answers 402 until `paidAt` is set — and again after
+   a refund (below).
 
 A buyer who closes the tab before step 3 is covered by **reconcile-on-read**: `GET /cvs/:id`
 and `GET /cvs/:id/pdf` re-check that CV's pending payments from the last 3 days.
@@ -42,7 +43,7 @@ unless they sign in, which the warning also offers. Going ahead:
 2. Checkout, the bank and the result page are the normal flow; every `/cvs` route accepts
    the guest key in place of a session (`requireCvOwner`), so the guest can edit and download
    what they bought, and find it on `/dashboard` (the proxy lets a guest cookie through).
-3. Signing in — password, sign-up, Google, or simply `GET /identity/me` with both cookies —
+3. Signing in — password (after a sign-up's verification link, which only activates), Google, or simply `GET /identity/me` with both cookies —
    moves the guest's CVs and their payments to the account and clears the cookie
    (`server/src/services/guestCvs.ts`).
 
@@ -82,5 +83,42 @@ What is verified on return: `ResponseCode "00"`, `OrderStatus 2` / `payment_depo
 OrderID equals ours and the charged amount is at least ours. Declined, void and refunded are
 `failed`; anything else stays `pending`.
 
-Not implemented: refunds through the API (do them in the bank's merchant panel), and revoking
-a CV whose payment is refunded later.
+A two-stage terminal answers `OrderStatus 1` / `payment_approved` instead: the amount is
+only blocked. After the same OrderID and (blocked) amount checks, `check` sends
+`ConfirmPayment` for our amount and reads `GetPaymentDetails` again; only that second read
+can settle it. Whether the terminal is one- or two-stage is the bank's setting.
+
+Refunds are made by hand in the bank's merchant panel. `RefundPayment` (up to the
+transaction amount) and `CancelPayment` (within 72 hours of InitPayment) exist in the
+protocol and need the bank's refund/reverse permission (codes 513/514); they are not called.
+
+A refund takes the designed PDF back: before printing it, `GET /cvs/:id/pdf` re-reads the
+CV's `succeeded` payments (`revalidatePaidCv`). One the bank shows refunded or voided —
+`OrderStatus` 4 / 3, or `RefundedAmount` reaching the charge; a partial refund does not
+count — becomes `refunded`, and the CV loses `paidAt` when no `succeeded` payment is left,
+so its owner gets 402 and may buy it again. A bank that cannot answer counts as still paid.
+Until that first download attempt the dashboard still shows the CV as paid.
+
+## Delivery evidence
+
+The refund policy (`src/constants/legal.ts#REFUND`) refunds a PDF that could not be
+downloaded — but not one that was. Every designed PDF the server sends in full writes a
+`PdfDownload` row (`GET /cvs/:id/pdf`, `routes/cvs.ts`): the time, the size, the IP and user
+agent, and the `succeeded` payment it was served under (the latest, if there are two). It is
+written on the response's `finish` — the last byte handed to the connection — so a print
+that failed, or a client that hung up first, leaves no row. That is as close as the server
+can get to "received": it cannot see the browser save the file. The free black-and-white
+PDF is not recorded.
+
+Rows outlive the CV and the account (both links `SET NULL`), like the payment itself. To
+check a claim, find the payment by the buyer's email and date, then:
+
+```sql
+SELECT d."createdAt", d.bytes, d.ip, d."userAgent"
+FROM "PdfDownload" d JOIN "Payment" p ON p.id = d."paymentId"
+WHERE p."orderNumber" = <order number>
+ORDER BY d."createdAt";
+```
+
+No rows: the PDF never reached them. Rows from their usual IP and browser after the
+payment: it did.

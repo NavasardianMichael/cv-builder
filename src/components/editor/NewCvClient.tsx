@@ -15,13 +15,13 @@ import { dedupe } from '@helpers/dedupe'
 import { readLocalDraft, writeLocalDraft } from '@helpers/localDraft'
 import { ErrorState } from '@components/ui/ErrorState'
 
-type Props = { templateId: TemplateId; sample: boolean }
+type Props = { templateId: TemplateId; sample: boolean; free: boolean }
 
 /**
  * Starts a CV and opens it. Signed in: created on the server. Guest: written as the local
  * draft — after asking, if a draft is already there, since there is only one.
  */
-export const NewCvClient: FC<Props> = ({ templateId, sample }) => {
+export const NewCvClient: FC<Props> = ({ templateId, sample, free }) => {
   const t = useTranslations('Editor')
   const tCommon = useTranslations('Common')
   const router = useRouter()
@@ -31,18 +31,21 @@ export const NewCvClient: FC<Props> = ({ templateId, sample }) => {
   const [error, setError] = useState<unknown>(null)
 
   const startDraft = useCallback(() => {
-    writeLocalDraft(newCvDocument(templateId, { sample }))
+    writeLocalDraft(newCvDocument(templateId, { sample, free }))
     router.replace(editorPath(DRAFT_ID))
-  }, [router, sample, templateId])
+  }, [free, router, sample, templateId])
 
   const start = useCallback(async () => {
     if (user) {
-      const id = await dedupe(`new-cv:${templateId}:${sample}`, async () => (await createCvAPI(newCvDocument(templateId, { sample }))).id)
+      const id = await dedupe(
+        `new-cv:${templateId}:${sample}:${free}`,
+        async () => (await createCvAPI(newCvDocument(templateId, { sample, free }))).id,
+      )
       return router.replace(editorPath(id))
     }
     if (readLocalDraft()) return setAskReplace(true)
     startDraft()
-  }, [router, sample, startDraft, templateId, user])
+  }, [free, router, sample, startDraft, templateId, user])
 
   useEffect(() => {
     if (!isResolved) return

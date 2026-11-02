@@ -24,7 +24,7 @@ export const pageMetadata = ({
   title: string
   description: string
   path: string
-  /** Skip the root layout's "%s | Ինքնակենսագրական" template (the homepage names the brand itself). */
+  /** Skip the root layout's "%s | Իմ ինքնակենսագրականը" template (the homepage names the brand itself). */
   absoluteTitle?: boolean
   /** The route has its own `opengraph-image` / `twitter-image` files, which a named image would override. */
   ownImage?: boolean

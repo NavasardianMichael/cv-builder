@@ -19,16 +19,36 @@ export const paymentsRouter = Router()
 const toResult = (res: Response, query: Record<string, string>): void =>
   res.redirect(buildWebUrl(config.corsOrigin, PAYMENT_RESULT_PATH, query))
 
-/** Ameria sends `paymentID`; the mock does too. */
+/** A query value by name, whatever its case: the bank's spelling of its own names varies (`resposneCode`). */
+const queryParam = (req: Request, name: string): string => {
+  const key = Object.keys(req.query).find((candidate) => candidate.toLowerCase() === name.toLowerCase())
+  const value = key ? req.query[key] : undefined
+  return typeof value === 'string' ? value : ''
+}
+
+/**
+ * Ameria sends `paymentID` and echoes `opaque` (our `Payment.id`); the mock sends both too.
+ * The ID is matched case-insensitively (InitPayment answers it in upper case), and `opaque`
+ * finds the row when it does not match. Either only picks the row: it is settled from the
+ * gateway's record of the ID we stored. A return we cannot place shows "pending" — not
+ * "failed", which tells the buyer nothing was charged — and is logged for diagnosis.
+ */
 paymentsRouter.get(
   '/return/:gateway',
   asyncHandler(async (req, res) => {
     const gateway = req.params.gateway
-    const paymentId = typeof req.query.paymentID === 'string' ? req.query.paymentID : ''
-    if (!isGatewayId(gateway) || !paymentId) return toResult(res, { status: 'failed' })
+    if (!isGatewayId(gateway)) return toResult(res, { status: 'failed' })
+    const paymentId = queryParam(req, 'paymentID')
+    const opaque = queryParam(req, 'opaque')
 
-    const payment = await prisma.payment.findFirst({ where: { gateway, gatewayPaymentId: paymentId } })
-    if (!payment) return toResult(res, { status: 'failed' })
+    const payment =
+      (paymentId
+        ? await prisma.payment.findFirst({ where: { gateway, gatewayPaymentId: { equals: paymentId, mode: 'insensitive' } } })
+        : null) ?? (opaque ? await prisma.payment.findFirst({ where: { gateway, id: opaque } }) : null)
+    if (!payment) {
+      console.warn(`[payments] unmatched ${gateway} return: ${JSON.stringify(req.query)}`)
+      return toResult(res, { status: 'pending' })
+    }
 
     let status: string = payment.status
     try {
@@ -54,7 +74,7 @@ small{color:#888}
 </style></head><body><main>
 <h1>Փորձնական բանկ</h1>
 <p>Սա մշակման ռեժիմի կեղծ վճարման էջ է։ Իրական գումար չի գանձվում։</p>
-<p><strong>${amount.toLocaleString('hy-AM')} ֏</strong></p>
+<p><strong>${amount.toLocaleString('hy-AM')} դրամ</strong></p>
 <a class="pay" href="/payments/mock/${escapeHtml(id)}/approve">Վճարել</a>
 <a class="decline" href="/payments/mock/${escapeHtml(id)}/decline">Մերժել</a>
 <p><small>PAYMENT_GATEWAY=mock</small></p>

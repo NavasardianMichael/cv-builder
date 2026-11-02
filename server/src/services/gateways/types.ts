@@ -28,6 +28,8 @@ export type PaymentGatewayClient = {
   init(input: GatewayInitInput): Promise<GatewayInitResult>
   /** The gateway's own answer for one payment, checked against what we asked it to charge. */
   check(gatewayPaymentId: string, expected: { orderNumber: number; amount: number }): Promise<GatewayVerdict>
+  /** True when a settled payment has been refunded or voided since. Throws when the gateway cannot answer. */
+  isReversed(gatewayPaymentId: string): Promise<boolean>
 }
 
 export class GatewayError extends Error {}

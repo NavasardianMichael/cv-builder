@@ -1,6 +1,6 @@
-import { escapeHtml, isMailConfigured, type MailResult, sendExternalMail } from './mail.js'
+import { escapeHtml, type MailResult, sendAccountMail } from './mail.js'
 import { prisma } from './prisma.js'
-import { buildWebUrl, PASSWORD_RESET_PATH, PASSWORD_RESET_QUERY } from './return-path.js'
+import { buildWebUrl, FORGOT_PASSWORD_PATH, PASSWORD_RESET_PATH, PASSWORD_RESET_QUERY } from './return-path.js'
 import { hashUrlToken, mintUrlToken } from './token.js'
 import { config } from '../config.js'
 
@@ -19,28 +19,38 @@ export const issuePasswordResetToken = async (userId: string): Promise<string> =
 export const buildPasswordResetUrl = (token: string): string =>
   buildWebUrl(config.corsOrigin, PASSWORD_RESET_PATH, { [PASSWORD_RESET_QUERY]: token })
 
-const SUBJECT = 'Գաղտնաբառի վերականգնում — Ինքնակենսագրական'
+const SUBJECT = 'Գաղտնաբառի վերականգնում — Իմ ինքնակենսագրականը'
 
 const text = (url: string): string =>
-  `Ինչ-որ մեկը խնդրել է վերականգնել Ձեր «Ինքնակենսագրական» հաշվի գաղտնաբառը։\n\n${url}\n\n` +
+  `Ինչ-որ մեկը խնդրել է վերականգնել Ձեր «Իմ ինքնակենսագրականը» հաշվի գաղտնաբառը։\n\n${url}\n\n` +
   'Հղումը գործում է մեկ ժամ և կարող է օգտագործվել մեկ անգամ։ Եթե դա Դուք չեք եղել, ' +
   'անտեսեք այս նամակը․ Ձեր գաղտնաբառը չի փոխվել։'
 
 const html = (url: string): string =>
-  '<p>Ինչ-որ մեկը խնդրել է վերականգնել Ձեր «Ինքնակենսագրական» հաշվի գաղտնաբառը։</p>' +
+  '<p>Ինչ-որ մեկը խնդրել է վերականգնել Ձեր «Իմ ինքնակենսագրականը» հաշվի գաղտնաբառը։</p>' +
   `<p><a href="${escapeHtml(url)}">Ընտրել նոր գաղտնաբառ</a></p>` +
   '<p>Հղումը գործում է մեկ ժամ և կարող է օգտագործվել մեկ անգամ։ Եթե դա Դուք չեք եղել, ' +
   'անտեսեք այս նամակը․ Ձեր գաղտնաբառը չի փոխվել։</p>'
 
-/** Unconfigured is normal in dev (the link prints here) and an outage in production. */
-export const sendPasswordResetEmail = async (to: string, url: string): Promise<MailResult> => {
-  if (!isMailConfigured()) {
-    if (config.nodeEnv === 'production') {
-      console.error('[mail] Password reset not sent: MAIL_API_URL or MAIL_API_KEY is empty')
-      return { ok: false, status: 0, message: 'Mail engine is not configured' }
-    }
-    console.log(`[mail] Password reset for ${to}\n${url}`)
-    return { ok: true }
-  }
-  return sendExternalMail({ to, subject: SUBJECT, text: text(url), html: html(url) })
+export const sendPasswordResetEmail = (to: string, url: string): Promise<MailResult> =>
+  sendAccountMail('Password reset', { to, subject: SUBJECT, text: text(url), html: html(url) })
+
+const CHANGED_SUBJECT = 'Գաղտնաբառը փոխվել է — Իմ ինքնակենսագրականը'
+
+/**
+ * The notice after a password is set or changed, so a takeover through a stolen inbox
+ * session or reset link does not go unseen. Its link starts a fresh reset.
+ */
+export const sendPasswordChangedEmail = (to: string): Promise<MailResult> => {
+  const url = buildWebUrl(config.corsOrigin, FORGOT_PASSWORD_PATH)
+  const lead =
+    'Ձեր «Իմ ինքնակենսագրականը» հաշվի գաղտնաբառը հենց նոր փոխվել է, և մյուս բոլոր սարքերից ' +
+    'հաշվից դուրս եք եկել։'
+  const warning = 'Եթե դա Դուք չեք եղել, անմիջապես վերականգնեք գաղտնաբառը՝'
+  return sendAccountMail('Password changed notice', {
+    to,
+    subject: CHANGED_SUBJECT,
+    text: `${lead}\n\n${warning}\n\n${url}`,
+    html: `<p>${lead}</p><p>${warning} <a href="${escapeHtml(url)}">վերականգնել գաղտնաբառը</a></p>`,
+  })
 }

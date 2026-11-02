@@ -10,8 +10,8 @@ import { sampleContent } from '@helpers/cvFactory'
 import { CvPreview } from '@components/cv/CvPreview'
 
 /**
- * Previews use the sample CV, not the user's: twelve live copies of the open document would
- * re-render on every keystroke, and a blank CV previews as twelve empty sheets.
+ * Previews use the sample CV, not the user's: a live copy of the open document per template
+ * would re-render on every keystroke, and a blank CV previews as a wall of empty sheets.
  */
 const TemplateThumb = memo<{ templateId: TemplateId }>(({ templateId }) => {
   const content = useMemo(() => sampleContent(), [])

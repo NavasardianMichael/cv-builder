@@ -1,9 +1,15 @@
 import { type Request, type Response, Router } from 'express'
 import { googleRouter } from './identity-google.js'
 import { fail, ok } from '../lib/api-response.js'
+import { sendVerificationLink } from '../lib/email-verification.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
 import { hashPassword, needsRehash, validatePassword, verifyDummyPassword, verifyPassword } from '../lib/password.js'
-import { buildPasswordResetUrl, issuePasswordResetToken, sendPasswordResetEmail } from '../lib/password-reset.js'
+import {
+  buildPasswordResetUrl,
+  issuePasswordResetToken,
+  sendPasswordChangedEmail,
+  sendPasswordResetEmail,
+} from '../lib/password-reset.js'
 import { prisma } from '../lib/prisma.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
 import { asEmail, asFullName } from '../lib/request.js'
@@ -21,6 +27,7 @@ identityRouter.use('/google', googleRouter)
 const loginLimiter = createRateLimiter({ limit: 10, windowMs: 15 * 60 * 1000 })
 const registerLimiter = createRateLimiter({ limit: 10, windowMs: 60 * 60 * 1000 })
 const resetLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60 * 1000 })
+const verifyLimiter = createRateLimiter({ limit: 5, windowMs: 60 * 60 * 1000 })
 
 const limited = (res: Response, retryAfterSeconds: number): void => {
   res.setHeader('Retry-After', String(retryAfterSeconds))
@@ -44,6 +51,10 @@ identityRouter.get(
   })
 )
 
+/**
+ * Creates the account inactive: no session until the emailed link is opened (`/email/verify`).
+ * Answers with the address the link went to, for the "check your inbox" screen.
+ */
 identityRouter.post(
   '/register',
   asyncHandler(async (req, res) => {
@@ -63,9 +74,13 @@ identityRouter.post(
     const user = await prisma.user.create({
       data: { email, fullName, passwordHash: await hashPassword(req.body.password as string) },
     })
-    issueSession(res, user)
-    await claimGuestCvs(req, res, user.id)
-    ok(res, mapUser(user), 201)
+    const sent = await sendVerificationLink(user, req.body?.returnTo)
+    if (!sent.ok) {
+      // Undone, so trying again is a fresh sign-up rather than "email taken" on a dead account.
+      await prisma.user.delete({ where: { id: user.id } })
+      return fail(res, 'Email could not be sent', 503, 503)
+    }
+    ok(res, { email: user.email }, 201)
   })
 )
 
@@ -95,9 +110,58 @@ identityRouter.post(
     if (needsRehash(user.passwordHash)) {
       await prisma.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(password) } })
     }
+    // Only after the password matched, so this answer reveals nothing a stranger could not already learn.
+    if (!user.emailVerifiedAt) {
+      return fail(res, 'Email is not verified', ERROR_CODE.emailNotVerified, 403)
+    }
     issueSession(res, user)
     await claimGuestCvs(req, res, user.id)
     ok(res, mapUser(user))
+  })
+)
+
+/**
+ * A fresh verification link. Always answers ok, so it cannot be used to learn which addresses
+ * have accounts; mails only an unverified password account.
+ */
+identityRouter.post(
+  '/email/resend',
+  asyncHandler(async (req, res) => {
+    const verdict = verifyLimiter(req.ip ?? 'unknown')
+    if (!verdict.allowed) return limited(res, verdict.retryAfterSeconds)
+
+    const email = asEmail(req.body?.email)
+    const user = email ? await prisma.user.findUnique({ where: { email } }) : null
+    if (user?.passwordHash && !user.emailVerifiedAt) {
+      const sent = await sendVerificationLink(user, req.body?.returnTo)
+      if (!sent.ok) return fail(res, 'Email could not be sent', 503, 503)
+    }
+    ok(res, null)
+  })
+)
+
+/**
+ * Opening the emailed link activates the account, and only that: no session is issued — the
+ * page sends the user to sign in, which also claims the browser's guest CVs. Single use: the
+ * page asks for a click before calling this, so a mail scanner that prefetches the link
+ * cannot spend it.
+ */
+identityRouter.post(
+  '/email/verify',
+  asyncHandler(async (req, res) => {
+    const token = typeof req.body?.token === 'string' ? (req.body.token as string) : ''
+    const user = token
+      ? await prisma.user.findUnique({ where: { emailVerifyTokenHash: hashUrlToken(token) } })
+      : null
+    if (!user || !user.emailVerifyExpiresAt || user.emailVerifyExpiresAt < new Date()) {
+      return fail(res, 'Verification link is invalid or expired', ERROR_CODE.verifyTokenInvalid, 400)
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: user.emailVerifiedAt ?? new Date(), emailVerifyTokenHash: null, emailVerifyExpiresAt: null },
+    })
+    ok(res, null)
   })
 )
 
@@ -169,16 +233,23 @@ identityRouter.post(
     const check = validatePassword(req.body?.password, { email: user.email })
     if (!check.ok) return fail(res, check.message, ERROR_CODE.weakPassword, 400)
 
+    // The link came through the inbox, so it proves the address too: an account that never
+    // opened its verification link is activated here.
     const updated = await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash: await hashPassword(req.body.password as string),
         passwordResetTokenHash: null,
         passwordResetExpiresAt: null,
+        emailVerifiedAt: user.emailVerifiedAt ?? new Date(),
+        emailVerifyTokenHash: null,
+        emailVerifyExpiresAt: null,
         tokenVersion: { increment: 1 },
       },
     })
     issueSession(res, updated)
+    // Not awaited: the notice must not hold up, or fail, the reset itself.
+    void sendPasswordChangedEmail(updated.email)
     ok(res, mapUser(updated))
   })
 )

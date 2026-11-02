@@ -8,6 +8,16 @@
 export const PASSWORD_RESET_QUERY = 'token'
 export const PASSWORD_RESET_PATH = '/auth/reset-password'
 
+/** Linked from the "password changed" notice (`ROUTES.forgotPassword`). */
+export const FORGOT_PASSWORD_PATH = '/auth/forgot-password'
+
+/** The query name the web's verification page reads (`VERIFY_TOKEN_QUERY`). */
+export const EMAIL_VERIFY_QUERY = 'token'
+export const EMAIL_VERIFY_PATH = '/auth/verify-email'
+
+/** Where to land once signed in (`RETURN_TO_QUERY`); carried through the verification link. */
+export const RETURN_TO_QUERY = 'returnTo'
+
 /** Where a finished checkout lands (`ROUTES.paymentResult`). */
 export const PAYMENT_RESULT_PATH = '/payment/result'
 

@@ -58,4 +58,29 @@ export const PALETTE_PRESETS: PalettePreset[] = [
     name: 'Արևածաղիկ',
     palette: { accent: '#ca8a04', background: '#ffffff', text: '#292524', heading: '#1c1917', muted: '#78716c', sidebarBackground: '#1c1917', sidebarText: '#fef9c3' },
   },
+  {
+    id: 'jermuk',
+    name: 'Ջերմուկ',
+    palette: { accent: '#0e8fa8', background: '#f7fdff', text: '#1f3640', heading: '#0b2530', muted: '#5f7a85', sidebarBackground: '#cdf3fa', sidebarText: '#0b3340' },
+  },
+  {
+    id: 'rose',
+    name: 'Վարդ',
+    palette: { accent: '#db2777', background: '#fffafc', text: '#3a2530', heading: '#2a1020', muted: '#86687a', sidebarBackground: '#831843', sidebarText: '#fdf2f8' },
+  },
+  {
+    id: 'areni',
+    name: 'Արենի',
+    palette: { accent: '#b8860b', background: '#fffdf8', text: '#2f2326', heading: '#3f0d1f', muted: '#7d6a6e', sidebarBackground: '#3f0d1f', sidebarText: '#f8e7c9' },
+  },
+  {
+    id: 'mint',
+    name: 'Անանուխ',
+    palette: { accent: '#059669', background: '#f7fdfa', text: '#1f2f2a', heading: '#0b2b22', muted: '#64786f', sidebarBackground: '#d1fae5', sidebarText: '#064e3b' },
+  },
+  {
+    id: 'peacock',
+    name: 'Սիրամարգ',
+    palette: { accent: '#ea5a47', background: '#ffffff', text: '#1f2d2c', heading: '#0f2a28', muted: '#647977', sidebarBackground: '#134e4a', sidebarText: '#ccfbf1' },
+  },
 ]

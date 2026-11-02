@@ -13,7 +13,7 @@ export default async function OpengraphImage() {
   return new ImageResponse(
     socialCard({
       heading: 'Ինքնակենսագրական, որը նման է Ձեզ',
-      subheading: 'Գրեք անմիջապես թղթի վրա և ներբեռնեք պատրաստի PDF',
+      subheading: 'Խմբագրեք անմիջապես ձևանմուշի վրա և ներբեռնեք պատրաստի PDF-ը',
       facts: [`${TEMPLATE_IDS.length} ձևանմուշ`, `${FONT_SLUGS.length} հայերեն տառատեսակ`, 'Անվճար PDF'],
       sheets: [
         { id: 'elegant', left: 752, top: 150, width: 224, tilt: -8 },

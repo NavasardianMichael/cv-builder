@@ -1,7 +1,7 @@
 import type { TemplateId } from './templates'
 
 /**
- * Every path in the app. Server-built links (password reset, payment result, Google errors)
+ * Every path in the app. Server-built links (email verification, password reset, payment result, Google errors)
  * are twins in `server/src/lib/return-path.ts`, pinned by `twins.spec.ts`.
  */
 export const ROUTES = {
@@ -12,6 +12,7 @@ export const ROUTES = {
   signUp: '/auth/sign-up',
   forgotPassword: '/auth/forgot-password',
   resetPassword: '/auth/reset-password',
+  verifyEmail: '/auth/verify-email',
   dashboard: '/dashboard',
   account: '/account',
   editor: '/editor',
@@ -30,6 +31,9 @@ export const editorPath = (cvId: string): string => `${ROUTES.editor}/${cvId}`
 
 export const newCvPath = (templateId: TemplateId): string => `${ROUTES.editorNew}?template=${templateId}`
 
+/** A new CV in the free black-and-white design (`BASIC_DESIGN`). */
+export const newFreeCvPath = (): string => `${ROUTES.editorNew}?${FREE_QUERY}=1`
+
 /** Signed-in areas; `src/proxy.ts` sends a visitor without a session cookie to sign-in. */
 export const PROTECTED_PREFIXES = [ROUTES.dashboard, ROUTES.account]
 
@@ -38,3 +42,4 @@ export const RETURN_TO_QUERY = 'returnTo'
 export const CHECKOUT_QUERY = 'checkout'
 export const TEMPLATE_QUERY = 'template'
 export const SAMPLE_QUERY = 'sample'
+export const FREE_QUERY = 'free'

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { isGoogleError } from '@constants/auth'
+import { isGoogleError, VERIFIED_QUERY } from '@constants/auth'
 import { RETURN_TO_QUERY } from '@constants/routes'
 import { privateMetadata } from '@helpers/metadata'
 import { AuthCard } from '@components/auth/AuthCard'
@@ -19,7 +19,11 @@ export default async function SignInPage({ searchParams }: Props) {
   const returnTo = typeof query[RETURN_TO_QUERY] === 'string' ? query[RETURN_TO_QUERY] : undefined
   return (
     <AuthCard title={t('signInTitle')} subtitle={t('signInSubtitle')}>
-      <SignInForm returnTo={returnTo} googleError={isGoogleError(query.error) ? query.error : undefined} />
+      <SignInForm
+        returnTo={returnTo}
+        googleError={isGoogleError(query.error) ? query.error : undefined}
+        verified={query[VERIFIED_QUERY] === '1'}
+      />
     </AuthCard>
   )
 }

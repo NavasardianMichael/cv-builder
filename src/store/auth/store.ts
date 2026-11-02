@@ -50,10 +50,9 @@ export const useAuthStoreBase = create<AuthState & AuthActions>()(
         register: async (payload) => {
           set({ isPending: true, error: null })
           try {
-            const user = await registerAPI(payload)
-            set({ user, isResolved: true })
+            const result = await registerAPI(payload)
             trackEvent('sign_up', { method: 'password' })
-            return user
+            return result
           } finally {
             set({ isPending: false })
           }

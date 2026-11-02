@@ -34,6 +34,8 @@ export const config = {
   oauthFlowTtlMs: 10 * 60 * 1000,
   /** A reset link is a full credential, so it lives an hour. */
   passwordResetTtlMs: 60 * 60 * 1000,
+  /** A verification link only activates an account the owner just made, so it may wait in the inbox. */
+  emailVerifyTtlMs: 48 * 60 * 60 * 1000,
   /** External mail engine. `apiKey` is read only by `lib/mail.ts`. Empty disables sending. */
   mail: {
     apiUrl: (process.env.MAIL_API_URL ?? '').replace(/\/+$/, ''),

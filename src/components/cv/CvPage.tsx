@@ -9,6 +9,8 @@ type Props = {
   design: CvDesign
   /** A full-height coloured sidebar strip behind that column. */
   sidebar?: 'left' | 'right'
+  /** A layer for background art behind the text, drawn by the template's CSS on every page. */
+  decor?: boolean
   className?: string
   children: ReactNode
 }
@@ -23,14 +25,17 @@ type Props = {
  *   therefore sits in a table whose empty `thead`/`tfoot` rows are the vertical padding:
  *   Chrome repeats a table's header and footer groups on every printed page.
  * - **A sidebar colour on every page.** `.cv-side-bg` is absolutely positioned on screen
- *   and `position: fixed` in print, which Chrome repeats per page.
+ *   and `position: fixed` in print, which Chrome repeats per page. `.cv-decor`, the background
+ *   art, works the same way; its images are one A4 page tall and repeat down the sheet, so the
+ *   editor shows each page's art where the PDF prints it.
  */
-export const CvPage: FC<Props> = ({ design, sidebar, className, children }) => (
+export const CvPage: FC<Props> = ({ design, sidebar, decor, className, children }) => (
   <div
     className={cn('cv-root', `cvt-${design.templateId}`, sidebar && `cv-has-side cv-side-${sidebar}`, className)}
     style={designVars(design)}
   >
     {sidebar && <div className='cv-side-bg' aria-hidden='true' />}
+    {decor && <div className='cv-decor' aria-hidden='true' />}
     <table className='cv-flow' role='presentation'>
       <thead>
         <tr>

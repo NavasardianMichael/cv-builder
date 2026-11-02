@@ -1,8 +1,8 @@
 import { FONT_SLUGS } from './fonts'
 import { TEMPLATE_IDS } from './templates'
 
-/** Brand and site-wide facts. The brand name is a placeholder until the real one is chosen. */
-export const APP_NAME = 'Ինքնակենսագրական'
+/** Brand and site-wide facts. */
+export const APP_NAME = 'Իմ ինքնակենսագրականը'
 export const APP_NAME_LATIN = 'CV Builder'
 
 /** The one-line pitch: page titles, OG cards, llms.txt. */
@@ -10,7 +10,7 @@ export const APP_TAGLINE = 'Հայերեն ինքնակենսագրականի (C
 
 export const APP_DESCRIPTION =
   `Ստեղծեք պրոֆեսիոնալ հայերեն ինքնակենսագրական (CV) րոպեների ընթացքում՝ ${TEMPLATE_IDS.length} ձևանմուշ, ${FONT_SLUGS.length} հայերեն տառատեսակ,` +
-  ' ամբողջական խմբագրում հենց էջի վրա։ Պարզ սև-սպիտակ PDF-ն անվճար է, ձևավորվածը՝ մեկանգամյա վճարով։'
+  ' ամբողջական խմբագրում հենց էջի վրա։ Պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF-ն անվճար է, պատրաստի, գունավոր, նկարով ձևանմուշովը՝ մեկանգամյա վճարով։'
 
 /** The public domain, as printed in the free PDF's watermark (which links to it). */
 export const SITE_DOMAIN = 'cv-builder.eapps.site'

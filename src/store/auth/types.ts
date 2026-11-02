@@ -1,4 +1,4 @@
-import type { LoginPayload, RegisterPayload } from '@api/auth/types'
+import type { LoginPayload, RegisterPayload, RegisterResult } from '@api/auth/types'
 import type { StateCommonProps } from '@interfaces/store'
 
 export type User = {
@@ -21,6 +21,7 @@ export type AuthActions = {
   /** Never rejects: `null` for signed out. A network failure lands in `error`. */
   getMe: () => Promise<User | null>
   login: (payload: LoginPayload) => Promise<User>
-  register: (payload: RegisterPayload) => Promise<User>
+  /** Does not sign in: the account is inactive until its emailed link is opened. */
+  register: (payload: RegisterPayload) => Promise<RegisterResult>
   logout: () => Promise<void>
 }

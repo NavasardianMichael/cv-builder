@@ -3,8 +3,11 @@ import type { Endpoint } from '@interfaces/api'
 
 export type GetMeAPI = Endpoint<{ payload: void; response: User | null; processed: User | null }>
 
-export type RegisterPayload = { fullName: string; email: string; password: string }
-export type RegisterAPI = Endpoint<{ payload: RegisterPayload; response: User; processed: User }>
+/** `returnTo` is carried through the verification link. */
+export type RegisterPayload = { fullName: string; email: string; password: string; returnTo?: string }
+/** No session yet: the account waits for its emailed link. `email` is where that link went. */
+export type RegisterResult = { email: string }
+export type RegisterAPI = Endpoint<{ payload: RegisterPayload; response: RegisterResult; processed: RegisterResult }>
 
 export type LoginPayload = { email: string; password: string }
 export type LoginAPI = Endpoint<{ payload: LoginPayload; response: User; processed: User }>
@@ -23,3 +26,9 @@ export type ForgotPasswordAPI = Endpoint<{ payload: ForgotPasswordPayload; respo
 
 export type ResetPasswordPayload = { token: string; password: string }
 export type ResetPasswordAPI = Endpoint<{ payload: ResetPasswordPayload; response: User; processed: User }>
+
+export type VerifyEmailPayload = { token: string }
+export type VerifyEmailAPI = Endpoint<{ payload: VerifyEmailPayload; response: null; processed: void }>
+
+export type ResendVerificationPayload = { email: string; returnTo?: string }
+export type ResendVerificationAPI = Endpoint<{ payload: ResendVerificationPayload; response: null; processed: void }>

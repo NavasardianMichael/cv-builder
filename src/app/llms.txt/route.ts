@@ -16,22 +16,26 @@ export const dynamic = 'force-static'
 export function GET(): Response {
   const body = buildLlmsTxt({
     title: `${APP_NAME} (${APP_NAME_LATIN})`,
-    summary: `${APP_DESCRIPTION} Պարզ սև-սպիտակ PDF-ն անվճար է, ձևավորված PDF-ը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար (մեկանգամյա, առանց բաժանորդագրության)։`,
+    summary: `${APP_DESCRIPTION} Պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF-ն անվճար է, պատրաստի, գունավոր, նկարով ձևանմուշով PDF-ը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար (մեկանգամյա, առանց բաժանորդագրության)։`,
     // The site itself is Armenian-only; these say the same in the languages people ask in.
     details: [
-      `In English: ${APP_NAME} (${APP_NAME_LATIN}) is an online builder for writing a CV (resume) in Armenian, for job seekers in Armenia and Armenian speakers abroad. Pick one of ${TEMPLATE_LIST.length} templates, type straight onto the CV, and set colours, backgrounds and fonts (${FONT_SLUGS.length} Armenian fonts) per section. A plain black-and-white PDF is free; the designed PDF is a one-time ${CV_PRICE_AMD} AMD per CV, no subscription, and no account needed. Also searched as: ${KEYWORDS_EN.join(', ')}.`,
-      `По-русски: ${APP_NAME} (${APP_NAME_LATIN}) — онлайн-конструктор резюме на армянском языке для тех, кто ищет работу в Армении, и армяноязычных соискателей за рубежом. ${TEMPLATE_LIST.length} шаблонов, редактирование прямо на резюме, цвета, фоны и шрифты (${FONT_SLUGS.length} армянских шрифтов) для каждого раздела. Простое чёрно-белое PDF — бесплатно; оформленное PDF — ${CV_PRICE_AMD} драмов один раз за резюме, без подписки и без регистрации. Также ищут как: ${KEYWORDS_RU.join(', ')}.`,
+      `In English: ${APP_NAME} (${APP_NAME_LATIN}) is an online builder for writing a CV (resume) in Armenian, for job seekers in Armenia and Armenian speakers abroad. Pick one of ${TEMPLATE_LIST.length} templates (from plain to gradient and illustrated-background designs), type straight onto the CV, and set colours, backgrounds and fonts (${FONT_SLUGS.length} Armenian fonts) per section. A PDF in the plain black-and-white template, without a photo, is free; a PDF in a ready-made colour template with a photo is a one-time ${CV_PRICE_AMD} AMD per CV, no subscription, and no account needed. Also searched as: ${KEYWORDS_EN.join(', ')}.`,
+      `По-русски: ${APP_NAME} (${APP_NAME_LATIN}) — онлайн-конструктор резюме на армянском языке для тех, кто ищет работу в Армении, и армяноязычных соискателей за рубежом. ${TEMPLATE_LIST.length} шаблонов (от строгих до градиентных и с иллюстрированным фоном), редактирование прямо на резюме, цвета, фоны и шрифты (${FONT_SLUGS.length} армянских шрифтов) для каждого раздела. PDF в простом чёрно-белом шаблоне без фото — бесплатно; PDF в готовом цветном шаблоне с фото — ${CV_PRICE_AMD} драмов один раз за резюме, без подписки и без регистрации. Также ищут как: ${KEYWORDS_RU.join(', ')}.`,
     ],
     sections: [
       {
         title: 'Էջեր',
         links: [
           { name: 'Գլխավոր', url: absoluteUrl(ROUTES.home), note: 'ինչ է ծառայությունը, հաճախ տրվող հարցեր' },
-          { name: 'Ձևանմուշներ', url: absoluteUrl(ROUTES.templates), note: `բոլոր ${TEMPLATE_LIST.length} ձևանմուշները` },
+          {
+            name: 'Ձևանմուշներ',
+            url: absoluteUrl(ROUTES.templates),
+            note: `բոլոր ${TEMPLATE_LIST.length} ձևանմուշները`,
+          },
           {
             name: 'Գինը',
             url: absoluteUrl(ROUTES.pricing),
-            note: `սև-սպիտակ PDF՝ անվճար, ձևավորված PDF՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար`,
+            note: `պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF՝ անվճար, պատրաստի, գունավոր, նկարով ձևանմուշով PDF՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար`,
           },
           { name: 'Կապ մեզ հետ', url: absoluteUrl(ROUTES.contact), note: 'հարցեր և առաջարկներ' },
         ],

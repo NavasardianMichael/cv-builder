@@ -73,13 +73,11 @@ export const Header: FC = () => {
             </Button>
           </Link>
           <AccountMenu />
-          <Button
-            className='md:hidden'
-            type='text'
-            icon={<MenuOutlined />}
-            aria-label={t('menu')}
-            onClick={() => setOpen(true)}
-          />
+          {/* `md:hidden` on a wrapper: antd's Button styles are unlayered and its `display` beats
+              Tailwind's utilities, so on the Button itself the menu showed beside the nav links. */}
+          <span className='flex md:hidden'>
+            <Button type='text' icon={<MenuOutlined />} aria-label={t('menu')} onClick={() => setOpen(true)} />
+          </span>
         </div>
       </div>
       <Drawer open={open} onClose={() => setOpen(false)} placement='right' size='default' title={t('menu')}>

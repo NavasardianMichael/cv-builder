@@ -1,10 +1,11 @@
+import { Fragment } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import type { CreativeWork, WithContext } from 'schema-dts'
 import { APP_NAME, LOCALE } from '@constants/app'
-import { FONTS } from '@constants/fonts'
+import { FONTS, fontSourceUrl } from '@constants/fonts'
 import { newCvPath, ROUTES, SAMPLE_QUERY, templatePath } from '@constants/routes'
 import { isTemplateId, TEMPLATE_IDS, TEMPLATE_LIST, templateDesign,TEMPLATES } from '@constants/templates'
 import { sampleContent } from '@helpers/cvFactory'
@@ -74,7 +75,7 @@ export default async function TemplatePage({ params }: Props) {
           ]),
         ]}
       />
-      <div className='mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 pt-10 pb-16 md:px-6 lg:grid-cols-[1fr_1.1fr]'>
+      <div className='mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 pt-8 pb-12 sm:gap-12 sm:pt-10 sm:pb-16 md:px-6 lg:grid-cols-[1fr_1.1fr]'>
         <div className='lg:sticky lg:top-24 lg:self-start'>
           <nav aria-label='breadcrumb' className='text-sm text-muted'>
             <Link href={ROUTES.templates} className='no-underline hover:text-ink'>
@@ -102,23 +103,30 @@ export default async function TemplatePage({ params }: Props) {
               <dd className='m-0 mt-2 text-sm'>{t(`layouts.${template.layout}`)}</dd>
               <dt className='mt-4 text-xs font-semibold tracking-wider text-muted uppercase'>{t('fonts')}</dt>
               <dd className='m-0 mt-2 text-sm'>
-                {FONTS[design.headingFont].name} · {FONTS[design.bodyFont].name}
+                {[design.headingFont, design.bodyFont].map((slug, index) => (
+                  <Fragment key={index}>
+                    {index > 0 && ' · '}
+                    <a href={fontSourceUrl(slug)} target='_blank' rel='noopener noreferrer' className='text-ink underline hover:text-accent-strong'>
+                      {FONTS[slug].name}
+                    </a>
+                  </Fragment>
+                ))}
               </dd>
             </div>
           </dl>
 
           <div className='mt-9 flex flex-wrap gap-3'>
             <Link
-              href={newCvPath(templateId)}
-              className='inline-flex items-center rounded-full bg-ink px-6 py-3.5 font-semibold text-white no-underline shadow-lg shadow-ink/20 transition hover:-translate-y-0.5'
-            >
-              {t('useThis')}
-            </Link>
-            <Link
               href={`${newCvPath(templateId)}&${SAMPLE_QUERY}=1`}
-              className='inline-flex items-center rounded-full bg-surface px-6 py-3.5 font-semibold text-ink no-underline ring-1 ring-line'
+              className='inline-flex items-center rounded-full bg-ink px-5 py-3 sm:px-6 sm:py-3.5 font-semibold text-white no-underline shadow-lg shadow-ink/20 transition hover:-translate-y-0.5'
             >
               {t('startSample')}
+            </Link>
+            <Link
+              href={newCvPath(templateId)}
+              className='inline-flex items-center rounded-full bg-surface px-5 py-3 sm:px-6 sm:py-3.5 font-semibold text-ink no-underline ring-1 ring-line'
+            >
+              {t('useThis')}
             </Link>
           </div>
         </div>
@@ -129,7 +137,7 @@ export default async function TemplatePage({ params }: Props) {
       </div>
 
       <section className='mx-auto max-w-7xl px-4 pb-10 md:px-6' aria-labelledby='other-templates'>
-        <h2 id='other-templates' className='font-display text-2xl font-extrabold text-ink'>
+        <h2 id='other-templates' className='font-display text-xl font-extrabold text-ink sm:text-2xl'>
           {t('otherTemplates')}
         </h2>
         <div className='mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4'>

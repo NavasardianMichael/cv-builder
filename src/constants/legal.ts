@@ -1,19 +1,24 @@
 import { APP_NAME, SUPPORT_EMAIL } from './app'
 import { CV_PRICE_AMD, formatAmd } from './pricing'
+import { ROUTES } from './routes'
 
 /**
  * Terms, privacy and refund copy. A **draft** written to describe how this app actually works
  * (one-time purchase per CV, Ameriabank vPOS, Google sign-in, local drafts) — it must be
  * reviewed by a lawyer before launch; every page says so. Ameriabank's merchant agreement
  * requires these three pages to be reachable from the site.
+ *
+ * A paragraph may link with `[label](/path)` (`LegalPage` renders it).
  */
 export type LegalSection = { heading: string; paragraphs: string[] }
 export type LegalDocument = { title: string; description: string; updated: string; sections: LegalSection[] }
 
 const PRICE = formatAmd(CV_PRICE_AMD)
 const UPDATED = '2026-10-29'
-/** Google Analytics and Sentry added. */
-const PRIVACY_UPDATED = '2026-11-01'
+/** Paid PDF downloads recorded. */
+const PRIVACY_UPDATED = '2026-11-02'
+/** Paid PDF downloads recorded; requests go through the contact page. */
+const REFUND_UPDATED = '2026-11-02'
 
 export const TERMS: LegalDocument = {
   title: 'Օգտագործման պայմաններ',
@@ -23,14 +28,14 @@ export const TERMS: LegalDocument = {
     {
       heading: '1. Ծառայությունը',
       paragraphs: [
-        `«${APP_NAME}» ծառայությունը առցանց գործիք է, որը թույլ է տալիս ստեղծել, խմբագրել և PDF ձևաչափով ներբեռնել ինքնակենսագրականներ (CV)։ Ինքնակենսագրականի պարզ սև-սպիտակ PDF-ը ներբեռնելն անվճար է։`,
+        `«${APP_NAME}» ծառայությունը առցանց գործիք է, որը թույլ է տալիս ստեղծել, խմբագրել և PDF ձևաչափով ներբեռնել ինքնակենսագրականներ (CV)։ Ինքնակենսագրականի պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF-ը ներբեռնելն անվճար է։`,
       ],
     },
     {
       heading: '2. Հաշիվ',
       paragraphs: [
         'Ծառայությունից, այդ թվում՝ ներբեռնելուց և գնելուց, կարող եք օգտվել առանց հաշվի։ Առանց հաշվի գնված ինքնակենսագրականը հասանելի է միայն այն դիտարկիչից, որով գնվել է։ Հաշիվ կարող եք բացել էլ. փոստով և գաղտնաբառով կամ Google-ով։ Դուք պատասխանատու եք Ձեր գաղտնաբառի գաղտնիության համար։',
-        'Կարող եք ցանկացած պահի ջնջել Ձեր հաշիվը «Հաշիվ» էջից։ Ջնջելով՝ ջնջվում են նաև Ձեր բոլոր ինքնակենսագրականները։',
+        `Կարող եք ցանկացած պահի ջնջել Ձեր հաշիվը [«Հաշիվ»](${ROUTES.account})։ Ջնջելով՝ ջնջվում են նաև Ձեր բոլոր ինքնակենսագրականները։`,
       ],
     },
     {
@@ -72,6 +77,7 @@ export const PRIVACY: LegalDocument = {
         'Հաշվի տվյալներ՝ անուն, էլ. փոստ, գաղտնաբառի հեշ (ոչ թե գաղտնաբառը) կամ Google հաշվի նույնացուցիչ և նկար։',
         'Ինքնակենսագրականների բովանդակությունը, ներառյալ Ձեր վերբեռնած լուսանկարը, որը պահվում է փոքրացված տեսքով։',
         'Վճարումների գրառումներ՝ գումար, ամսաթիվ և բանկի կողմից տրված վճարման նույնացուցիչ։ Քարտի տվյալներ մենք չենք ստանում։',
+        'Վճարված PDF-ի ներբեռնումների գրառումներ՝ ամսաթիվ, IP հասցե և դիտարկիչի տեսակ, որոնք որպես ապրանքի հանձնման ապացույց պահվում են վճարման գրառման հետ։',
       ],
     },
     {
@@ -105,7 +111,9 @@ export const PRIVACY: LegalDocument = {
     },
     {
       heading: '6. Ձեր իրավունքները',
-      paragraphs: [`Կարող եք խմբագրել կամ ջնջել Ձեր տվյալները հաշվի էջից, կամ գրել ${SUPPORT_EMAIL} հասցեին։`],
+      paragraphs: [
+        `Կարող եք խմբագրել կամ ջնջել Ձեր տվյալները [«Հաշիվ»](${ROUTES.account}), կամ գրել ${SUPPORT_EMAIL} հասցեին։ Վճարումների և վճարված PDF-ի ներբեռնումների գրառումները պահվում են նաև հաշիվը ջնջելուց հետո՝ որպես հաշվապահական փաստաթուղթ։`,
+      ],
     },
   ],
 }
@@ -113,12 +121,13 @@ export const PRIVACY: LegalDocument = {
 export const REFUND: LegalDocument = {
   title: 'Վերադարձի քաղաքականություն',
   description: `«${APP_NAME}» ծառայության վճարումների վերադարձի պայմանները։`,
-  updated: UPDATED,
+  updated: REFUND_UPDATED,
   sections: [
     {
       heading: '1. Թվային ապրանք',
       paragraphs: [
         'Ինքնակենսագրականի PDF-ը թվային ապրանք է, որը հասանելի է դառնում վճարումից անմիջապես հետո։ Վճարելուց առաջ Դուք կարող եք անվճար տեսնել ինքնակենսագրականի ամբողջական տեսքը խմբագրիչում։',
+        'Վճարված PDF-ի յուրաքանչյուր հաջող ներբեռնում գրանցվում է մեր համակարգում։ Եթե PDF-ն արդեն հաջողությամբ ներբեռնվել է, գումարը չի վերադարձվում, բացառությամբ կրկնակի վճարման դեպքի։',
       ],
     },
     {
@@ -131,7 +140,7 @@ export const REFUND: LegalDocument = {
     {
       heading: '3. Ինչպես դիմել',
       paragraphs: [
-        `Գրեք ${SUPPORT_EMAIL} հասցեին վճարումից 14 օրվա ընթացքում՝ նշելով հաշվի էլ. փոստը և վճարման ամսաթիվը։ Հաստատված վերադարձը կատարվում է նույն քարտին՝ բանկի ժամկետներում։`,
+        `Կապվեք մեզ հետ [«Կապ մեզ հետ»](${ROUTES.contact}) վճարումից 14 օրվա ընթացքում՝ նշելով հաշվի էլ. փոստը և վճարման ամսաթիվը։ Հաստատված վերադարձը կատարվում է նույն քարտին՝ բանկի ժամկետներում։`,
       ],
     },
   ],

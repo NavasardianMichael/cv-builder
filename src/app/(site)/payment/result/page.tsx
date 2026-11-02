@@ -17,7 +17,8 @@ export default async function PaymentResultPage({ searchParams }: Props) {
   const status = STATUSES.find((value) => value === query.status) ?? 'failed'
   const cvId = typeof query.cv === 'string' ? query.cv : undefined
   return (
-    <div className='mesh-bg px-4 py-20'>
+    // The screen below the header (h-16), so the spinner and the result sit in its middle.
+    <div className='mesh-bg flex min-h-[calc(100dvh-4rem)] flex-col px-4 py-14 sm:py-20'>
       <PaymentResultClient cvId={cvId} status={status} />
     </div>
   )

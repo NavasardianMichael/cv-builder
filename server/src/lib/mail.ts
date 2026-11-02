@@ -26,13 +26,13 @@ import { config } from '../config.js'
 const APP_ID = 'CV Builder'
 
 /**
- * Every external send goes out as `Ինքնակենսագրական <cv-builder@…>` — the engine owns the
+ * Every external send goes out as `Իմ ինքնակենսագրականը <cv-builder@…>` — the engine owns the
  * domain; only the part before `@` is ours. Mailbox providers build reputation per sender,
  * so these stay fixed: one sender for every kind of mail, never varied per call site.
  * The engine accepts letters, digits and single `.` `_` `-` between them, max 64 chars —
  * anything else answers `400` on every send.
  */
-const EXTERNAL_SENDER = { fromName: 'Ինքնակենսագրական', mailFromPrefix: 'cv-builder' } as const
+const EXTERNAL_SENDER = { fromName: 'Իմ ինքնակենսագրականը', mailFromPrefix: 'cv-builder' } as const
 
 const MAIL_TIMEOUT_MS = 10_000
 
@@ -144,6 +144,24 @@ export const sendInternalMail = (payload: InternalMailPayload): Promise<MailResu
 /** Mail a user at an address they already hold. */
 export const sendExternalMail = (payload: ExternalMailPayload): Promise<MailResult> =>
   send('/mail/external/send', { ...EXTERNAL_SENDER, ...payload })
+
+/**
+ * Mail about the reader's own account (verification, password links and notices).
+ * Unconfigured is normal in dev, where the mail prints here instead, links included, and an
+ * outage in production, where the caller must not pretend it went.
+ */
+export const sendAccountMail = async (label: string, payload: ExternalMailPayload): Promise<MailResult> => {
+  if (!isMailConfigured()) {
+    if (config.nodeEnv === 'production') {
+      console.error(`[mail] ${label} not sent: MAIL_API_URL or MAIL_API_KEY is empty`)
+      return { ok: false, status: 0, message: 'Mail engine is not configured' }
+    }
+    console.log(`[mail] ${label} for ${payload.to}
+${payload.text ?? ''}`)
+    return { ok: true }
+  }
+  return sendExternalMail(payload)
+}
 
 /**
  * The engine sanitises HTML with DOMPurify, which strips scripts and handlers but does

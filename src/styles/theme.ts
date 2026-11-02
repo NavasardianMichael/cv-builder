@@ -39,6 +39,10 @@ export const antdTheme: ThemeConfig = {
       // which otherwise derives a mid grey from colorPrimary.
       controlItemBgActiveHover: INK[800],
     },
+    /** The label sits close to its field (antd's default is 8px below it). */
+    Form: {
+      verticalLabelPadding: '0 0 4px',
+    },
     Segmented: {
       itemSelectedBg: CANVAS.raised,
       trackBg: CANVAS.sunken,

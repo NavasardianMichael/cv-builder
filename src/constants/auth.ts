@@ -7,6 +7,12 @@ export const GUEST_COOKIE = 'cv-builder-guest'
 /** The reset page's query (`PASSWORD_RESET_QUERY` on the server). */
 export const RESET_TOKEN_QUERY = 'token'
 
+/** The verification page's query (`EMAIL_VERIFY_QUERY` on the server). */
+export const VERIFY_TOKEN_QUERY = 'token'
+
+/** Set on the sign-in page by a successful verification, which signs nobody in. */
+export const VERIFIED_QUERY = 'verified'
+
 /** `?error=` values the API's Google flow redirects back with (`GOOGLE_ERROR`). */
 export const GOOGLE_ERRORS = ['google_unavailable', 'google_denied', 'google_failed', 'google_email_unverified'] as const
 

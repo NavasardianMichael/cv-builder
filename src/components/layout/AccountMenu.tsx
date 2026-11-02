@@ -18,7 +18,7 @@ import { classifyError, errorCopyKey } from '@helpers/error'
 const AVATAR_STYLE: CSSProperties = {
   background: 'var(--brand-ink)',
   color: 'var(--brand-accent)',
-  fontFamily: 'var(--font-display-face), var(--font-ui), sans-serif',
+  fontFamily: 'var(--font-ui), sans-serif',
   fontWeight: 700,
 }
 

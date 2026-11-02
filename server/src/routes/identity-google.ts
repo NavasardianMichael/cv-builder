@@ -3,7 +3,7 @@ import { issueSession } from './identity.js'
 import { config } from '../config.js'
 import { ensureGoogleStrategy, GOOGLE_ERROR, GOOGLE_STRATEGY, type GoogleIdentity, passport } from '../lib/google-oauth.js'
 import { prisma } from '../lib/prisma.js'
-import { buildWebUrl, DASHBOARD_PATH, isSafeReturnPath, SIGN_IN_PATH } from '../lib/return-path.js'
+import { buildWebUrl, DASHBOARD_PATH, isSafeReturnPath, RETURN_TO_QUERY, SIGN_IN_PATH } from '../lib/return-path.js'
 import { claimGuestCvs } from '../services/guestCvs.js'
 
 /**
@@ -22,7 +22,8 @@ const toSignIn = (res: Response, error: string): void =>
 
 googleRouter.get('/', (req: Request, res: Response, next: NextFunction) => {
   if (!ensureGoogleStrategy()) return toSignIn(res, GOOGLE_ERROR.unavailable)
-  const returnPath = isSafeReturnPath(req.query.returnTo) ? req.query.returnTo : null
+  const returnTo = req.query[RETURN_TO_QUERY]
+  const returnPath = isSafeReturnPath(returnTo) ? returnTo : null
   passport.authenticate(GOOGLE_STRATEGY, { session: false, state: { returnPath } } as object)(req, res, next)
 })
 

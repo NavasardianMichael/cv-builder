@@ -83,8 +83,9 @@ const main = async (): Promise<void> => {
   for (const seed of USERS) {
     const user = await prisma.user.upsert({
       where: { email: seed.email },
-      update: {},
-      create: { email: seed.email, fullName: seed.fullName, passwordHash },
+      // Verified, so they can sign in; `update` also activates accounts seeded before verification existed.
+      update: { emailVerifiedAt: new Date() },
+      create: { email: seed.email, fullName: seed.fullName, passwordHash, emailVerifiedAt: new Date() },
     })
     for (const cv of seed.cvs) await seedCv(user.id, cv.fixture, Boolean(cv.paid))
     console.log(`[seed] ${seed.email} / ${PASSWORD} — ${seed.cvs.length} CV(s)`)

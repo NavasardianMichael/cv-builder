@@ -9,7 +9,7 @@ export const FinalCta: FC = async () => {
   const t = await getTranslations('Home')
   return (
     <section className='mx-auto max-w-7xl px-4 md:px-6'>
-      <div className='relative overflow-hidden rounded-3xl bg-ink px-6 py-16 text-center sm:px-12'>
+      <div className='relative overflow-hidden rounded-3xl bg-ink px-6 py-12 text-center sm:px-12 sm:py-16'>
         <div
           className='pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-accent opacity-30 blur-3xl'
           aria-hidden='true'
@@ -19,7 +19,7 @@ export const FinalCta: FC = async () => {
         </h2>
         <Link
           href={newCvPath(DEFAULT_TEMPLATE_ID)}
-          className='relative mt-8 inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-base font-semibold text-white no-underline transition hover:-translate-y-0.5 hover:bg-accent-strong'
+          className='relative mt-6 sm:mt-8 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 sm:px-7 sm:py-3.5 text-base font-semibold text-white no-underline transition hover:-translate-y-0.5 hover:bg-accent-strong'
         >
           {t('finalCta')} <ArrowRightOutlined />
         </Link>

@@ -1,6 +1,6 @@
-# cv-builder (Ինքնակենսագրական)
+# cv-builder (Իմ ինքնակենսագրականը)
 
-An Armenian-only CV builder. Users pick one of 12 templates, edit the CV **in place** (text,
+An Armenian-only CV builder. Users pick one of 42 templates, edit the CV **in place** (text,
 colours, backgrounds and fonts per section), and pay once per CV (2,000 ֏) to download its
 designed PDF; a plain black-and-white PDF of the same text is free. Neither needs an account. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
 Modelled on `../bookie` — same stack and conventions, smaller.
@@ -45,7 +45,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | The CV document type | `src/store/cvs/single/types.ts` — twin of `server/src/services/cvDocument.ts` |
 | Templates (names, layouts, default palettes/fonts) | `src/constants/templates.ts` |
 | Template markup | `src/components/cv/templates/*.tsx`, composed from `src/components/cv/blocks/` |
-| Template styling | `src/components/cv/cv.css` — reads only `--cv-*` variables (`src/helpers/cvStyle.ts`) |
+| Template styling | `src/components/cv/cv.css` — reads only `--cv-*` variables (`src/helpers/cvStyle.ts`). Background art (gradients, SVG masks in mm) goes on `CvPage decor` / `.cv-side-bg` pseudo-elements, tiled once per A4 page — see "Page mechanics" there |
 | Fonts (40, self-hosted, all from fonter.am) | `src/constants/fonts.ts` · files in `public/fonts/` · provenance `public/fonts/LICENSES.md` · rebuild `scripts/fonts/` |
 | Section types, default titles, level words | `src/constants/sections.ts` |
 | In-place editing | `src/components/cv/Editable.tsx` + `CvEditContext.tsx`; the editor's controls in `src/components/editor/` |
@@ -54,9 +54,9 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
 | Buying without an account | `server/src/lib/guest.ts` (guest-key cookie) · `services/guestCvs.ts` (moved to the account on sign-in) · `CheckoutModal` · `docs/PAYMENTS.md` |
 | PDF | `server/src/services/pdf.ts` prints the web's `/render` page (`src/app/render/`) in headless Chrome |
-| Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` |
+| Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` · delivery evidence for refunds: `PdfDownload` rows written by `GET /cvs/:id/pdf` |
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
-| Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` |
+| Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` · emailed links (verify, reset, "password changed") in `server/src/lib/{email-verification,password-reset}.ts`. A password sign-up has no session until its verification link is opened |
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
 | SEO / GEO | `src/helpers/metadata.ts`, `src/constants/seo.ts` (hy/en/ru keywords, verification tags), `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
 | Share cards (OpenGraph / X) | `src/app/socialCard.tsx` draws them; `app/opengraph-image.tsx` (site) and `templates/[templateId]/{opengraph,twitter}-image.tsx` (per template). `pageMetadata` names the site image on every page — a page's own `openGraph` would otherwise drop it — except with `ownImage: true` |

@@ -1,8 +1,12 @@
 'use client'
 
 import { type CSSProperties, type FC, type MouseEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { AppstoreOutlined, ArrowRightOutlined } from '@ant-design/icons'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
+import { ROUTES } from '@constants/routes'
+import { isBasicDesign } from '@helpers/basicCv'
 import { clampZoom } from '@helpers/canvasZoom'
 import { cn } from '@helpers/cn'
 import { CvDocument } from '@components/cv/CvDocument'
@@ -37,8 +41,11 @@ const distanceOf = (touches: TouchPoints): number =>
 
 /**
  * The editable CV. The document is drawn at true A4 size and scaled to the zoom; dashed
- * guides mark where each A4 page ends (approximate — the PDF repeats page padding and keeps
- * entries whole, so a break can land slightly earlier than its guide).
+ * guides mark where the PDF's pages break. The PDF repeats the sheet's vertical padding at
+ * the top and bottom of every page (CvPage), so each page holds A4 minus twice that padding
+ * of the CV, and the breaks fall at `padding + n × that`. Still approximate: the PDF keeps
+ * entries whole, so an entry the guide cuts starts the next page, and the editor alone shows
+ * hidden and empty sections.
  *
  * Touch screens pinch to zoom the sheet, not the page: the scroller takes only pans
  * (`touch-action`), and two fingers set the zoom, keeping the point between them in place.
@@ -53,6 +60,8 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
   const sheetRef = useRef<HTMLDivElement>(null)
   const [fitZoom, setFitZoom] = useState(1)
   const [sheetHeight, setSheetHeight] = useState(A4_HEIGHT_PX)
+  /** The template's vertical page padding, which the PDF repeats on every page. */
+  const [pagePad, setPagePad] = useState(0)
   const scale = zoom ?? fitZoom
 
   useEffect(() => {
@@ -65,13 +74,15 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
       setFitZoom(next)
       onFitZoomChange(next)
       setSheetHeight(sheet.offsetHeight)
+      setPagePad(sheet.querySelector<HTMLElement>('.cv-flow-pad')?.offsetHeight ?? 0)
     })
     observer.observe(scroller)
     observer.observe(sheet)
     return () => observer.disconnect()
   }, [onFitZoomChange])
 
-  const pages = Math.max(1, Math.ceil((sheetHeight - 2) / A4_HEIGHT_PX))
+  const pageContent = A4_HEIGHT_PX - 2 * pagePad
+  const pages = Math.max(1, Math.ceil((sheetHeight - 2 * pagePad - 2) / pageContent))
   useEffect(() => onPagesChange(pages), [pages, onPagesChange])
 
   // The pinch reads the zoom it starts from and reports through refs, so its listeners are
@@ -177,6 +188,21 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
           if (event.target === event.currentTarget && selectedBlock) selectBlock(null)
         }}
       >
+        {!previewing && isBasicDesign(doc.design) && (
+          // Above the sheet's top-right corner, not on it: nothing of the editor goes inside the CV.
+          <div className='mx-auto mb-3 flex justify-end' style={{ width: A4_WIDTH_PX * scale }}>
+            <Link
+              href={ROUTES.templates}
+              className='group inline-flex max-w-full items-center gap-2 rounded-full bg-linear-to-r from-ink to-accent py-1.5 pr-3.5 pl-1.5 text-sm font-semibold text-white no-underline shadow-lg shadow-accent/25 ring-1 ring-white/20 transition hover:-translate-y-0.5 hover:shadow-accent/40'
+            >
+              <span className='grid size-6 place-items-center rounded-full bg-white/20' aria-hidden='true'>
+                <AppstoreOutlined />
+              </span>
+              {t('tryTemplates')}
+              <ArrowRightOutlined className='text-xs transition group-hover:translate-x-0.5' aria-hidden='true' />
+            </Link>
+          </div>
+        )}
         <div className='mx-auto' style={{ width: A4_WIDTH_PX * scale, height: sheetHeight * scale }}>
           <div
             className='relative origin-top-left'
@@ -201,7 +227,7 @@ export const EditorCanvas: FC<Props> = ({ zoom, onZoomChange, previewing, onBloc
               <div
                 key={index}
                 className='pointer-events-none absolute inset-x-0 border-t-2 border-dashed border-accent/70'
-                style={{ top: A4_HEIGHT_PX * (index + 1) }}
+                style={{ top: pagePad + pageContent * (index + 1) }}
                 aria-hidden='true'
               >
                 {/* Beside the sheet where there is room for it; on a phone, just inside its edge. */}

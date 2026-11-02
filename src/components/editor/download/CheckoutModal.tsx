@@ -201,16 +201,16 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
           )}
         </DownloadOption>
       </div>
-      <p className='mt-4 mb-0 text-xs leading-relaxed text-muted'>{t('secure')}</p>
-      <p className='mt-1 mb-0 text-xs text-muted'>
+      <p className='mt-4 mb-0 text-xs leading-relaxed'>{t('secure')}</p>
+      <p className='mt-1 mb-0 text-xs'>
         {t.rich('agree', {
           terms: (chunks) => (
-            <Link href={ROUTES.terms} target='_blank' className='underline'>
+            <Link href={ROUTES.terms} target='_blank' className='underline!'>
               {chunks}
             </Link>
           ),
           refund: (chunks) => (
-            <Link href={ROUTES.refundPolicy} target='_blank' className='underline'>
+            <Link href={ROUTES.refundPolicy} target='_blank' className='underline!'>
               {chunks}
             </Link>
           ),

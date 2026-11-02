@@ -25,6 +25,21 @@
   --brand-radius: var(--ant-border-radius-lg);
 }
 
+/*
+ * Phones (below `sm`): large controls a step lower, 46px → 42px — still a comfortable tap
+ * target. Their text stays 16px, under which iOS zooms into a focused field. antd sets these
+ * on `.rz` (the root) and `.rz.ant-input`, so each override carries one class more.
+ */
+@media (max-width: 575.98px) {
+  :root.rz {
+    --ant-control-height-lg: 42px;
+  }
+
+  :root .rz:is(.ant-input, .ant-input-css-var) {
+    --ant-input-padding-block-lg: 8px;
+  }
+}
+
 @theme inline {
   --color-ink: var(--brand-ink);
   --color-text: var(--brand-text);
@@ -43,7 +58,7 @@
   --color-ink-deep: var(--brand-ink-deep);
   --radius-brand: var(--brand-radius);
   --font-sans: var(--font-ui), system-ui, sans-serif;
-  --font-display: var(--font-display-face), var(--font-ui), sans-serif;
+  --font-display: var(--font-ui), system-ui, sans-serif;
 }
 
 /* Unlayered CSS beats every Tailwind utility, so element defaults live in the base layer. */
@@ -98,6 +113,15 @@
 @utility text-title {
   font-size: min(var(--title-max, 1.875rem), 100cqi / var(--title-em, 15.5));
   line-height: var(--tw-leading, 1.2);
+}
+
+/* A form field's hint (`Form.Item extra`, e.g. the password rules) and its validation
+   message: a step below the field's text and set off from it. antd has no token for either;
+   three classes outrank its rule. */
+.ant-form-item .ant-form-item-additional .ant-form-item-extra,
+.ant-form-item .ant-form-item-additional .ant-form-item-explain {
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
 }
 
 /* A soft mesh behind the hero and auth cards. */

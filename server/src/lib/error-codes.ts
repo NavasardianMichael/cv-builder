@@ -9,6 +9,8 @@ export const ERROR_CODE = {
   weakPassword: 4003,
   resetTokenInvalid: 4004,
   googleOnlyAccount: 4005,
+  emailNotVerified: 4006,
+  verifyTokenInvalid: 4007,
   cvLimitReached: 4010,
   cvAlreadyPaid: 4020,
   cvNotPaid: 4021,

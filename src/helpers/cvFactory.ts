@@ -1,7 +1,7 @@
 import type { BlockStyle, CvContact, CvContent, CvDocument, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
 import { type ContactType, LEGACY_CONTACT_TYPES } from '@constants/contacts'
 import { SECTION_DEFAULT_TITLES, SECTION_META, type SectionType } from '@constants/sections'
-import { templateDesign, type TemplateId } from '@constants/templates'
+import { BASIC_DESIGN, templateDesign, type TemplateId } from '@constants/templates'
 
 /** Building blocks for new documents, sections and items. Pure. */
 
@@ -130,8 +130,12 @@ export const sampleContent = (): CvContent => ({
 
 export const DEFAULT_CV_TITLE = 'Իմ ինքնակենսագրականը'
 
-export const newCvDocument = (templateId: TemplateId, { sample = false }: { sample?: boolean } = {}): CvDocument => ({
+/** `free` starts in the free PDF's black-and-white design instead of the template's own. */
+export const newCvDocument = (
+  templateId: TemplateId,
+  { sample = false, free = false }: { sample?: boolean; free?: boolean } = {},
+): CvDocument => ({
   title: DEFAULT_CV_TITLE,
   content: sample ? sampleContent() : blankContent(),
-  design: templateDesign(templateId),
+  design: free ? { ...BASIC_DESIGN, palette: { ...BASIC_DESIGN.palette } } : templateDesign(templateId),
 })

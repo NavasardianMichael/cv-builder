@@ -2,6 +2,7 @@ import type { FC } from 'react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { APP_NAME } from '@constants/app'
+import { FONTS_SOURCE_URL } from '@constants/fonts'
 import { ROUTES } from '@constants/routes'
 import { BrandLogo } from './BrandLogo'
 
@@ -35,7 +36,15 @@ export const Footer: FC = async () => {
         <div className='max-w-sm'>
           <BrandLogo />
           <p className='mt-4 text-sm leading-relaxed text-muted'>{t('tagline')}</p>
-          <p className='mt-3 text-xs text-muted'>{t('fonts')}</p>
+          <p className='mt-3 text-xs text-muted'>
+            {t.rich('fonts', {
+              link: (chunks) => (
+                <a href={FONTS_SOURCE_URL} target='_blank' rel='noopener noreferrer' className='text-muted underline hover:text-ink'>
+                  {chunks}
+                </a>
+              ),
+            })}
+          </p>
         </div>
         {columns.map((column) => (
           <nav key={column.title} aria-label={column.title}>

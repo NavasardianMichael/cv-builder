@@ -15,6 +15,9 @@ import type { GatewayVerdict } from './types.js'
  * - `POST api/VPOS/GetPaymentDetails` takes Username + Password + PaymentID; answers
  *   `ResponseCode` **"00"** on success, `OrderStatus` 2 / `PaymentState` "payment_deposited"
  *   for a completed one-step payment, 6 / "payment_declined" for a declined one.
+ * - A two-stage terminal stops at `OrderStatus` 1 / "payment_approved": the amount is only
+ *   blocked on the card until `POST api/VPOS/ConfirmPayment` (PaymentID + Username + Password
+ *   + Amount) charges it; that answers `ResponseCode` **"00"** on success.
  * - Currency is ISO 4217 numeric: AMD = "051". Amount is a decimal number of drams.
  */
 
@@ -39,11 +42,21 @@ export type AmeriaDetailsResponse = {
   Amount?: number | string | null
   ApprovedAmount?: number | string | null
   DepositedAmount?: number | string | null
+  RefundedAmount?: number | string | null
   OrderStatus?: string | number | null
   PaymentState?: string | null
   Description?: string | null
   TrxnDescription?: string | null
 }
+
+export type AmeriaConfirmResponse = {
+  ResponseCode?: string | number | null
+  ResponseMessage?: string | null
+  Opaque?: string | null
+}
+
+/** A gateway verdict, plus the wire-only "blocked, not yet charged" of a two-stage terminal. */
+export type AmeriaVerdict = GatewayVerdict | { status: 'approved' }
 
 export const buildInitPaymentBody = (
   credentials: AmeriaCredentials,
@@ -68,7 +81,14 @@ export const buildDetailsBody = (credentials: AmeriaCredentials, paymentId: stri
   Password: credentials.password,
 })
 
-export const paymentPageUrl = (baseUrl: string, paymentId: string): string =>
+export const buildConfirmBody = (credentials: AmeriaCredentials, paymentId: string, amount: number) => ({
+  PaymentID: paymentId,
+  Username: credentials.username,
+  Password: credentials.password,
+  Amount: amount,
+})
+
+export const paymentPageUrl =(baseUrl: string, paymentId: string): string =>
   `${baseUrl}Payments/Pay?id=${encodeURIComponent(paymentId)}&lang=am`
 
 /** `ResponseCode` 1 (number, or "1" in some representations) with a PaymentID. */
@@ -80,6 +100,11 @@ export const readInitResponse = (body: AmeriaInitResponse): { ok: true; paymentI
   return { ok: false, message: `InitPayment ResponseCode ${String(code)}: ${body.ResponseMessage ?? 'no message'}` }
 }
 
+export const readConfirmResponse = (body: AmeriaConfirmResponse): { ok: true } | { ok: false; message: string } =>
+  String(body.ResponseCode ?? '') === '00'
+    ? { ok: true }
+    : { ok: false, message: `ConfirmPayment ResponseCode ${String(body.ResponseCode)}: ${body.ResponseMessage ?? 'no message'}` }
+
 const asNumber = (value: unknown): number | null => {
   const parsed = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : NaN
   return Number.isFinite(parsed) ? parsed : null
@@ -88,12 +113,13 @@ const asNumber = (value: unknown): number | null => {
 /**
  * The settlement decision. Paid only when the bank says deposited **and** the order number
  * and amount are the ones we asked for — a details record for some other order (a replayed
- * `paymentID`) or a smaller charge must not unlock anything.
+ * `paymentID`) or a smaller charge must not unlock anything. `approved` (blocked on the card,
+ * two-stage) passes the same checks against the blocked amount before it may be confirmed.
  */
 export const interpretDetails = (
   body: AmeriaDetailsResponse,
   expected: { orderId: number; amount: number }
-): GatewayVerdict => {
+): AmeriaVerdict => {
   const status = asNumber(body.OrderStatus)
   const state = body.PaymentState ?? ''
   const responseOk = String(body.ResponseCode ?? '') === '00'
@@ -104,11 +130,29 @@ export const interpretDetails = (
   }
 
   const deposited = status === 2 || state === 'payment_deposited'
-  if (!deposited || !responseOk) return { status: 'pending' }
+  const approved = status === 1 || state === 'payment_approved'
+  if (!(deposited || approved) || !responseOk) return { status: 'pending' }
 
   if (asNumber(body.OrderID) !== expected.orderId) return { status: 'failed', reason: 'order mismatch' }
-  const charged = asNumber(body.DepositedAmount) ?? asNumber(body.ApprovedAmount) ?? asNumber(body.Amount)
+  const charged = deposited
+    ? (asNumber(body.DepositedAmount) ?? asNumber(body.ApprovedAmount) ?? asNumber(body.Amount))
+    : asNumber(body.ApprovedAmount)
   if (charged === null || charged < expected.amount) return { status: 'failed', reason: 'amount mismatch' }
 
-  return { status: 'succeeded' }
+  return { status: deposited ? 'succeeded' : 'approved' }
+}
+
+/**
+ * Whether a settled payment was taken back later, in the bank's merchant panel: `OrderStatus`
+ * 4 / "payment_refunded" or 3 / "payment_void", or `RefundedAmount` reaching what was charged.
+ * A partial refund keeps it paid. A record the bank could not give (no status, no refund) is
+ * not a reversal.
+ */
+export const isReversedPayment = (body: AmeriaDetailsResponse): boolean => {
+  const status = asNumber(body.OrderStatus)
+  const state = body.PaymentState ?? ''
+  if (status === 3 || status === 4 || state === 'payment_void' || state === 'payment_refunded') return true
+  const refunded = asNumber(body.RefundedAmount) ?? 0
+  const charged = asNumber(body.DepositedAmount) ?? asNumber(body.Amount) ?? 0
+  return refunded > 0 && refunded >= charged
 }

@@ -31,16 +31,16 @@ export default async function PricingPage() {
           ]),
         ]}
       />
-      <div className='mx-auto max-w-5xl px-4 pt-14 md:px-6'>
+      <div className='mx-auto max-w-5xl px-4 pt-10 sm:pt-14 md:px-6'>
         <div className='text-center'>
           <h1 className='font-display text-title font-extrabold tracking-tight text-ink sm:text-5xl'>{t('title')}</h1>
-          <p className='mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted'>{t('subtitle')}</p>
+          <p className='mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted sm:mt-5 sm:text-lg'>{t('subtitle')}</p>
         </div>
 
-        <div className='mt-14 grid gap-6 md:grid-cols-2'>
-          <div className='rounded-3xl bg-surface p-8 ring-1 ring-line'>
-            <h2 className='m-0 text-lg font-bold text-muted'>{t('free')}</h2>
-            <p className='mt-3 mb-6 font-display text-5xl font-extrabold text-ink'>{t('freePrice')}</p>
+        <div className='mt-10 grid gap-5 sm:mt-14 sm:gap-6 md:grid-cols-2'>
+          <div className='rounded-3xl bg-surface p-6 ring-1 ring-line sm:p-8'>
+            <h2 className='m-0 text-base font-bold text-muted sm:text-lg'>{t('free')}</h2>
+            <p className='mt-2 mb-5 font-display text-4xl font-extrabold text-ink sm:mt-3 sm:mb-6 sm:text-5xl'>{t('freePrice')}</p>
             <ul className='m-0 flex list-none flex-col gap-3 p-0'>
               {freeItems.map((item) => (
                 <li key={item} className='flex gap-3'>
@@ -50,10 +50,10 @@ export default async function PricingPage() {
             </ul>
           </div>
 
-          <div className='relative overflow-hidden rounded-3xl bg-ink p-8 text-white shadow-2xl shadow-ink/30'>
+          <div className='relative overflow-hidden rounded-3xl bg-ink p-6 text-white shadow-2xl shadow-ink/30 sm:p-8'>
             <div className='pointer-events-none absolute -top-20 -right-20 size-60 rounded-full bg-accent opacity-30 blur-3xl' aria-hidden='true' />
-            <h2 className='relative m-0 text-lg font-bold text-white/70'>{t('paid')}</h2>
-            <p className='relative mt-3 mb-1 font-display text-5xl font-extrabold text-white'>{formatAmd(CV_PRICE_AMD)}</p>
+            <h2 className='relative m-0 text-base font-bold text-white/70 sm:text-lg'>{t('paid')}</h2>
+            <p className='relative mt-2 mb-1 font-display text-4xl font-extrabold text-white sm:mt-3 sm:text-5xl'>{formatAmd(CV_PRICE_AMD)}</p>
             <p className='relative mt-0 mb-6 text-white/60'>{t('perCv')}</p>
             <ul className='relative m-0 flex list-none flex-col gap-3 p-0'>
               {paidItems.map((item) => (
@@ -64,7 +64,7 @@ export default async function PricingPage() {
             </ul>
             <Link
               href={ROUTES.templates}
-              className='relative mt-8 flex justify-center rounded-full bg-accent px-6 py-3.5 font-semibold text-white no-underline transition hover:bg-accent-strong'
+              className='relative mt-6 flex justify-center rounded-full bg-accent px-5 py-3 sm:px-6 sm:py-3.5 font-semibold text-white no-underline transition hover:bg-accent-strong sm:mt-8'
             >
               {t('cta')}
             </Link>

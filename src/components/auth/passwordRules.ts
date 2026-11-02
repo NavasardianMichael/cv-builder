@@ -12,3 +12,12 @@ export const passwordRules = (requiredMessage: string, weakMessage: string): Rul
         : Promise.reject(new Error(weakMessage)),
   },
 ]
+
+/** The repeat field: equal to `field`. The item must list `field` in `dependencies` to recheck as it changes. */
+export const confirmPasswordRules = (field: string, requiredMessage: string, mismatchMessage: string): Rule[] => [
+  { required: true, message: requiredMessage },
+  ({ getFieldValue }) => ({
+    validator: (_rule, value: string | undefined) =>
+      !value || value === getFieldValue(field) ? Promise.resolve() : Promise.reject(new Error(mismatchMessage)),
+  }),
+]

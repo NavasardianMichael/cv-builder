@@ -9,10 +9,11 @@ import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@constants/auth'
 import { RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { ErrorAlert } from '@components/ui/ErrorAlert'
 import { GoogleButton } from './GoogleButton'
-import { passwordRules } from './passwordRules'
+import { confirmPasswordRules, passwordRules } from './passwordRules'
 import { useAuthRedirect } from './useAuthRedirect'
+import { VerificationNotice } from './VerificationNotice'
 
-type Values = { fullName: string; email: string; password: string }
+type Values = { fullName: string; email: string; password: string; confirmPassword: string }
 
 export const SignUpForm: FC<{ returnTo?: string }> = ({ returnTo }) => {
   const t = useTranslations('Auth')
@@ -20,16 +21,33 @@ export const SignUpForm: FC<{ returnTo?: string }> = ({ returnTo }) => {
   const register = useAuthStore.use.register()
   const isPending = useAuthStore.use.isPending()
   const [error, setError] = useState<unknown>(null)
+  /** Where the verification link went; set once the account exists. */
+  const [sentTo, setSentTo] = useState<string | null>(null)
   useAuthRedirect(returnTo)
   const query = returnTo ? `?${RETURN_TO_QUERY}=${encodeURIComponent(returnTo)}` : ''
 
-  const onFinish = async (values: Values) => {
+  const onFinish = async ({ fullName, email, password }: Values) => {
     setError(null)
     try {
-      await register({ ...values, fullName: values.fullName.trim() })
+      const { email: address } = await register({ fullName: fullName.trim(), email, password, returnTo })
+      setSentTo(address)
     } catch (failure) {
       setError(failure)
     }
+  }
+
+  if (sentTo) {
+    return (
+      <div className='flex flex-col gap-5'>
+        <VerificationNotice variant='sent' email={sentTo} returnTo={returnTo} />
+        <p className='m-0 text-center text-sm text-muted'>
+          {t('haveAccount')}{' '}
+          <Link href={`${ROUTES.signIn}${query}`} className='font-semibold text-ink'>
+            {t('signInTitle')}
+          </Link>
+        </p>
+      </div>
+    )
   }
 
   return (
@@ -57,6 +75,14 @@ export const SignUpForm: FC<{ returnTo?: string }> = ({ returnTo }) => {
           label={t('password')}
           extra={t('passwordHint', { min: PASSWORD_MIN_LENGTH })}
           rules={passwordRules(t('required'), t('weakPassword', { min: PASSWORD_MIN_LENGTH }))}
+        >
+          <Input.Password size='large' autoComplete='new-password' maxLength={PASSWORD_MAX_LENGTH} />
+        </Form.Item>
+        <Form.Item
+          name='confirmPassword'
+          label={t('confirmPassword')}
+          dependencies={['password']}
+          rules={confirmPasswordRules('password', t('required'), t('passwordMismatch'))}
         >
           <Input.Password size='large' autoComplete='new-password' maxLength={PASSWORD_MAX_LENGTH} />
         </Form.Item>

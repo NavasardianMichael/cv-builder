@@ -8,5 +8,7 @@ export const ENDPOINTS = {
   passwordLink: '/identity/password/link',
   forgotPassword: '/identity/password/forgot',
   resetPassword: '/identity/password/reset',
+  verifyEmail: '/identity/email/verify',
+  resendVerification: '/identity/email/resend',
   google: '/identity/google',
 } as const

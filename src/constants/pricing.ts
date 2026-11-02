@@ -6,5 +6,8 @@ export const CV_PRICE_AMD = 2000
 
 export const CURRENCY = 'AMD'
 
-/** "2,000 ֏" — grouped the way Armenian sites print prices. */
-export const formatAmd = (amount: number): string => `${amount.toLocaleString('en-US')} ֏`
+/**
+ * "2,000 դրամ" — grouped the way Armenian sites print prices. Spelled out, not ֏: GHEA
+ * Grapalat, the app font, draws a pomegranate at U+058F.
+ */
+export const formatAmd = (amount: number): string => `${amount.toLocaleString('en-US')} դրամ`

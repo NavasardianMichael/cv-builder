@@ -3,7 +3,7 @@ import type { APIResponse } from '@interfaces/api'
 import { RETURN_TO_QUERY } from '@constants/routes'
 import { getApiUrl } from '@helpers/url'
 import { ENDPOINTS } from './endpoints'
-import { processGetMeResponse, processUserResponse } from './processors'
+import { processGetMeResponse, processRegisterResponse, processUserResponse } from './processors'
 import type {
   DeleteMeAPI,
   ForgotPasswordAPI,
@@ -11,9 +11,12 @@ import type {
   LoginAPI,
   LogoutAPI,
   RegisterAPI,
+  RegisterResult,
+  ResendVerificationAPI,
   ResetPasswordAPI,
   SendPasswordLinkAPI,
   UpdateMeAPI,
+  VerifyEmailAPI,
 } from './types'
 import { axiosInstance } from '../axiosInstance'
 
@@ -23,8 +26,8 @@ export const getMeAPI: GetMeAPI['api'] = async () => {
 }
 
 export const registerAPI: RegisterAPI['api'] = async (payload) => {
-  const { data } = await axiosInstance.post<APIResponse<User>>(ENDPOINTS.register, payload)
-  return processUserResponse(data)
+  const { data } = await axiosInstance.post<APIResponse<RegisterResult>>(ENDPOINTS.register, payload)
+  return processRegisterResponse(data)
 }
 
 export const loginAPI: LoginAPI['api'] = async (payload) => {
@@ -57,6 +60,15 @@ export const forgotPasswordAPI: ForgotPasswordAPI['api'] = async (payload) => {
 export const resetPasswordAPI: ResetPasswordAPI['api'] = async (payload) => {
   const { data } = await axiosInstance.post<APIResponse<User>>(ENDPOINTS.resetPassword, payload)
   return processUserResponse(data)
+}
+
+/** Opens the emailed link: activates the account and signs it in. */
+export const verifyEmailAPI: VerifyEmailAPI['api'] = async (payload) => {
+  await axiosInstance.post(ENDPOINTS.verifyEmail, payload)
+}
+
+export const resendVerificationAPI: ResendVerificationAPI['api'] = async (payload) => {
+  await axiosInstance.post(ENDPOINTS.resendVerification, payload)
 }
 
 /** A top-level navigation, not an XHR: Google's consent screen cannot run in a request. */

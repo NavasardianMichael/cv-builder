@@ -16,9 +16,14 @@ model User {
   passwordHash           String?
   googleId               String?   @unique
   avatarUrl              String?
-  /// Set when Google vouched for the address. A password signup is not verified; nothing
-  /// is gated on it except Google linking (see routes/identity-google.ts).
+  /// Set when the inbox was proven: Google vouched for it, or the owner opened an emailed
+  /// link (verification or password reset). A password account cannot sign in until it is
+  /// set (routes/identity.ts), and Google linking claims an account where it is not
+  /// (routes/identity-google.ts).
   emailVerifiedAt        DateTime?
+  /// The pending verification link (hashed, like the reset token). Cleared once used.
+  emailVerifyTokenHash   String?   @unique
+  emailVerifyExpiresAt   DateTime?
   /// Bumped by password reset/change and account delete; every session cookie minted
   /// against an older value stops being honoured (middleware/auth.ts).
   tokenVersion           Int       @default(0)
@@ -53,7 +58,8 @@ model Cv {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  payments Payment[]
+  payments  Payment[]
+  downloads PdfDownload[]
 
   @@index([userId, updatedAt])
   @@index([guestKeyHash, updatedAt])
@@ -63,6 +69,9 @@ enum PaymentStatus {
   pending
   succeeded
   failed
+  /// Was `succeeded`, then refunded or voided in the bank's panel; the CV keeps `paidAt` only
+  /// while another payment of it is still `succeeded`.
+  refunded
 }
 
 enum PaymentGateway {
@@ -91,5 +100,28 @@ model Payment {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
+  downloads PdfDownload[]
+
   @@index([cvId, status])
+}
+
+/// One designed PDF the server sent in full (`GET /cvs/:id/pdf`, routes/cvs.ts): the proof,
+/// next to the payment's, that a paid CV was delivered — what the refund policy's "could not
+/// download it" claim is checked against. Written once the last byte is handed to the
+/// connection; a print that failed or a client that hung up first leaves no row. The free
+/// black-and-white PDF is not recorded. Kept, like `Payment`, when the CV or account goes.
+model PdfDownload {
+  id        String   @id @default(cuid())
+  cvId      String?
+  cv        Cv?      @relation(fields: [cvId], references: [id], onDelete: SetNull)
+  /// The `succeeded` payment the download was served under.
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  bytes     Int
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([cvId, createdAt])
+  @@index([paymentId])
 }

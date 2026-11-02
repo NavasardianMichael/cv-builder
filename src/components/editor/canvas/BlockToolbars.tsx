@@ -306,7 +306,7 @@ export const AddContactButton: FC<{ count: number }> = ({ count }) => {
     >
       <button
         type='button'
-        className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-transparent px-2.5 py-1 text-xs'
+        className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-(--cv-bg) px-2.5 py-0.5 text-xs whitespace-nowrap'
         style={{ color: 'var(--cv-accent)', fontFamily: 'var(--font-ui), sans-serif' }}
       >
         <PlusOutlined /> {t('add')}
@@ -325,7 +325,7 @@ const AddItemButtonComponent: FC<{ sectionId: string; type: SectionType }> = ({ 
   return (
     <button
       type='button'
-      className='cv-add-item mt-2 inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-transparent px-2.5 py-1 font-[inherit] text-xs'
+      className='cv-add-item inline-flex cursor-pointer items-center gap-1 rounded-full border border-dashed border-current bg-(--cv-bg) px-2.5 py-0.5 text-xs whitespace-nowrap'
       style={{ color: 'var(--cv-accent)', fontFamily: 'var(--font-ui), sans-serif' }}
       onClick={() => (kind === 'entries' ? addEntry(sectionId) : addTag(sectionId))}
     >

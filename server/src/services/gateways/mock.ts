@@ -33,6 +33,11 @@ export const mockGateway: PaymentGatewayClient = {
     }
     return payment.verdict
   },
+
+  // The mock bank has no refunds.
+  async isReversed() {
+    return false
+  },
 }
 
 export const readMockPayment = (id: string): MockPayment | undefined => payments.get(id)

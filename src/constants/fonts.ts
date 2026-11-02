@@ -116,5 +116,11 @@ export const cvFontFamily = (slug: FontSlug): string => `'cv-${slug}'`
 /** A full stack: the chosen face, then Mardoto for glyphs it lacks (Latin, digits). */
 export const cvFontStack = (slug: FontSlug): string => `${cvFontFamily(slug)}, 'cv-mardoto', 'cv-free-sans', sans-serif`
 
+/** Where every face in the catalogue comes from; credited in the footer. */
+export const FONTS_SOURCE_URL = 'https://fonter.am'
+
+/** The face's own (Armenian) page on fonter.am; every slug here is that page's slug. */
+export const fontSourceUrl = (slug: FontSlug): string => `${FONTS_SOURCE_URL}/hy/fonts/${slug}`
+
 /** Served by Next from `public/`; linked only by pages that render CVs. */
 export const CV_FONTS_STYLESHEET = '/fonts/cv-fonts.css'

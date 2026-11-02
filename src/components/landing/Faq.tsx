@@ -18,15 +18,15 @@ export const Faq: FC<{ title?: string }> = async ({ title }) => {
   const items = FAQ_KEYS.map((key) => ({ key, question: t(`${key}.q`), answer: t(`${key}.a`, { price }) }))
 
   return (
-    <section className='mx-auto max-w-3xl px-4 py-20 md:px-6' aria-labelledby='faq-title'>
+    <section className='mx-auto max-w-3xl px-4 py-14 sm:py-20 md:px-6' aria-labelledby='faq-title'>
       <JsonLd data={faqSchema(items)} />
       <h2 id='faq-title' className='text-center font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>
         {title ?? tHome('faqTitle')}
       </h2>
-      <div className='mt-10 flex flex-col gap-3'>
+      <div className='mt-8 flex flex-col gap-3 sm:mt-10'>
         {items.map((item) => (
-          <details key={item.key} className='group rounded-2xl bg-surface p-5 ring-1 ring-line open:shadow-md'>
-            <summary className='flex cursor-pointer list-none items-center justify-between gap-4 text-lg font-semibold text-ink [&::-webkit-details-marker]:hidden'>
+          <details key={item.key} className='group rounded-2xl bg-surface p-4 ring-1 ring-line open:shadow-md sm:p-5'>
+            <summary className='flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold sm:text-lg text-ink [&::-webkit-details-marker]:hidden'>
               {item.question}
               <PlusOutlined className='shrink-0 text-accent transition group-open:rotate-45' />
             </summary>

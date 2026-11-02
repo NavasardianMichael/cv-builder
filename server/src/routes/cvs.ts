@@ -12,7 +12,7 @@ import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware
 import { asyncHandler, HttpError } from '../middleware/error.js'
 import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
 import { coerceContent, coerceDesign, coerceTitle, DEFAULT_CV_TITLE } from '../services/cvDocument.js'
-import { reconcileCvPayments, startCheckout } from '../services/payments.js'
+import { reconcileCvPayments, revalidatePaidCv, startCheckout } from '../services/payments.js'
 
 /**
  * A user's CVs — or a guest's: the CVs a browser bought without an account, owned by its
@@ -158,21 +158,37 @@ cvsRouter.post(
   })
 )
 
-/** The designed PDF: the CV as the user styled it. Paid. */
+/**
+ * The designed PDF: the CV as the user styled it. Paid — and asked again, so a refund takes it
+ * back. Every one sent in full is recorded against its payment (`PdfDownload`): the evidence a
+ * "could not download it" refund claim is checked against.
+ */
 cvsRouter.get(
   '/:id/pdf',
   asyncHandler(async (req, res) => {
     let cv = await loadOwnedCv(req)
     if (!cv.paidAt && (await reconcileCvPayments(cv.id))) cv = await loadOwnedCv(req)
+    else if (cv.paidAt && !(await revalidatePaidCv(cv.id))) cv = await loadOwnedCv(req)
     if (!cv.paidAt) return fail(res, 'Payment required', ERROR_CODE.cvNotPaid, 402)
     if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
 
-    await sendPdf(res, cv.id, {
-      title: cv.title,
-      content: coerceContent(cv.content),
-      design: coerceDesign(cv.design),
-      watermark: false,
-    })
+    const cvId = cv.id
+    const ip = req.ip ?? null
+    const userAgent = req.get('user-agent')?.slice(0, 500) ?? null
+    await sendPdf(
+      res,
+      cvId,
+      { title: cv.title, content: coerceContent(cv.content), design: coerceDesign(cv.design), watermark: false },
+      async (bytes) => {
+        // Two succeeded payments are a double charge; the download counts against the latest.
+        const payment = await prisma.payment.findFirst({
+          where: { cvId, status: 'succeeded' },
+          orderBy: { paidAt: 'desc' },
+          select: { id: true },
+        })
+        await prisma.pdfDownload.create({ data: { cvId, paymentId: payment?.id ?? null, bytes, ip, userAgent } })
+      }
+    )
   })
 )
 

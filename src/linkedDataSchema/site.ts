@@ -1,6 +1,7 @@
 import type { BreadcrumbList, FAQPage, ItemList, Organization, WebApplication, WebSite, WithContext } from 'schema-dts'
 import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN, LOCALE, SUPPORT_EMAIL } from '@constants/app'
 import { FONT_SLUGS } from '@constants/fonts'
+import { PALETTE_PRESETS } from '@constants/palettes'
 import { CURRENCY, CV_PRICE_AMD } from '@constants/pricing'
 import { templatePath } from '@constants/routes'
 import { ALTERNATE_NAMES, SEARCH_KEYWORDS } from '@constants/seo'
@@ -58,6 +59,7 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
     `${FONT_SLUGS.length} հայերեն տառատեսակ`,
     'Խմբագրում անմիջապես ինքնակենսագրականի վրա',
     'Գույնի, ֆոնի և տառատեսակի կարգավորում ամեն բաժնի համար',
+    `${PALETTE_PRESETS.length} պատրաստի գունային համադրություն, գրադիենտներ և նկարազարդ ֆոներ`,
     'PDF ներբեռնում ներկառուցված տառատեսակներով',
   ],
   offers: [
@@ -65,14 +67,14 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
       '@type': 'Offer',
       price: 0,
       priceCurrency: CURRENCY,
-      description: 'Ինքնակենսագրականի պարզ սև-սպիտակ PDF ներբեռնում',
+      description: 'Ինքնակենսագրականի PDF ներբեռնում՝ պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով',
       availability: 'https://schema.org/InStock',
     },
     {
       '@type': 'Offer',
       price: CV_PRICE_AMD,
       priceCurrency: CURRENCY,
-      description: 'Մեկ ինքնակենսագրականի ձևավորված PDF ներբեռնում, մեկանգամյա վճար',
+      description: 'Մեկ ինքնակենսագրականի PDF ներբեռնում՝ պատրաստի, գունավոր, նկարով ձևանմուշով, մեկանգամյա վճար',
       availability: 'https://schema.org/InStock',
     },
   ],
