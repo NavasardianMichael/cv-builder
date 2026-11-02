@@ -23,7 +23,6 @@ const STACK: { id: TemplateId; className: string; tilt: string; delay: string }[
 export const Hero: FC = async () => {
   const t = await getTranslations('Home')
   const price = formatAmd(CV_PRICE_AMD)
-  const content = sampleContent()
 
   return (
     <section className='mesh-bg overflow-hidden'>
@@ -81,7 +80,7 @@ export const Hero: FC = async () => {
               aria-hidden='true'
             >
               <div className='overflow-hidden rounded-xl shadow-[0_30px_60px_-20px_rgba(20,24,45,0.45)] ring-1 ring-black/5'>
-                <CvPreview content={content} design={templateDesign(item.id)} />
+                <CvPreview content={sampleContent(item.id)} design={templateDesign(item.id)} />
               </div>
             </div>
           ))}

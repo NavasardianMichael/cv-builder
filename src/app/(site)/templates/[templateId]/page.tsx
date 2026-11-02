@@ -46,7 +46,10 @@ export default async function TemplatePage({ params }: Props) {
   const tNav = await getTranslations('Nav')
   const template = TEMPLATES[templateId]
   const design = templateDesign(templateId)
-  const others = TEMPLATE_LIST.filter((other) => other.id !== templateId).slice(0, 4)
+  // The next four in the list, wrapping: every template is linked from four others, not only
+  // from `/templates` (the first four would otherwise get every page's links).
+  const position = TEMPLATE_LIST.findIndex((other) => other.id === templateId)
+  const others = Array.from({ length: 4 }, (_, offset) => TEMPLATE_LIST[(position + offset + 1) % TEMPLATE_LIST.length])
   const title = t('detailTitle', { name: template.name })
 
   const creativeWork: WithContext<CreativeWork> = {
@@ -124,7 +127,7 @@ export default async function TemplatePage({ params }: Props) {
             </Link>
             <Link
               href={newCvPath(templateId)}
-              className='inline-flex items-center rounded-full bg-surface px-5 py-3 sm:px-6 sm:py-3.5 font-semibold text-ink no-underline ring-1 ring-line'
+              className='inline-flex items-center rounded-full bg-surface px-5 py-3 sm:px-6 sm:py-3.5 font-semibold text-ink no-underline ring-1 ring-line transition hover:-translate-y-0.5'
             >
               {t('useThis')}
             </Link>
@@ -132,7 +135,7 @@ export default async function TemplatePage({ params }: Props) {
         </div>
 
         <div className='overflow-hidden rounded-2xl shadow-[0_30px_70px_-25px_rgba(20,24,45,0.45)] ring-1 ring-black/5'>
-          <CvPreview content={sampleContent()} design={design} firstPageOnly={false} />
+          <CvPreview content={sampleContent(templateId)} design={design} firstPageOnly={false} />
         </div>
       </div>
 

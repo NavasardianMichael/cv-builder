@@ -14,7 +14,7 @@ import { CvPreview } from '@components/cv/CvPreview'
  * would re-render on every keystroke, and a blank CV previews as a wall of empty sheets.
  */
 const TemplateThumb = memo<{ templateId: TemplateId }>(({ templateId }) => {
-  const content = useMemo(() => sampleContent(), [])
+  const content = useMemo(() => sampleContent(templateId), [templateId])
   const design = useMemo(() => templateDesign(templateId), [templateId])
   return <CvPreview content={content} design={design} />
 })

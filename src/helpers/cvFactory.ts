@@ -1,5 +1,6 @@
 import type { BlockStyle, CvContact, CvContent, CvDocument, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
 import { type ContactType, LEGACY_CONTACT_TYPES } from '@constants/contacts'
+import { DEFAULT_SAMPLE, SAMPLE_CVS, TEMPLATE_SAMPLES } from '@constants/sampleCvs'
 import { SECTION_DEFAULT_TITLES, SECTION_META, type SectionType } from '@constants/sections'
 import { BASIC_DESIGN, templateDesign, type TemplateId } from '@constants/templates'
 
@@ -62,71 +63,30 @@ export const blankContent = (): CvContent => ({
   ],
 })
 
-/** A filled-in example: template previews, and "start from an example". */
-export const sampleContent = (): CvContent => ({
-  basics: {
-    fullName: 'Անի Հովհաննիսյան',
-    headline: 'Ավագ արտադրանքի դիզայներ',
-    contacts: [
-      newContact('email', 'ani.hovhannisyan@mail.am'),
-      newContact('phone', '+374 91 123 456'),
-      newContact('location', 'Երևան, Հայաստան'),
-      newContact('website', 'anihovhannisyan.am'),
-      newContact('linkedin', 'linkedin.com/in/anihov'),
-    ],
-    photo: null,
-    style: emptyStyle(),
-  },
-  sections: [
-    newSection('summary', {
-      text: 'Արտադրանքի դիզայներ՝ 7 տարվա փորձով ֆինտեք և էլեկտրոնային առևտրի ոլորտներում։ Սիրում եմ բարդ գործընթացները դարձնել պարզ և հաճելի, աշխատել հետազոտության տվյալներով և թիմի հետ գտնել լուծումներ, որոնք օգնում են և՛ օգտատիրոջը, և՛ բիզնեսին։',
+/**
+ * A filled-in example: template previews, and "start from an example". Each template has its
+ * own person (`TEMPLATE_SAMPLES`); without one, the designer.
+ */
+export const sampleContent = (templateId?: TemplateId): CvContent => {
+  const sample = SAMPLE_CVS[templateId ? TEMPLATE_SAMPLES[templateId] : DEFAULT_SAMPLE]
+  return {
+    basics: {
+      fullName: sample.fullName,
+      headline: sample.headline,
+      contacts: sample.contacts.map(([type, value]) => newContact(type, value)),
+      photo: null,
+      style: emptyStyle(),
+    },
+    sections: sample.sections.map(({ type, title, text, entries, tags }) => {
+      const section = newSection(type, {
+        text,
+        entries: entries?.map((entry) => newEntry(entry)),
+        tags: tags?.map(([name, level]) => newTag(name, level)),
+      })
+      return title ? { ...section, title } : section
     }),
-    newSection('experience', {
-      entries: [
-        newEntry({
-          title: 'Ավագ արտադրանքի դիզայներ',
-          subtitle: 'Արարատ Տեխ',
-          period: '2021 – այժմ',
-          location: 'Երևան',
-          description:
-            '• Ղեկավարել եմ բջջային բանկինգի հավելվածի վերանախագծումը՝ 1,2 մլն օգտատեր\n• Կրճատել եմ վճարման քայլերը 5-ից 2-ի, ինչը 18%-ով բարձրացրեց փոխարկումը\n• Ստեղծել և պահպանում եմ ընկերության դիզայն համակարգը',
-        }),
-        newEntry({
-          title: 'UX/UI դիզայներ',
-          subtitle: 'Սևան Դիջիթալ',
-          period: '2018 – 2021',
-          location: 'Երևան',
-          description:
-            '• Նախագծել եմ 20+ վեբ և բջջային ինտերֆեյս տեղական և միջազգային հաճախորդների համար\n• Անցկացրել եմ օգտատերերի հարցազրույցներ և օգտագործելիության թեստեր',
-        }),
-      ],
-    }),
-    newSection('education', {
-      entries: [
-        newEntry({
-          title: 'Ինֆորմատիկայի մագիստրոս',
-          subtitle: 'Երևանի պետական համալսարան',
-          period: '2016 – 2018',
-          location: 'Երևան',
-        }),
-        newEntry({
-          title: 'Դիզայնի բակալավր',
-          subtitle: 'Հայաստանի ամերիկյան համալսարան',
-          period: '2012 – 2016',
-          location: 'Երևան',
-        }),
-      ],
-    }),
-    newSection('skills', {
-      tags: [newTag('Figma', 5), newTag('Օգտատերերի հետազոտություն', 4), newTag('Դիզայն համակարգեր', 5), newTag('Պրոտոտիպավորում', 4), newTag('HTML/CSS', 3)],
-    }),
-    newSection('languages', { tags: [newTag('Հայերեն', 5), newTag('Անգլերեն', 4), newTag('Ռուսերեն', 4)] }),
-    newSection('certificates', {
-      entries: [newEntry({ title: 'Google UX Design Certificate', subtitle: 'Coursera', period: '2020' })],
-    }),
-    newSection('interests', { tags: [newTag('Լեռնագնացություն'), newTag('Լուսանկարչություն'), newTag('Շախմատ')] }),
-  ],
-})
+  }
+}
 
 export const DEFAULT_CV_TITLE = 'Իմ ինքնակենսագրականը'
 
@@ -136,6 +96,6 @@ export const newCvDocument = (
   { sample = false, free = false }: { sample?: boolean; free?: boolean } = {},
 ): CvDocument => ({
   title: DEFAULT_CV_TITLE,
-  content: sample ? sampleContent() : blankContent(),
+  content: sample ? sampleContent(templateId) : blankContent(),
   design: free ? { ...BASIC_DESIGN, palette: { ...BASIC_DESIGN.palette } } : templateDesign(templateId),
 })

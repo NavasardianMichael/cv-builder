@@ -16,7 +16,7 @@ export const TemplateCard: FC<Props> = ({ template, className, headingLevel: Hea
     className={cn('group block rounded-2xl text-inherit no-underline focus-visible:outline-offset-4', className)}
   >
     <div className='relative overflow-hidden rounded-2xl bg-surface shadow-[0_10px_30px_-12px_rgba(20,24,45,0.25)] ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[0_24px_50px_-16px_rgba(20,24,45,0.35)]'>
-      <CvPreview content={sampleContent()} design={templateDesign(template.id)} />
+      <CvPreview content={sampleContent(template.id)} design={templateDesign(template.id)} />
       <TemplateCardPending />
     </div>
     <div className='mt-4 px-1'>
