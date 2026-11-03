@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { GatewayVerdict, PaymentGatewayClient } from './types.js'
+import { GatewayError, type GatewayVerdict, type PaymentGatewayClient } from './types.js'
 import { config } from '../../config.js'
 
 /**
@@ -35,6 +35,14 @@ export const mockGateway: PaymentGatewayClient = {
   },
 
   // The mock bank has no refunds.
+  async refund() {
+    throw new GatewayError('The mock bank has no refunds')
+  },
+
+  async cancel() {
+    throw new GatewayError('The mock bank has no refunds')
+  },
+
   async isReversed() {
     return false
   },

@@ -1,16 +1,18 @@
 import {
   AMERIA_BASE_URL,
-  type AmeriaConfirmResponse,
   type AmeriaDetailsResponse,
   type AmeriaInitResponse,
+  type AmeriaResultResponse,
+  buildCancelBody,
   buildConfirmBody,
   buildDetailsBody,
   buildInitPaymentBody,
+  buildRefundBody,
   interpretDetails,
   isReversedPayment,
   paymentPageUrl,
-  readConfirmResponse,
   readInitResponse,
+  readResultResponse,
 } from './ameria-wire.js'
 import { GatewayError, type PaymentGatewayClient } from './types.js'
 import { config } from '../../config.js'
@@ -71,12 +73,29 @@ export const ameriaGateway: PaymentGatewayClient = {
 
     // A two-stage terminal only blocked the amount; ConfirmPayment charges it. The verdict
     // still comes from the bank's record, read again, not from the confirmation's answer.
-    const confirmed = readConfirmResponse(
-      await post<AmeriaConfirmResponse>('ConfirmPayment', buildConfirmBody(credentials(), gatewayPaymentId, target.amount))
+    const confirmed = readResultResponse(
+      'ConfirmPayment',
+      await post<AmeriaResultResponse>('ConfirmPayment', buildConfirmBody(credentials(), gatewayPaymentId, target.amount))
     )
     if (!confirmed.ok) throw new GatewayError(confirmed.message)
     const after = await readDetails()
     return after.status === 'approved' ? { status: 'pending' } : after
+  },
+
+  async refund(gatewayPaymentId, amount) {
+    const answer = readResultResponse(
+      'RefundPayment',
+      await post<AmeriaResultResponse>('RefundPayment', buildRefundBody(credentials(), gatewayPaymentId, chargeOf(amount)))
+    )
+    if (!answer.ok) throw new GatewayError(answer.message)
+  },
+
+  async cancel(gatewayPaymentId) {
+    const answer = readResultResponse(
+      'CancelPayment',
+      await post<AmeriaResultResponse>('CancelPayment', buildCancelBody(credentials(), gatewayPaymentId))
+    )
+    if (!answer.ok) throw new GatewayError(answer.message)
   },
 
   async isReversed(gatewayPaymentId) {

@@ -28,6 +28,12 @@ export type PaymentGatewayClient = {
   init(input: GatewayInitInput): Promise<GatewayInitResult>
   /** The gateway's own answer for one payment, checked against what we asked it to charge. */
   check(gatewayPaymentId: string, expected: { orderNumber: number; amount: number }): Promise<GatewayVerdict>
+  /**
+   * Money back for a settled payment, an operator's action (`pnpm payments:reverse`): `refund`
+   * the whole charge, or `cancel` it (Ameria: within 72 hours). Throw when the gateway refuses.
+   */
+  refund(gatewayPaymentId: string, amount: number): Promise<void>
+  cancel(gatewayPaymentId: string): Promise<void>
   /** True when a settled payment has been refunded or voided since. Throws when the gateway cannot answer. */
   isReversed(gatewayPaymentId: string): Promise<boolean>
 }

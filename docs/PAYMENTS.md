@@ -88,9 +88,14 @@ only blocked. After the same OrderID and (blocked) amount checks, `check` sends
 `ConfirmPayment` for our amount and reads `GetPaymentDetails` again; only that second read
 can settle it. Whether the terminal is one- or two-stage is the bank's setting.
 
-Refunds are made by hand in the bank's merchant panel. `RefundPayment` (up to the
-transaction amount) and `CancelPayment` (within 72 hours of InitPayment) exist in the
-protocol and need the bank's refund/reverse permission (codes 513/514); they are not called.
+Money goes back by an operator, in the bank's merchant panel or with
+`pnpm payments:reverse <refund|cancel> <order number>…` (`server/src/cli/reverse-payment.ts`,
+order numbers are `Payment.orderNumber`). That calls `RefundPayment` (the whole charge) or
+`CancelPayment` (only within 72 hours of InitPayment) — the bank's refund/reverse permission,
+codes 513/514 — then marks the payment `refunded` and locks its CV. Re-running it is safe:
+the bank refuses a second reversal, and one that took effect despite an unclear answer is
+read back from `GetPaymentDetails`. Each payment is reversed at most once, so the bank's
+sign-off ("5 refunds and 5 cancellations") needs 10 settled test payments.
 
 A refund takes the designed PDF back: before printing it, `GET /cvs/:id/pdf` re-reads the
 CV's `succeeded` payments (`revalidatePaidCv`). One the bank shows refunded or voided —

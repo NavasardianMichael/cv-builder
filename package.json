@@ -28,7 +28,8 @@
     "db:setup": "pnpm db:migrate && pnpm db:seed",
     "server:dev": "pnpm --filter cv-builder-server dev",
     "build:api": "pnpm --filter cv-builder-server build && node scripts/build-api-release.mjs",
-    "env:base64": "node scripts/env-to-base64.mjs"
+    "env:base64": "node scripts/env-to-base64.mjs",
+    "payments:reverse": "pnpm --filter cv-builder-server run payments:reverse"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",

@@ -21,6 +21,7 @@ pnpm test           # vitest (tests/unit)
 pnpm fonts:css      # public/fonts/manifest.json -> public/fonts/cv-fonts.css
 pnpm build:api      # server/dist -> out/api, the standalone API release the deploy ships
 pnpm env:base64 production | clip   # server/.env.production.local -> the ENV_API_BASE64 secret
+pnpm payments:reverse refund 12 13  # money back through the gateway (refund | cancel), by Payment.orderNumber
 ```
 
 Seeded test accounts (all `cv-builder-dev-1234`): `docs/DEV_CREDS.md`. In dev `PAYMENT_GATEWAY=mock`: the

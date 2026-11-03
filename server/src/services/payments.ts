@@ -97,14 +97,42 @@ export const revalidatePaidCv = async (cvId: string): Promise<boolean> => {
     }
   }
   if (reversed.length === 0) return true
+  return markRefunded(cvId, reversed)
+}
 
-  return prisma.$transaction(async (tx) => {
-    await tx.payment.updateMany({ where: { id: { in: reversed }, status: 'succeeded' }, data: { status: 'refunded' } })
+/** `succeeded` → `refunded`; true while the CV still has another `succeeded` payment, else it is locked. */
+const markRefunded = (cvId: string | null, paymentIds: string[]): Promise<boolean> =>
+  prisma.$transaction(async (tx) => {
+    await tx.payment.updateMany({ where: { id: { in: paymentIds }, status: 'succeeded' }, data: { status: 'refunded' } })
+    if (!cvId) return false
     if ((await tx.payment.count({ where: { cvId, status: 'succeeded' } })) > 0) return true
     await tx.cv.updateMany({ where: { id: cvId }, data: { paidAt: null } })
     console.info(`[payments] CV ${cvId} locked again: its payment was refunded at the bank`)
     return false
   })
+
+export type Reversal = 'refund' | 'cancel'
+
+/**
+ * An operator's refund or cancellation of a settled payment, through the gateway's API
+ * (`pnpm payments:reverse`): the whole charge goes back to the card. Once the gateway says
+ * "done" the payment is `refunded` and its CV locked unless paid again. Returns whether the
+ * CV is still paid; throws the gateway's refusal (code and message) unchanged.
+ */
+export const reversePayment = async (payment: Payment, kind: Reversal): Promise<boolean> => {
+  if (payment.status !== 'succeeded' || !payment.gatewayPaymentId) {
+    throw new Error(`payment #${payment.orderNumber} is ${payment.status}, only a succeeded one can be reversed`)
+  }
+  const gateway = GATEWAYS[payment.gateway]
+  try {
+    if (kind === 'refund') await gateway.refund(payment.gatewayPaymentId, payment.amount)
+    else await gateway.cancel(payment.gatewayPaymentId)
+  } catch (error) {
+    // Ameria's test server sometimes answers an empty ResponseCode and does nothing (re-run
+    // it); a refusal that did take effect anyway shows in the payment's own record.
+    if (!(await gateway.isReversed(payment.gatewayPaymentId).catch(() => false))) throw error
+  }
+  return markRefunded(payment.cvId, [payment.id])
 }
 
 /** True when the CV is (now) paid. Gateway failures are logged, never thrown at a reader. */
