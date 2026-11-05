@@ -1,6 +1,7 @@
 import type { CSSProperties, FC } from 'react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { CATALOGUE_COUNTS } from '@constants/app'
 import { FONT_SLUGS } from '@constants/fonts'
 import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
 import { newFreeCvPath, ROUTES } from '@constants/routes'
@@ -35,7 +36,7 @@ export const Hero: FC = async () => {
           <h1 className='text-balance mt-6 font-display text-title leading-[1.08] [--title-em:13] [--title-max:2.25rem] font-extrabold tracking-tight text-ink sm:text-5xl lg:text-5xl'>
             {t('heroTitle')} <span className='text-accent'>{t('heroTitleAccent')}</span>
           </h1>
-          <p className='mt-5 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg'>{t('heroSubtitle', { price })}</p>
+          <p className='mt-5 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg'>{t('heroSubtitle', { price, ...CATALOGUE_COUNTS })}</p>
           <div className='mt-8 flex flex-wrap items-center gap-3'>
             <Link
               href={ROUTES.templates}

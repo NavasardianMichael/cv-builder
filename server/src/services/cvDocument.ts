@@ -30,6 +30,7 @@ export type CvEntry = {
   location: string
   description: string
   url: string
+  subtitleUrl: string
 }
 export type CvTag = { id: string; name: string; level: number | null }
 export type SectionColumn = 'auto' | 'main' | 'side'
@@ -142,6 +143,7 @@ const coerceEntry = (raw: unknown): CvEntry => {
     location: str(value.location, CV_LIMITS.short),
     description: str(value.description, CV_LIMITS.long),
     url: str(value.url, CV_LIMITS.url),
+    subtitleUrl: str(value.subtitleUrl, CV_LIMITS.url),
   }
 }
 

@@ -17,21 +17,28 @@ import { useAuthStore } from '@store/auth/store'
 import { ROUTES } from '@constants/routes'
 import { cn } from '@helpers/cn'
 import { clearGuestCvsMark, hasGuestCvs } from '@helpers/guestCvs'
+import { hasLocalDraft } from '@helpers/localDraft'
 import { AccountMenu } from './AccountMenu'
 import { BrandLogo } from './BrandLogo'
 
 /** `icon` shows only in the mobile drawer; the desktop bar stays text. */
 type NavItem = { href: string; label: string; icon: ReactNode }
 
-/** localStorage has no change event within a tab; the flag only changes on a full navigation. */
+/**
+ * localStorage has no change event within a tab. The site's header remounts whenever the
+ * editor is left (another layout), which is where a draft or a guest purchase appears.
+ */
 const subscribeNever = (): (() => void) => () => undefined
+
+/** Something of the guest's lives in this browser: a draft, or CVs bought without an account. */
+const hasGuestWork = (): boolean => hasLocalDraft() || hasGuestCvs()
 
 export const Header: FC = () => {
   const t = useTranslations('Nav')
   const pathname = usePathname()
   const user = useAuthStore.use.user()
-  // A guest who bought without an account gets the way back to those CVs (`helpers/guestCvs`).
-  const guestCvs = useSyncExternalStore(subscribeNever, hasGuestCvs, () => false)
+  // A guest with a draft or a CV bought without an account gets the way back to it ("My CVs").
+  const guestCvs = useSyncExternalStore(subscribeNever, hasGuestWork, () => false)
   const [open, setOpen] = useState(false)
 
   // Signed in: the API has moved this browser's guest CVs to the account.
@@ -57,9 +64,11 @@ export const Header: FC = () => {
               key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? 'page' : undefined}
+              // The current page: dark text and an accent bar under it, no background.
               className={cn(
-                'rounded-full px-3.5 py-1.5 text-[15px] font-medium text-muted no-underline transition-colors hover:text-ink',
-                isActive(item.href) && 'bg-surface text-ink shadow-sm'
+                'relative px-3.5 py-1.5 text-[15px] font-medium text-muted no-underline transition-colors hover:text-ink',
+                isActive(item.href) &&
+                  'text-ink after:absolute after:inset-x-3.5 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-accent'
               )}
             >
               {item.label}
@@ -90,10 +99,10 @@ export const Header: FC = () => {
               aria-current={isActive(item.href) ? 'page' : undefined}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium no-underline hover:bg-canvas',
-                isActive(item.href) && 'bg-canvas'
+                isActive(item.href) && 'text-accent-strong'
               )}
             >
-              <span className='flex text-lg text-muted' aria-hidden='true'>
+              <span className={cn('flex text-lg', isActive(item.href) ? 'text-accent' : 'text-muted')} aria-hidden='true'>
                 {item.icon}
               </span>
               {item.label}

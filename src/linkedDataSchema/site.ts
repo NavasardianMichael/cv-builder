@@ -1,9 +1,17 @@
 import type { BreadcrumbList, FAQPage, ItemList, Organization, WebApplication, WebSite, WithContext } from 'schema-dts'
-import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN, LOCALE, SUPPORT_EMAIL } from '@constants/app'
+import {
+  APP_DESCRIPTION,
+  APP_NAME,
+  APP_NAME_LATIN,
+  LOCALE,
+  SUPPORT_EMAIL,
+  SUPPORT_PHONE_TEL,
+  SUPPORT_POSTAL_ADDRESS,
+} from '@constants/app'
 import { FONT_SLUGS } from '@constants/fonts'
 import { PALETTE_PRESETS } from '@constants/palettes'
 import { CURRENCY, CV_PRICE_AMD } from '@constants/pricing'
-import { templatePath } from '@constants/routes'
+import { ROUTES, templatePath } from '@constants/routes'
 import { ALTERNATE_NAMES, SEARCH_KEYWORDS } from '@constants/seo'
 import { TEMPLATE_LIST } from '@constants/templates'
 import { absoluteUrl } from '@helpers/url'
@@ -25,6 +33,22 @@ export const organizationSchema = (): WithContext<Organization> => ({
   url: absoluteUrl('/'),
   logo: absoluteUrl('/icon'),
   email: SUPPORT_EMAIL,
+  telephone: SUPPORT_PHONE_TEL,
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: SUPPORT_POSTAL_ADDRESS.street,
+    addressLocality: SUPPORT_POSTAL_ADDRESS.locality,
+    addressCountry: SUPPORT_POSTAL_ADDRESS.country,
+  },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer support',
+    email: SUPPORT_EMAIL,
+    telephone: SUPPORT_PHONE_TEL,
+    url: absoluteUrl(ROUTES.contact),
+    availableLanguage: 'hy',
+    areaServed: 'AM',
+  },
   areaServed: { '@type': 'Country', name: 'Armenia' },
 })
 

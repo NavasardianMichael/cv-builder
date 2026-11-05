@@ -182,6 +182,19 @@ export const useCvEditorStoreBase = create<CvEditorState & CvEditorActions>()(
             })
           )
         },
+        reorderSection: (sectionId, overId) => {
+          set((state) => {
+            const sections = state.doc?.content.sections
+            if (!sections || sectionId === overId) return
+            const from = sections.findIndex((section) => section.id === sectionId)
+            const to = sections.findIndex((section) => section.id === overId)
+            if (from < 0 || to < 0) return
+            edit(state, null, (doc) => {
+              const [section] = doc.content.sections.splice(from, 1)
+              doc.content.sections.splice(to, 0, section)
+            })
+          })
+        },
         removeSection: (sectionId) => {
           set((state) => {
             edit(state, null, (doc) => {

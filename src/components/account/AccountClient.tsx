@@ -60,7 +60,6 @@ export const AccountClient: FC = () => {
               content: t('saveConfirmText', { name: fullName.trim() }),
               okText: tCommon('save'),
               cancelText: tCommon('cancel'),
-              centered: true,
               onOk: () =>
                 run('profile', async () => {
                   setUser(await updateMeAPI({ fullName: fullName.trim() }))
@@ -109,7 +108,6 @@ export const AccountClient: FC = () => {
                   ),
                   okText: t('passwordConfirmOk'),
                   cancelText: tCommon('cancel'),
-                  centered: true,
                   onOk: () =>
                     run('password', async () => {
                       await sendPasswordLinkAPI()

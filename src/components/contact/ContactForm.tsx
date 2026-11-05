@@ -84,6 +84,7 @@ export const ContactForm: FC = () => {
       >
         <Input.TextArea
           rows={6}
+          style={{ resize: 'none' }}
           placeholder={t('messagePlaceholder')}
           maxLength={MAX_CONTACT_MESSAGE_LENGTH}
           showCount

@@ -15,8 +15,11 @@ const AuthBootstrap: FC = () => {
   return null
 }
 
+/** Every modal and confirm dialog opens in the middle of the screen; set here, not per modal. */
+const MODAL_CONFIG = { centered: true }
+
 export const App: FC<PropsWithChildren> = ({ children }) => (
-  <ConfigProvider theme={antdTheme} locale={hyAM}>
+  <ConfigProvider theme={antdTheme} locale={hyAM} modal={MODAL_CONFIG}>
     {/* component={false}: context only, no wrapper element — enables App.useApp(). */}
     <AntApp component={false}>
       <AuthBootstrap />

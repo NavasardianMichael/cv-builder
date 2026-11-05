@@ -20,7 +20,7 @@ export const SignInToDownloadModal: FC<{ cvId: string; open: boolean; onClose: (
   const query = `?${RETURN_TO_QUERY}=${encodeURIComponent(returnTo)}`
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} title={t('signInTitle')} width={440} centered>
+    <Modal open={open} onCancel={onClose} footer={null} title={t('signInTitle')} width={440}>
       <p className='mb-5 text-muted'>{t('signInText')}</p>
       <div className='flex flex-col gap-3'>
         <GoogleButton returnTo={returnTo} />

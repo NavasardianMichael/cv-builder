@@ -1,6 +1,7 @@
 'use client'
 
 import { type FC, useCallback, useEffect, useState } from 'react'
+import { CloseOutlined } from '@ant-design/icons'
 import { Button, Drawer, Spin } from 'antd'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -15,6 +16,7 @@ import { DEFAULT_TEMPLATE_ID } from '@constants/templates'
 import { dedupe } from '@helpers/dedupe'
 import { classifyError } from '@helpers/error'
 import { clearLocalDraft, readLocalDraft } from '@helpers/localDraft'
+import { LeaveGuard } from '@components/layout/LeaveGuard'
 import { ErrorState } from '@components/ui/ErrorState'
 import { CanvasZoomControl } from './canvas/CanvasZoomControl'
 import { EditorCanvas } from './canvas/EditorCanvas'
@@ -63,6 +65,8 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   const [sheet, setSheet] = useState<{ tab: EditorTab; focusBlock: string | null }>({ tab: 'content', focusBlock: null })
   const [sheetOpen, setSheetOpen] = useState(false)
   const [previewing, setPreviewing] = useState(false)
+  /** Closing the guest banner lasts only until the editor is next opened: it is never stored. */
+  const [guestBannerOpen, setGuestBannerOpen] = useState(true)
   const selectBlock = useCvEditorStore.use.selectBlock()
   const compact = useMediaQuery(COMPACT_QUERY)
   const tapToEdit = compact && (zoom ?? fitZoom) < DIRECT_EDIT_ZOOM
@@ -148,6 +152,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   return (
     <div className='flex h-dvh flex-col bg-canvas'>
       <Autosave />
+      <LeaveGuard />
       <EditorTopBar
         zoom={zoom}
         fitZoom={fitZoom}
@@ -160,19 +165,32 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
           setPreviewing(next)
         }}
       />
-      {!user && openCvId && (
-        <div className='flex shrink-0 items-center justify-center gap-3 bg-accent-soft px-3 py-1 text-center text-[11px] leading-snug sm:px-4 sm:py-1.5 sm:text-xs'>
-          <span>{t(openCvId === DRAFT_ID ? 'guestBanner' : 'guestCvBanner')}</span>
-          <Link
-            href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(openCvId))}`}
-            className='shrink-0 font-semibold text-ink underline'
-          >
-            {t('guestBannerCta')}
-          </Link>
+      {!user && openCvId && guestBannerOpen && (
+        <div className='flex shrink-0 items-center gap-2 bg-accent-soft px-1 py-0.5 text-[11px] leading-snug sm:px-2 sm:py-1 sm:text-xs'>
+          {/* As wide as the close button, so the message stays centred on the whole bar. */}
+          <span className='w-6 shrink-0' aria-hidden='true' />
+          <div className='flex min-w-0 flex-1 items-center justify-center gap-3 text-center'>
+            <span>{t(openCvId === DRAFT_ID ? 'guestBanner' : 'guestCvBanner')}</span>
+            <Link
+              href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(openCvId))}`}
+              className='shrink-0 font-semibold text-ink underline'
+            >
+              {t('guestBannerCta')}
+            </Link>
+          </div>
+          <Button
+            type='text'
+            size='small'
+            icon={<CloseOutlined />}
+            onClick={() => setGuestBannerOpen(false)}
+            aria-label={tCommon('close')}
+            className='shrink-0'
+          />
         </div>
       )}
       <div className='flex min-h-0 flex-1'>
-        <aside className='hidden w-90 shrink-0 overflow-y-auto border-r border-line bg-surface lg:block' aria-label={t('panelOpen')}>
+        {/* Does not scroll itself: the tabs' body does, under a tab bar that stays (EditorPanel). */}
+        <aside className='hidden w-90 shrink-0 overflow-hidden border-r border-line bg-surface lg:block' aria-label={t('panelOpen')}>
           <EditorPanel />
         </aside>
         <div className='relative flex min-w-0 flex-1'>

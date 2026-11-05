@@ -117,7 +117,10 @@ const EntryCardComponent: FC<EntryCardProps> = ({ sectionId, type, entry, index,
   const duplicateEntry = useCvEditorStore.use.duplicateEntry()
   const removeEntry = useCvEditorStore.use.removeEntry()
   const labels = ENTRY_PLACEHOLDERS[type] ?? DEFAULT_ENTRY_PLACEHOLDERS
-  const urlInvalid = Boolean(entry.url?.trim()) && !toWebsiteUrl(entry.url)
+  const links = [
+    { field: 'url', label: labels.title },
+    { field: 'subtitleUrl', label: labels.subtitle },
+  ] as const
 
   return (
     <li className='rounded-xl border border-line bg-canvas/50 p-3'>
@@ -163,22 +166,29 @@ const EntryCardComponent: FC<EntryCardProps> = ({ sectionId, type, entry, index,
             onChange={(event) => setEntryField(sectionId, entry.id, 'description', event.target.value)}
           />
         </Field>
-        <Field
-          label={t('content.url')}
-          className='sm:col-span-2'
-          hint={urlInvalid ? <span className='text-danger'>{t('block.linkInvalid')}</span> : t('content.urlHint')}
-        >
-          <Input
-            // `?? ''`: an entry from a draft saved before links existed has no `url` yet.
-            value={entry.url ?? ''}
-            placeholder='https://'
-            inputMode='url'
-            autoCapitalize='off'
-            status={urlInvalid ? 'warning' : undefined}
-            prefix={<LinkOutlined className='text-muted' />}
-            onChange={(event) => setEntryField(sectionId, entry.id, 'url', event.target.value)}
-          />
-        </Field>
+        {links.map(({ field, label }) => {
+          // `?? ''`: an entry from a draft saved before its links existed has no such field yet.
+          const value = entry[field] ?? ''
+          const invalid = Boolean(value.trim()) && !toWebsiteUrl(value)
+          return (
+            <Field
+              key={field}
+              label={t('content.url', { field: label })}
+              className='sm:col-span-2'
+              hint={invalid ? <span className='text-danger'>{t('block.linkInvalid')}</span> : t('content.urlHint', { field: label })}
+            >
+              <Input
+                value={value}
+                placeholder='https://'
+                inputMode='url'
+                autoCapitalize='off'
+                status={invalid ? 'warning' : undefined}
+                prefix={<LinkOutlined className='text-muted' />}
+                onChange={(event) => setEntryField(sectionId, entry.id, field, event.target.value)}
+              />
+            </Field>
+          )
+        })}
       </div>
     </li>
   )

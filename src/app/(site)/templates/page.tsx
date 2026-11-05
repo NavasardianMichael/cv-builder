@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
+import { CATALOGUE_COUNTS } from '@constants/app'
 import { ROUTES } from '@constants/routes'
 import { TEMPLATE_LIST } from '@constants/templates'
 import { pageMetadata } from '@helpers/metadata'
@@ -10,7 +11,7 @@ import { TemplateCard } from '@components/templates/TemplateCard'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('Templates')
-  return pageMetadata({ title: t('metaTitle'), description: t('metaDescription'), path: ROUTES.templates })
+  return pageMetadata({ title: t('metaTitle'), description: t('metaDescription', CATALOGUE_COUNTS), path: ROUTES.templates })
 }
 
 export default async function TemplatesPage() {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { CATALOGUE_COUNTS } from '@constants/app'
 import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
 import { ROUTES } from '@constants/routes'
 import { pageMetadata } from '@helpers/metadata'
@@ -18,7 +19,10 @@ export default async function PricingPage() {
   const t = await getTranslations('Pricing')
   const tNav = await getTranslations('Nav')
   const freeItems = t.raw('freeItems') as string[]
-  const paidItems = t.raw('paidItems') as string[]
+  // Raw strings skip ICU formatting, so the catalogue's counts are filled in here.
+  const paidItems = (t.raw('paidItems') as string[]).map((item) =>
+    item.replace('{templates}', String(CATALOGUE_COUNTS.templates)).replace('{fonts}', String(CATALOGUE_COUNTS.fonts))
+  )
 
   return (
     <div className='mesh-bg'>

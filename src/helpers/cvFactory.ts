@@ -22,6 +22,7 @@ export const newEntry = (fields: Partial<Omit<CvEntry, 'id'>> = {}): CvEntry => 
   location: '',
   description: '',
   url: '',
+  subtitleUrl: '',
   ...fields,
 })
 

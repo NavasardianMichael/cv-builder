@@ -33,8 +33,6 @@ export const metadata: Metadata = {
   keywords: SEARCH_KEYWORDS,
   verification: {
     ...(SITE_VERIFICATION.google && { google: SITE_VERIFICATION.google }),
-    ...(SITE_VERIFICATION.yandex && { yandex: SITE_VERIFICATION.yandex }),
-    ...(SITE_VERIFICATION.bing && { other: { 'msvalidate.01': SITE_VERIFICATION.bing } }),
   },
   manifest: '/manifest.webmanifest',
   robots: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },

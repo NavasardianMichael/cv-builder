@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getTranslations } from 'next-intl/server'
-import { APP_DESCRIPTION, APP_NAME } from '@constants/app'
+import { APP_DESCRIPTION, APP_NAME, CATALOGUE_COUNTS } from '@constants/app'
 import { ROUTES } from '@constants/routes'
 import { pageMetadata } from '@helpers/metadata'
 import { organizationSchema, webApplicationSchema, websiteSchema } from '@linkedDataSchema/site'
@@ -15,7 +15,7 @@ import { JsonLd } from '@components/seo/JsonLd'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('Home')
-  return pageMetadata({ title: `${APP_NAME} — ${t('metaTitle')}`, description: APP_DESCRIPTION, path: ROUTES.home, absoluteTitle: true })
+  return pageMetadata({ title: `${APP_NAME} — ${t('metaTitle', CATALOGUE_COUNTS)}`, description: APP_DESCRIPTION, path: ROUTES.home, absoluteTitle: true })
 }
 
 export default function HomePage() {

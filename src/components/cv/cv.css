@@ -208,14 +208,16 @@
   gap: 1em;
 }
 
-.cv-entry-title-row {
+.cv-entry-title-row,
+.cv-entry-subtitle-row {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: 0.35em;
 }
 
-.cv-entry-title-row .cv-icon {
+.cv-entry-title-row .cv-icon,
+.cv-entry-subtitle-row .cv-icon {
   width: 0.85em;
   height: 0.85em;
 }
@@ -1667,7 +1669,7 @@ span.cv-editable {
   grid-row: 1;
 }
 
-.cvt-euro .cv-entry-subtitle {
+.cvt-euro .cv-entry-subtitle-row {
   grid-column: 2;
   grid-row: 2;
 }

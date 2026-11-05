@@ -32,17 +32,29 @@ const withContacts = (doc: CvDocument): CvDocument => {
   return { ...doc, content: { ...doc.content, basics: { fullName, headline, contacts, photo, style } } }
 }
 
-export const readLocalDraft = (): CvDocument | null => {
+/** The draft and when it was last saved (`savedAt` is now for a draft stored without one). */
+export const readLocalDraftEntry = (): StoredDraft | null => {
   try {
     const raw = window.localStorage.getItem(KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as Partial<StoredDraft>
     const doc = parsed.doc
     if (!doc?.content?.basics || !Array.isArray(doc.content.sections) || !doc.design?.templateId) return null
-    return withContacts(doc)
+    return { doc: withContacts(doc), savedAt: typeof parsed.savedAt === 'string' ? parsed.savedAt : new Date().toISOString() }
   } catch (error) {
     reportError(error, 'localDraft:read')
     return null
+  }
+}
+
+export const readLocalDraft = (): CvDocument | null => readLocalDraftEntry()?.doc ?? null
+
+/** Cheap enough to call on every render (no parsing): whether this browser holds a draft. */
+export const hasLocalDraft = (): boolean => {
+  try {
+    return window.localStorage.getItem(KEY) !== null
+  } catch {
+    return false
   }
 }
 

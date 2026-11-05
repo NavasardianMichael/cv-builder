@@ -5,6 +5,7 @@ import { APP_NAME } from '@constants/app'
 import { FONTS_SOURCE_URL } from '@constants/fonts'
 import { ROUTES } from '@constants/routes'
 import { BrandLogo } from './BrandLogo'
+import { PreferredSourceBadge } from './PreferredSourceBadge'
 
 export const Footer: FC = async () => {
   const t = await getTranslations('Footer')
@@ -31,7 +32,7 @@ export const Footer: FC = async () => {
   ]
 
   return (
-    <footer className='mt-24 border-t border-line bg-surface'>
+    <footer className='border-t border-line bg-surface'>
       <div className='mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-[2fr_1fr_1fr] md:px-6'>
         <div className='max-w-sm'>
           <BrandLogo />
@@ -45,11 +46,14 @@ export const Footer: FC = async () => {
               ),
             })}
           </p>
+          <div className='mt-5'>
+            <PreferredSourceBadge />
+          </div>
         </div>
         {columns.map((column) => (
           <nav key={column.title} aria-label={column.title}>
             <h2 className='mb-3 text-sm font-semibold text-ink'>{column.title}</h2>
-            <ul className='m-0 flex list-none flex-col gap-2 p-0'>
+            <ul className='m-0 flex list-none flex-col p-0'>
               {column.links.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className='text-sm text-muted no-underline hover:text-ink'>

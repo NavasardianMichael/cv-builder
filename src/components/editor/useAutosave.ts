@@ -4,6 +4,7 @@ import { type FC, useEffect } from 'react'
 import { updateCvAPI } from '@api/cvs/main'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
+import { useLeaveGuard } from '@hooks/useLeaveGuard'
 import { writeLocalDraft } from '@helpers/localDraft'
 import { reportError } from '@helpers/reportError'
 
@@ -64,14 +65,8 @@ export const useAutosave = (): void => {
     return () => clearTimeout(timer)
   }, [saveStatus, setSaveStatus])
 
-  useEffect(() => {
-    if (saveStatus === 'saved') return
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault()
-    }
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [saveStatus])
+  // Waiting for the debounce, being sent, or failed: leaving now would lose it (`LeaveGuard` asks).
+  useLeaveGuard(saveStatus !== 'saved')
 }
 
 /**

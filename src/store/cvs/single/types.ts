@@ -27,6 +27,8 @@ export type CvEntry = {
   description: string
   /** Makes the title a link (a project, a certificate, a company). '' for none. */
   url: string
+  /** Makes the subtitle a link (the company, school or issuer named there). '' for none. */
+  subtitleUrl: string
 }
 
 export type CvTag = {
@@ -165,6 +167,8 @@ export type CvEditorActions = {
   setSectionColumn: (sectionId: string, column: SectionColumn) => void
   toggleSectionHidden: (sectionId: string) => void
   moveSection: (sectionId: string, direction: MoveDirection) => void
+  /** Drag and drop: puts the section where `overId` is, shifting the ones between. */
+  reorderSection: (sectionId: string, overId: string) => void
   removeSection: (sectionId: string) => void
   addSection: (type: SectionType) => void
   addEntry: (sectionId: string) => void

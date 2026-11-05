@@ -17,7 +17,7 @@ import { useTranslations } from 'next-intl'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import type { BlockStyle, CvContact, CvEntry } from '@store/cvs/single/types'
 import { CONTACT_TYPES, MAX_CONTACTS } from '@constants/contacts'
-import { SECTION_META, type SectionType } from '@constants/sections'
+import { DEFAULT_ENTRY_PLACEHOLDERS, ENTRY_PLACEHOLDERS, SECTION_META, type SectionType } from '@constants/sections'
 import { contactHref, toLinkHref } from '@helpers/contactLink'
 import { toWebsiteUrl } from '@helpers/url'
 import { ToolbarShell, ToolButton } from './ToolButton'
@@ -130,52 +130,74 @@ const BasicsToolbarComponent: FC = () => {
 /** `memo`, no props: it reads its own style, so the header's re-renders need not reach it. */
 export const BasicsToolbar = memo(BasicsToolbarComponent)
 
-type LinkFormProps = {
-  url: string
-  title: string
-  hint: string
+type LinkField<K extends string> = {
+  key: K
+  /** `undefined` on an item from a draft saved before this link existed. */
+  url: string | undefined
+  /** Shown above the field when the form has more than one. */
+  label?: string
   placeholder: string
-  /** What the field may hold: a draft it turns into no link is refused. */
-  toHref: (text: string) => string | undefined
-  onSave: (url: string) => void
 }
 
-/** Attaches a URL to an item or a contact: its text becomes a link in the preview and the PDF. */
-const LinkForm: FC<LinkFormProps> = ({ url, title, hint, placeholder, toHref, onSave }) => {
-  const t = useTranslations('Editor.block')
-  // `?? ''`: an item from a draft saved before links existed has no `url` yet.
-  const [draft, setDraft] = useState(url ?? '')
-  const inputRef = useRef<InputRef>(null)
-  // The popover opened on a click on the link button, so the field taking focus is expected.
-  useEffect(() => inputRef.current?.focus(), [])
-  const invalid = Boolean(draft.trim()) && !toHref(draft)
+type LinkFormProps<K extends string> = {
+  title: string
+  fields: LinkField<K>[]
+  hint: string
+  /** What a field may hold: a draft it turns into no link is refused. */
+  toHref: (text: string) => string | undefined
+  /** Every field's value, trimmed; '' removes that link. */
+  onSave: (urls: Record<K, string>) => void
+}
 
+/**
+ * Attaches URLs to an item or a contact: the text they belong to becomes a link in the preview
+ * and the PDF. An entry has two (its title and its subtitle), a contact one.
+ */
+const LinkForm = <K extends string>({ title, fields, hint, toHref, onSave }: LinkFormProps<K>) => {
+  const t = useTranslations('Editor.block')
+  const [drafts, setDrafts] = useState(() => Object.fromEntries(fields.map((field) => [field.key, field.url ?? ''])) as Record<K, string>)
+  const inputRef = useRef<InputRef>(null)
+  // The popover opened on a click on the link button, so the first field taking focus is expected.
+  useEffect(() => inputRef.current?.focus(), [])
+  const isInvalid = (key: K): boolean => Boolean(drafts[key].trim()) && !toHref(drafts[key])
+  const invalid = fields.some((field) => isInvalid(field.key))
+  const hasLink = fields.some((field) => field.url)
+
+  const trimmed = (values: Record<K, string>) =>
+    Object.fromEntries(fields.map((field) => [field.key, values[field.key].trim()])) as Record<K, string>
   const save = () => {
-    if (!invalid) onSave(draft.trim())
+    if (!invalid) onSave(trimmed(drafts))
   }
+  const removeAll = () => onSave(Object.fromEntries(fields.map((field) => [field.key, ''])) as Record<K, string>)
 
   return (
     <div className='flex w-72 flex-col gap-2'>
       <span className='text-sm font-semibold'>{title}</span>
-      <Input
-        ref={inputRef}
-        value={draft}
-        placeholder={placeholder}
-        status={invalid ? 'error' : undefined}
-        prefix={<LinkOutlined className='text-muted' />}
-        onChange={(event) => setDraft(event.target.value)}
-        onPressEnter={save}
-        aria-label={title}
-      />
+      {fields.map((field, index) => (
+        <label key={field.key} className='flex flex-col gap-1'>
+          {field.label && <span className='text-xs font-medium text-muted'>{field.label}</span>}
+          <Input
+            ref={index === 0 ? inputRef : undefined}
+            value={drafts[field.key]}
+            placeholder={field.placeholder}
+            status={isInvalid(field.key) ? 'error' : undefined}
+            prefix={<LinkOutlined className='text-muted' />}
+            allowClear
+            onChange={(event) => setDrafts((current) => ({ ...current, [field.key]: event.target.value }))}
+            onPressEnter={save}
+            aria-label={field.label ?? title}
+          />
+        </label>
+      ))}
       {invalid ? (
         <span className='text-xs text-danger'>{t('linkInvalid')}</span>
       ) : (
         <span className='text-xs break-all text-muted'>{hint}</span>
       )}
       <div className='flex justify-end gap-2'>
-        {url && (
-          <Button size='small' danger onClick={() => onSave('')}>
-            {t('linkRemove')}
+        {hasLink && (
+          <Button size='small' danger onClick={removeAll}>
+            {fields.length > 1 ? t('linkRemoveAll') : t('linkRemove')}
           </Button>
         )}
         <Button size='small' type='primary' disabled={invalid} onClick={save}>
@@ -197,9 +219,12 @@ export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number
   const duplicateEntry = useCvEditorStore.use.duplicateEntry()
   const removeEntry = useCvEditorStore.use.removeEntry()
   const setEntryField = useCvEditorStore.use.setEntryField()
+  const sectionType = useCvEditorStoreBase((state) => state.doc?.content.sections.find((section) => section.id === sectionId)?.type)
+  const labels = (sectionType && ENTRY_PLACEHOLDERS[sectionType]) || DEFAULT_ENTRY_PLACEHOLDERS
   // Focus moves into the popover (a portal), so the toolbar's own :hover/:focus-within no
   // longer hold it open; this flag does (`data-open` in cv.css).
   const [linkOpen, setLinkOpen] = useState(false)
+  const hasLink = Boolean(entry.url || entry.subtitleUrl)
 
   return (
     <div className='cv-item-toolbar' data-open={linkOpen || undefined}>
@@ -212,13 +237,17 @@ export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number
           destroyOnHidden
           content={
             <LinkForm
-              url={entry.url}
               title={t('linkTitle')}
+              fields={[
+                { key: 'url', url: entry.url, label: labels.title, placeholder: 'https://' },
+                { key: 'subtitleUrl', url: entry.subtitleUrl, label: labels.subtitle, placeholder: 'https://' },
+              ]}
               hint={t('linkHint')}
-              placeholder='https://'
               toHref={toWebsiteUrl}
-              onSave={(url) => {
-                setEntryField(sectionId, entry.id, 'url', url)
+              onSave={(urls) => {
+                // Only what changed, so an untouched link adds no undo step.
+                if (urls.url !== (entry.url ?? '')) setEntryField(sectionId, entry.id, 'url', urls.url)
+                if (urls.subtitleUrl !== (entry.subtitleUrl ?? '')) setEntryField(sectionId, entry.id, 'subtitleUrl', urls.subtitleUrl)
                 setLinkOpen(false)
               }}
             />
@@ -226,8 +255,8 @@ export const EntryToolbar: FC<{ sectionId: string; entry: CvEntry; index: number
         >
           <ToolButton
             icon={<LinkOutlined />}
-            label={entry.url ? t('linkEdit') : t('linkAdd')}
-            className={entry.url ? 'text-accent' : undefined}
+            label={hasLink ? t('linkEdit') : t('linkAdd')}
+            className={hasLink ? 'text-accent' : undefined}
           />
         </Popover>
         <ToolButton
@@ -298,12 +327,11 @@ export const ContactToolbar: FC<{ contact: CvContact }> = ({ contact }) => {
           destroyOnHidden
           content={
             <LinkForm
-              url={contact.url}
               title={t('linkTitle')}
+              fields={[{ key: 'url', url: contact.url, placeholder: t('linkPlaceholder') }]}
               hint={autoHref ? t('linkAuto', { href: autoHref }) : t('linkHint')}
-              placeholder={t('linkPlaceholder')}
               toHref={toLinkHref}
-              onSave={(url) => {
+              onSave={({ url }) => {
                 setContactField(contact.id, 'url', url)
                 setLinkOpen(false)
               }}

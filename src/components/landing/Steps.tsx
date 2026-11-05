@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 import { getTranslations } from 'next-intl/server'
+import { CATALOGUE_COUNTS } from '@constants/app'
 
 const STEPS = ['pick', 'write', 'download'] as const
 
@@ -16,7 +17,7 @@ export const Steps: FC = async () => {
             <li key={step} className='relative rounded-2xl bg-white/5 p-6 ring-1 ring-white/10 sm:p-8'>
               <span className='font-display text-4xl font-extrabold text-accent sm:text-5xl'>{index + 1}</span>
               <h3 className='mt-3 mb-2 text-lg font-bold text-white sm:mt-4 sm:text-xl'>{t(`steps.${step}.title`)}</h3>
-              <p className='m-0 leading-relaxed text-white/70'>{t(`steps.${step}.text`)}</p>
+              <p className='m-0 leading-relaxed text-white/70'>{t(`steps.${step}.text`, CATALOGUE_COUNTS)}</p>
             </li>
           ))}
         </ol>

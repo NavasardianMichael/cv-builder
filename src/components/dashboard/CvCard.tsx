@@ -14,7 +14,8 @@ import { PaidBadge } from '@components/ui/PaidBadge'
 
 type Props = {
   cv: Cv
-  onDuplicate: (cv: Cv) => void
+  /** Left out for a guest's draft: a browser holds one, so it cannot be copied. */
+  onDuplicate?: (cv: Cv) => void
   onDelete: (cv: Cv) => void
   onDownload: (cv: Cv, variant: PdfVariant) => void
 }
@@ -50,7 +51,7 @@ export const CvCard: FC<Props> = ({ cv, onDuplicate, onDelete, onDownload }) => 
               cv.paidAt
                 ? { key: 'download', icon: <DownloadOutlined />, label: tCommon('download'), onClick: () => onDownload(cv, 'designed') }
                 : { key: 'download', icon: <DownloadOutlined />, label: tCommon('downloadBasic'), onClick: () => onDownload(cv, 'basic') },
-              { key: 'duplicate', icon: <CopyOutlined />, label: tCommon('duplicate'), onClick: () => onDuplicate(cv) },
+              ...(onDuplicate ? [{ key: 'duplicate', icon: <CopyOutlined />, label: tCommon('duplicate'), onClick: () => onDuplicate(cv) }] : []),
               { type: 'divider' as const },
               { key: 'delete', icon: <DeleteOutlined />, label: tCommon('delete'), danger: true, onClick: () => onDelete(cv) },
             ],

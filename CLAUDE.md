@@ -52,6 +52,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | In-place editing | `src/components/cv/Editable.tsx` + `CvEditContext.tsx`; the editor's controls in `src/components/editor/` |
 | Phones & tablets (< `lg`) | `EditorBottomBar` opens panels as a bottom sheet (`EditorShell`); `panels/ContentPanel` is the CV's text as a form; `EditorCanvas` pinches its own zoom and, below 65%, turns taps into "open this block in the form"; touch rules under `@media (hover: none)` in `cv.css`; `(editor)/layout.tsx` stops page zoom |
 | Editor state, undo/redo | `src/store/cvs/single/store.ts` · autosave `src/components/editor/useAutosave.ts` |
+| "Leave with unsaved changes?" | `useLeaveGuard(active)` (`src/hooks/`) · enforced by `components/layout/LeaveGuard.tsx`, mounted in `EditorShell`: browser dialog on tab close / reload / another site, ours on links and Back; a router call awaits `confirmLeave()` |
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
 | Buying without an account | `server/src/lib/guest.ts` (guest-key cookie) · `services/guestCvs.ts` (moved to the account on sign-in) · `CheckoutModal` · `docs/PAYMENTS.md` |
 | PDF | `server/src/services/pdf.ts` prints the web's `/render` page (`src/app/render/`) in headless Chrome |
@@ -98,8 +99,3 @@ endpoints only in `src/api/<domain>/endpoints.ts`, stores `create<S & A>()(immer
 every async failure shown with translated copy (`ErrorAlert`/`ErrorState`, dev details
 underneath), never a server message. Read an antd prop's type before using it — v6
 deprecates many (`Alert.title` not `message`, `destroyOnHidden`, `Space orientation`).
-
-## Env files
-
-Never read or print `.env*` files except `*.env.example`. A missing env file is created by
-copying its `.env.example`.

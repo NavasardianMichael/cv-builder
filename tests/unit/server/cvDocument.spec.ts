@@ -92,6 +92,20 @@ describe('coerceContent', () => {
     expect(coerced.basics.fullName).toHaveLength(CV_LIMITS.short)
   })
 
+  it('keeps an entry\'s title and subtitle links, and gives an older entry an empty subtitle link', () => {
+    const content = sampleContent()
+    const entry = content.sections.find((section) => section.entries.length)!.entries[0]
+    entry.url = 'https://example.am/project'
+    entry.subtitleUrl = 'https://example.am'
+    const coerced = coerceContent(content).sections.find((section) => section.entries.length)!.entries[0]
+    expect(coerced.url).toBe('https://example.am/project')
+    expect(coerced.subtitleUrl).toBe('https://example.am')
+
+    const { subtitleUrl: _subtitleUrl, ...older } = entry
+    const raw = { ...content, sections: [{ ...content.sections[0], entries: [older] }] }
+    expect(coerceContent(raw).sections[0].entries[0].subtitleUrl).toBe('')
+  })
+
   it('clamps a tag level to 0-5 and keeps "no level" as null', () => {
     const content = sampleContent()
     const skills = content.sections.find((section) => section.type === 'skills')!

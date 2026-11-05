@@ -4,13 +4,15 @@ import { type FC, useCallback, useEffect, useState } from 'react'
 import { PlusOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Empty, Skeleton, Tooltip } from 'antd'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
 import { useCvsListStore } from '@store/cvs/list/store'
-import type { Cv } from '@store/cvs/single/types'
+import { type Cv, type CvDocument, DRAFT_ID } from '@store/cvs/single/types'
 import { usePdfDownload } from '@hooks/usePdfDownload'
 import { RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { classifyError, errorCopyKey } from '@helpers/error'
+import { clearLocalDraft, hasLocalDraft, readLocalDraftEntry } from '@helpers/localDraft'
 import { reportError } from '@helpers/reportError'
 import { ErrorState } from '@components/ui/ErrorState'
 import { CvCard } from './CvCard'
@@ -29,12 +31,18 @@ export const DashboardClient: FC = () => {
   const duplicateCv = useCvsListStore.use.duplicateCv()
   const deleteCv = useCvsListStore.use.deleteCv()
   const { message, modal } = App.useApp()
-  const { download } = usePdfDownload()
+  const { download, downloadDraft } = usePdfDownload()
+  const router = useRouter()
   const [loadError, setLoadError] = useState<unknown>(null)
+  /** The API knows no owner here: signed out and no guest cookie, so no server CVs. */
+  const [noOwner, setNoOwner] = useState(false)
+  /** This browser's draft (`helpers/localDraft`); opening it signed in imports it to the account. */
+  const [draft, setDraft] = useState<{ doc: CvDocument; savedAt: string } | null>(null)
 
   const load = useCallback(
     () =>
       getCvs().catch((failure: unknown) => {
+        if (classifyError(failure).kind === 'unauthorized') return setNoOwner(true)
         reportError(failure, 'dashboard:list')
         setLoadError(failure)
       }),
@@ -44,6 +52,18 @@ export const DashboardClient: FC = () => {
   useEffect(() => {
     void load()
   }, [load])
+
+  useEffect(() => {
+    // localStorage exists only after hydration — the external system this effect reads.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDraft(readLocalDraftEntry())
+  }, [])
+
+  // Nothing of theirs in this browser and not signed in: the dashboard is the account's.
+  const nothingHere = isGuest && noOwner && !draft && !hasLocalDraft()
+  useEffect(() => {
+    if (nothingHere) router.replace(`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(ROUTES.dashboard)}`)
+  }, [nothingHere, router])
 
   const retry = () => {
     setLoadError(null)
@@ -64,18 +84,37 @@ export const DashboardClient: FC = () => {
       okText: tCommon('delete'),
       okButtonProps: { danger: true },
       cancelText: tCommon('cancel'),
-      centered: true,
       onOk: () =>
         deleteCv(cv.id)
           .then(() => message.success(t('deleted')))
           .catch(showError),
     })
 
+  const onDeleteDraft = () =>
+    modal.confirm({
+      title: t('deleteTitle', { title: draft?.doc.title ?? '' }),
+      content: t('deleteText'),
+      okText: tCommon('delete'),
+      okButtonProps: { danger: true },
+      cancelText: tCommon('cancel'),
+      onOk: () => {
+        clearLocalDraft()
+        setDraft(null)
+        message.success(t('deleted'))
+      },
+    })
+
+  /** The draft drawn as a CV card; its id opens `/editor/draft`, which imports it when signed in. */
+  const draftCv: Cv | null = draft
+    ? { ...draft.doc, id: DRAFT_ID, paidAt: null, createdAt: draft.savedAt, updatedAt: draft.savedAt }
+    : null
   const cvs = list.allIds.map((id) => list.byId[id])
+  const loaded = isLoaded || noOwner
+  const count = cvs.length + (draftCv ? 1 : 0)
 
   const body = () => {
     if (loadError) return <ErrorState error={loadError} onRetry={retry} />
-    if (!isLoaded) {
+    if (!loaded || nothingHere) {
       return (
         <div className='mt-10 grid grid-cols-2 gap-6 md:grid-cols-3 xl:grid-cols-4'>
           {Array.from({ length: 4 }, (_, index) => (
@@ -84,7 +123,7 @@ export const DashboardClient: FC = () => {
         </div>
       )
     }
-    if (!cvs.length) {
+    if (!count) {
       return (
         <Empty
           className='mt-12 sm:mt-20'
@@ -103,6 +142,9 @@ export const DashboardClient: FC = () => {
     }
     return (
       <div className='mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 xl:grid-cols-4'>
+        {draftCv && draft && (
+          <CvCard cv={draftCv} onDelete={onDeleteDraft} onDownload={() => void downloadDraft(draft.doc)} />
+        )}
         {cvs.map((cv) => (
           <CvCard key={cv.id} cv={cv} onDuplicate={onDuplicate} onDelete={onDelete} onDownload={(item, variant) => void download(item.id, item.title, variant)} />
         ))}
@@ -112,13 +154,13 @@ export const DashboardClient: FC = () => {
 
   return (
     <div className='mx-auto max-w-7xl px-4 py-10 sm:py-20 md:px-6'>
-      <div className='flex items-end justify-between gap-4'>
+      <div className='flex items-start justify-between gap-4'>
         <div className='min-w-0 flex-1'>
           <h1 className='m-0 font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>{t('title')}</h1>
           <p className='mt-2 mb-0 text-muted'>{t('subtitle')}</p>
         </div>
         {/* With no CVs the empty state carries its own button. */}
-        {isLoaded && !loadError && cvs.length > 0 && (
+        {loaded && !loadError && count > 0 && (
           <Tooltip title={t('new')}>
             <Link href={ROUTES.templates} className='shrink-0'>
               <Button color='primary' variant='dashed' size='large' className='bg-transparent!' shape='circle' icon={<PlusOutlined />} aria-label={t('new')} />
@@ -127,7 +169,7 @@ export const DashboardClient: FC = () => {
         )}
       </div>
       {/* Margin on a wrapper: antd's Alert styles are unlayered and reset `margin`. */}
-      {isGuest && (
+      {isGuest && !nothingHere && (
         <div className='mt-6'>
           <Alert
             type='warning'

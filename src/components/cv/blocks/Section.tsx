@@ -125,6 +125,9 @@ const EntryItemComponent: FC<EntryItemProps> = ({ sectionId, entry, index, count
   const edit = useCvEdit()
   const set = (field: 'title' | 'subtitle' | 'period' | 'location' | 'description') => (value: string) =>
     edit?.actions.setEntryField(sectionId, entry.id, field, value)
+  const titleHref = toWebsiteUrl(entry.url)
+  // `subtitleUrl` is missing on an entry from a draft saved before it existed; toWebsiteUrl takes that.
+  const subtitleHref = toWebsiteUrl(entry.subtitleUrl)
   return (
     <li className={cn('cv-entry', edit && 'cv-item-editable')} data-cv-key={entry.id}>
       {edit?.entryToolbar(sectionId, entry, index, count)}
@@ -134,16 +137,26 @@ const EntryItemComponent: FC<EntryItemProps> = ({ sectionId, entry, index, count
             as='h3'
             className='cv-entry-title'
             value={entry.title}
-            href={toWebsiteUrl(entry.url)}
+            href={titleHref}
             placeholder={placeholders.title}
             onChange={set('title')}
           />
-          {toWebsiteUrl(entry.url) && <CvIcon name='link' />}
+          {titleHref && <CvIcon name='link' />}
         </div>
         <Editable className='cv-entry-period' value={entry.period} placeholder={ENTRY_FIELD_PLACEHOLDERS.period} onChange={set('period')} />
       </div>
       <div className='cv-entry-sub'>
-        <Editable className='cv-entry-subtitle' linkify value={entry.subtitle} placeholder={placeholders.subtitle} onChange={set('subtitle')} />
+        <div className='cv-entry-subtitle-row'>
+          <Editable
+            className='cv-entry-subtitle'
+            linkify
+            value={entry.subtitle}
+            href={subtitleHref}
+            placeholder={placeholders.subtitle}
+            onChange={set('subtitle')}
+          />
+          {subtitleHref && entry.subtitle.trim() && <CvIcon name='link' />}
+        </div>
         <Editable className='cv-entry-location' value={entry.location} placeholder={ENTRY_FIELD_PLACEHOLDERS.location} onChange={set('location')} />
       </div>
       <Editable

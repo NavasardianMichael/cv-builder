@@ -32,14 +32,20 @@ export const PanelBody: FC<{ tab: EditorTab; focusBlock?: string | null }> = ({ 
 
 const DESKTOP_TABS: EditorTab[] = ['templates', 'design', 'sections']
 
-/** The desktop settings column: template, design, sections. Unmounts inactive tabs. */
+/**
+ * The desktop settings column: template, design, sections. Unmounts inactive tabs. It fills
+ * the column, and only the panel below the tab bar scrolls (`.ant-tabs-body-holder`, which
+ * antd already lets shrink in its flex column), so the tabs stay in view.
+ */
 export const EditorPanel: FC = () => {
   const t = useTranslations('Editor.tabs')
   return (
     <Tabs
       defaultActiveKey='design'
-      destroyOnHidden
       centered
+      destroyOnHidden
+      className='[&>.ant-tabs-body-holder]:overflow-y-auto [&>.ant-tabs-body-holder]:overscroll-contain'
+      styles={{ root: { height: '100%' } }}
       items={DESKTOP_TABS.map((tab) => ({
         key: tab,
         label: t(tab),

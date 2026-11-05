@@ -411,11 +411,11 @@ homepage → Request indexing.
 **Bing Webmaster Tools.** [bing.com/webmasters](https://www.bing.com/webmasters) → Import from
 Google Search Console: verified with the sitemap included, nothing else to add. Worth doing
 for answer engines too: Bing's index feeds ChatGPT search, Copilot and DuckDuckGo.
-(Without the import: the meta-tag method, value in `NEXT_PUBLIC_BING_VERIFICATION`.)
+(Without the import: its DNS method, a CNAME record at the DNS provider.)
 
 **Yandex Webmaster** (Russian-language search). [webmaster.yandex.com](https://webmaster.yandex.com)
-→ Add site `https://cv-builder.eapps.site` → Meta tag → its `content` value into
-`NEXT_PUBLIC_YANDEX_VERIFICATION` → redeploy → Check. Then Indexing → Sitemap files → add the
+→ Add site `https://cv-builder.eapps.site` → DNS record → add the TXT record it shows at the
+DNS provider → Check. Then Indexing → Sitemap files → add the
 sitemap, and Site information → Regional settings → Armenia.
 
 Nothing to submit for AI engines: `robots.txt` welcomes their crawlers by name, and

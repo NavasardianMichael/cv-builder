@@ -162,7 +162,7 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
   const unavailable = capabilities !== null && !capabilities.payments
 
   return (
-    <Modal open={open} onCancel={close} footer={null} width={760} centered title={t('payTitle')} destroyOnHidden>
+    <Modal open={open} onCancel={close} footer={null} width={760} title={t('payTitle')} destroyOnHidden>
       <div className='grid gap-4 md:grid-cols-2'>
         <DownloadOption
           variant='basic'
