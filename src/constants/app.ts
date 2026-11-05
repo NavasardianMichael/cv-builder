@@ -35,7 +35,7 @@ export const TIME_ZONE = 'Asia/Yerevan'
 export const SUPPORT_EMAIL = 'cv-builder@eapps.site'
 /** Shown on the contact page as written; an empty one is left out. */
 export const SUPPORT_PHONE = '098 75 16 15'
-/** What tapping the phone dials. */
+/** The phone in international form, for the Organization JSON-LD. */
 export const SUPPORT_PHONE_TEL = '+37498751615'
 /** The address in parts, for the Organization JSON-LD; `SUPPORT_ADDRESS` is the line shown. */
 export const SUPPORT_POSTAL_ADDRESS = { street: 'Կուրղինյան 14շ, 33', locality: 'Երևան', country: 'AM' } as const
