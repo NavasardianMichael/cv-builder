@@ -38,10 +38,10 @@ in production:
 
 |            | Development                                                   | Production                                                                                         |
 | ---------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **App**    | `.env.local` in the repo root, from [.env.example](../.env.example)         | one GitHub secret per key (step 8), built into the bundle by the pipeline. No file on the server. |
-| **Server** | `server/.env`, from [server/.env.example](../server/.env.example) | `server/.env.production.local` on your PC → `ENV_API_BASE64` (steps 6–8) → the pipeline writes `/home/michael/apps/cv-builder/shared/.env.api` |
+| **App**    | `.env.local` in the repo root, from [.env.example](../.env.example)         | one GitHub secret per key (step 7), built into the bundle by the pipeline. No file on the server. |
+| **Server** | `server/.env`, from [server/.env.example](../server/.env.example) | `server/.env.production.local` on your PC → `ENV_API_BASE64` (steps 6 and 9) → the pipeline writes `/home/michael/apps/cv-builder/shared/.env.api` |
 
-The app's values are public: both `NEXT_PUBLIC_*` values end up in the browser bundle. The
+The app's values are public: every `NEXT_PUBLIC_*` value ends up in the browser bundle. The
 server's are secret: the database password, the session signing key, the Google and bank
 credentials.
 
@@ -268,7 +268,8 @@ Then the outside services:
 - **Google sign-in** (optional; empty hides the button): Google Cloud console → APIs & Services
   → Credentials → Create OAuth client ID → Web application. Authorized redirect URI, exactly:
   `https://api.cv-builder.eapps.site/identity/google/callback`. Scopes: email, profile.
-- **Mail engine** (password-reset links and the contact form): `MAIL_API_URL` is the engine's
+- **Mail engine** (sign-up verification, password-reset and "password changed" mail, and the
+  contact form; without it nobody can finish a password sign-up): `MAIL_API_URL` is the engine's
   base URL from its [API docs](https://github.com/NavasardianMichael/api-mail-engine/blob/master/API_DOCS.md),
   bare — no `/mail`, no trailing path (the client appends `/mail/internal/send` itself).
   `MAIL_API_KEY` is the engine's `API_KEY`, the same one the other apps use
@@ -318,9 +319,38 @@ warnings in the terminal: a dev password, a key the deploy owns, the bank's test
 `http://` origin. Read them before pasting.
 
 If this file changes later, run the command again, update the `ENV_API_BASE64` secret and
-redeploy (step 9's **Run workflow**).
+redeploy (step 10's **Run workflow**).
 
-## 7. Google consent screen and the bank's pages **[EXT]** (once)
+## 7. Client environment **[GH]** (once)
+
+The web app's settings. There is no file in production: each one is a GitHub secret (added on
+step 9's page) that the build inlines into the bundle, so every value is public, and changing
+one means redeploying the web (step 10's **Run workflow**). Locally the same keys live in
+`.env.local`, from [.env.example](../.env.example).
+
+**Required.** The deploy stops when either is missing, loopback or `http://`.
+
+| Name                   | Value                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`  | `https://api.cv-builder.eapps.site` — must equal `API_PUBLIC_URL` (step 6) |
+| `NEXT_PUBLIC_SITE_URL` | `https://cv-builder.eapps.site` — must equal `CORS_ORIGIN` (step 6)        |
+
+**Optional.** Each one left out turns its feature off. Where to get each value: step 11.
+
+| Name                                   | Turns on                                                  | Value                                   |
+| -------------------------------------- | --------------------------------------------------------- | --------------------------------------- |
+| `NEXT_PUBLIC_GA_ID`                    | Google Analytics 4                                        | the Measurement ID, `G-…`               |
+| `NEXT_PUBLIC_SENTRY_DSN`               | Sentry error reporting (web only — the API has no Sentry) | the Sentry project's DSN                |
+| `SENTRY_AUTH_TOKEN`                    | readable Sentry stack traces (source maps)                | a Sentry organization auth token        |
+| `SENTRY_ORG`                           | 〃                                                        | the organization slug                   |
+| `SENTRY_PROJECT`                       | 〃                                                        | the project slug                        |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | Search Console ownership, URL-prefix property only        | the HTML tag's `content="…"` value      |
+
+The three `SENTRY_*` without the `NEXT_PUBLIC_` prefix are production only: the build uses them
+to upload source maps, and they never reach the browser. Set all three together, and never in
+`.env.local`. Without them, errors still arrive in Sentry, with minified stack traces.
+
+## 8. Google consent screen and the bank's pages **[EXT]** (once)
 
 - Only with Google sign-in (step 6's `GOOGLE_*` filled): Google Cloud console → OAuth consent
   screen: add `eapps.site` to the authorized domains, and
@@ -330,7 +360,7 @@ redeploy (step 9's **Run workflow**).
   Refund pages to be live: `/terms`, `/privacy`, `/refund-policy` — their text is a draft
   (`src/constants/legal.ts`), so have it reviewed first.
 
-## 8. GitHub secrets **[GH]** (once)
+## 9. GitHub secrets **[GH]** (once)
 
 Settings → Secrets and variables → Actions → **Secrets** tab → **Repository secrets** → **New
 repository secret**. Every value below goes there: not in the Variables tab, and not under
@@ -345,19 +375,14 @@ empty, and the build stops with "NEXT_PUBLIC_API_URL is empty").
 | `SSH_PORT`             | only if SSH is not on port 22                            |
 | `APP_DIR`              | `/home/michael/apps/cv-builder`                          |
 | `ENV_API_BASE64`       | output of step 6                                         |
-| `NEXT_PUBLIC_API_URL`  | `https://api.cv-builder.eapps.site`                      |
-| `NEXT_PUBLIC_SITE_URL` | `https://cv-builder.eapps.site` (must equal `CORS_ORIGIN` in step 6) |
 
-Optional ones, for analytics, error tracking and search engines, come from step 10; each one
-left out simply turns its feature off.
+Then the client environment: both required keys from step 7, and whichever optional ones you
+use.
 
 A saved secret cannot be viewed again, and logs show it as `***`. To check or fix one, overwrite
 it with the right value.
 
-The two `NEXT_PUBLIC_*` secrets are built into the bundle: change one, then redeploy the web
-(re-run **Deploy to Production**).
-
-## 9. First deploy **[GH]** (once)
+## 10. First deploy **[GH]** (once)
 
 Actions → **Deploy to Production** → **Run workflow** (deploys both sides). The first run takes
 longer: it downloads Chrome and creates the database. After that, every merge to `master`
@@ -382,10 +407,10 @@ After a few downloads, see what the API really uses on the server: `systemctl st
 cv-builder-api` (its `Memory:` line counts Node and the Chrome each PDF launches, against the
 unit's `MemoryHigh=512M` / `MemoryMax=768M`).
 
-## 10. Analytics, error tracking, search engines **[EXT]** + **[GH]** (once, each optional)
+## 11. Analytics, error tracking, search engines **[EXT]** + **[GH]** (once, each optional)
 
-Each item ends in a GitHub secret (step 8's page) or a DNS record. The secrets are built into
-the bundle, so after adding any of them redeploy the web (**Deploy to Production** → **Run
+Each item ends in a GitHub secret (listed in step 7, added on step 9's page) or a DNS record.
+The secrets are built into the bundle, so after adding any of them redeploy the web (**Deploy to Production** → **Run
 workflow**).
 
 **Google Analytics 4.** [analytics.google.com](https://analytics.google.com) → Admin → Create

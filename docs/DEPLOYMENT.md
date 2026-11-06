@@ -90,7 +90,7 @@ There is **no seed** in production: `server/prisma/seed.ts` creates the dev test
 | `NEXT_PUBLIC_API_URL`  | `https://api.cv-builder.eapps.site`                           |
 | `NEXT_PUBLIC_SITE_URL` | `https://cv-builder.eapps.site`                               |
 
-Optional, each one empty turns its feature off (setup: PRODUCTION_SETUP.md step 10):
+Optional, each one empty turns its feature off (all listed in PRODUCTION_SETUP.md step 7):
 `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION`, and
 `SENTRY_AUTH_TOKEN` + `SENTRY_ORG` + `SENTRY_PROJECT` for readable stack traces (source maps
 uploaded at build).

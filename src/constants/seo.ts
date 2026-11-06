@@ -56,7 +56,7 @@ export const GOOGLE_PREFERRED_SOURCE_URL = `https://www.google.com/preferences/s
 
 /**
  * Google Search Console's ownership tag, inlined at build time and left out when empty. A DNS
- * TXT record verifies the same ownership without it (docs/PRODUCTION_SETUP.md step 10).
+ * TXT record verifies the same ownership without it (docs/PRODUCTION_SETUP.md step 11).
  */
 export const SITE_VERIFICATION = {
   google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ?? '',
