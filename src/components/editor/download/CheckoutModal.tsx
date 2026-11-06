@@ -17,6 +17,7 @@ import { editorPath, ROUTES } from '@constants/routes'
 import { BASIC_DESIGN } from '@constants/templates'
 import { trackEvent } from '@helpers/analytics'
 import { basicContent } from '@helpers/basicCv'
+import { collectClientInfo } from '@helpers/clientInfo'
 import { classifyError } from '@helpers/error'
 import { markGuestCvs } from '@helpers/guestCvs'
 import { clearLocalDraft } from '@helpers/localDraft'
@@ -145,7 +146,7 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
     try {
       await flushSave()
       const id = cvId === DRAFT_ID ? await moveDraftToServer(setCvId) : cvId
-      const checkoutUrl = await checkoutCvAPI({ id })
+      const checkoutUrl = await checkoutCvAPI({ id, client: collectClientInfo() })
       trackEvent('begin_checkout', { currency: CURRENCY, value: CV_PRICE_AMD })
       window.location.assign(checkoutUrl)
     } catch (failure) {

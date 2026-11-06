@@ -7,6 +7,7 @@ import { ensureGuestKeyHash } from '../lib/guest.js'
 import { sendPdf } from '../lib/pdf-response.js'
 import { prisma } from '../lib/prisma.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
+import { readRequestInfo } from '../lib/request-info.js'
 import { mapCv } from '../mappers/entities.js'
 import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware/auth.js'
 import { asyncHandler, HttpError } from '../middleware/error.js'
@@ -89,7 +90,8 @@ cvsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
     let cv = await loadOwnedCv(req)
-    if (!cv.paidAt && (await reconcileCvPayments(cv.id))) cv = await loadOwnedCv(req)
+    if (!cv.paidAt && (await reconcileCvPayments(cv.id, { source: 'cv-open', request: readRequestInfo(req) })))
+      cv = await loadOwnedCv(req)
     ok(res, mapCv(cv))
   })
 )
@@ -153,7 +155,7 @@ cvsRouter.post(
     const verdict = checkoutLimiter(ownerKey(cvOwnerOf(req)))
     if (!verdict.allowed) return fail(res, 'Too many attempts', ERROR_CODE.rateLimited, 429)
 
-    const redirectUrl = await startCheckout({ id: cv.id, title: cv.title, userId: cv.userId })
+    const redirectUrl = await startCheckout({ id: cv.id, title: cv.title, userId: cv.userId }, readRequestInfo(req))
     ok(res, { redirectUrl })
   })
 )
@@ -167,7 +169,8 @@ cvsRouter.get(
   '/:id/pdf',
   asyncHandler(async (req, res) => {
     let cv = await loadOwnedCv(req)
-    if (!cv.paidAt && (await reconcileCvPayments(cv.id))) cv = await loadOwnedCv(req)
+    if (!cv.paidAt && (await reconcileCvPayments(cv.id, { source: 'pdf-download', request: readRequestInfo(req) })))
+      cv = await loadOwnedCv(req)
     else if (cv.paidAt && !(await revalidatePaidCv(cv.id))) cv = await loadOwnedCv(req)
     if (!cv.paidAt) return fail(res, 'Payment required', ERROR_CODE.cvNotPaid, 402)
     if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)

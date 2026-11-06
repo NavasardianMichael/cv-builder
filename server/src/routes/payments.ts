@@ -2,6 +2,7 @@ import { type Request, type Response, Router } from 'express'
 import { config } from '../config.js'
 import { escapeHtml } from '../lib/mail.js'
 import { prisma } from '../lib/prisma.js'
+import { readRequestInfo } from '../lib/request-info.js'
 import { buildWebUrl, PAYMENT_RESULT_PATH } from '../lib/return-path.js'
 import { asyncHandler } from '../middleware/error.js'
 import { isGatewayId } from '../services/gateways/index.js'
@@ -52,7 +53,7 @@ paymentsRouter.get(
 
     let status: string = payment.status
     try {
-      status = await settlePayment(payment)
+      status = await settlePayment(payment, { source: 'return', request: readRequestInfo(req) })
     } catch (error) {
       console.error(`[payments] settle on return failed for ${payment.id}`, error instanceof Error ? error.message : error)
     }

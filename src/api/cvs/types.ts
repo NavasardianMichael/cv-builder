@@ -1,5 +1,6 @@
 import type { Cv, CvContent, CvDocument } from '@store/cvs/single/types'
 import type { Endpoint } from '@interfaces/api'
+import type { ClientInfo } from '@helpers/clientInfo'
 
 export type GetCvsAPI = Endpoint<{ payload: void; response: Cv[]; processed: Cv[] }>
 
@@ -16,7 +17,12 @@ export type DuplicateCvAPI = Endpoint<{ payload: { id: string }; response: Cv; p
 export type DeleteCvAPI = Endpoint<{ payload: { id: string }; response: null; processed: void }>
 
 export type CheckoutResponse = { redirectUrl: string }
-export type CheckoutCvAPI = Endpoint<{ payload: { id: string }; response: CheckoutResponse; processed: string }>
+/** `client`: the device facts for the admin's "checkout started" mail (`@helpers/clientInfo`). */
+export type CheckoutCvAPI = Endpoint<{
+  payload: { id: string; client: ClientInfo }
+  response: CheckoutResponse
+  processed: string
+}>
 
 /** `basic` is the free black-and-white PDF; `designed` the paid one, as styled. */
 export type PdfVariant = 'designed' | 'basic'

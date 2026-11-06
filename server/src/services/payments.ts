@@ -1,9 +1,12 @@
 import type { Payment, PaymentStatus } from '@prisma/client'
 import { GATEWAYS } from './gateways/index.js'
+import type { SettleSource } from './paymentMail.js'
+import { notifyCheckoutStarted, notifyPaymentSucceeded } from './paymentNotifications.js'
 import { CV_PRICE_AMD } from './pricing.js'
 import { config } from '../config.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
 import { prisma } from '../lib/prisma.js'
+import type { RequestInfo } from '../lib/request-info.js'
 import { HttpError } from '../middleware/error.js'
 
 /**
@@ -20,8 +23,17 @@ import { HttpError } from '../middleware/error.js'
 
 const RECONCILE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
 
-/** `userId` is null for a guest's CV; the payment is moved to the account if they sign in later. */
-export const startCheckout = async (cv: { id: string; title: string; userId: string | null }): Promise<string> => {
+/** The request that is settling a payment, for the "payment succeeded" mail. */
+export type SettleContext = { source: SettleSource; request: RequestInfo | null }
+
+/**
+ * `userId` is null for a guest's CV; the payment is moved to the account if they sign in later.
+ * `request` is the buyer's click, for the "checkout started" mail (`paymentNotifications.ts`).
+ */
+export const startCheckout = async (
+  cv: { id: string; title: string; userId: string | null },
+  request: RequestInfo
+): Promise<string> => {
   const gatewayId = config.payments.gateway
   const gateway = GATEWAYS[gatewayId]
 
@@ -38,16 +50,19 @@ export const startCheckout = async (cv: { id: string; title: string; userId: str
       opaque: payment.id,
     })
     await prisma.payment.update({ where: { id: payment.id }, data: { gatewayPaymentId } })
+    void notifyCheckoutStarted(payment.id, request)
     return redirectUrl
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'init failed'
     console.error(`[payments] init failed for payment ${payment.id}: ${reason}`)
     await prisma.payment.update({ where: { id: payment.id }, data: { status: 'failed', failureReason: reason.slice(0, 500) } })
+    void notifyCheckoutStarted(payment.id, request)
     throw new HttpError(502, 'Payment could not be started', ERROR_CODE.paymentInitFailed)
   }
 }
 
-export const settlePayment = async (payment: Payment): Promise<PaymentStatus> => {
+/** `context` names who is settling it, for the "payment succeeded" mail sent by the one that wins the claim. */
+export const settlePayment = async (payment: Payment, context?: SettleContext): Promise<PaymentStatus> => {
   if (payment.status !== 'pending' || !payment.gatewayPaymentId) return payment.status
 
   const verdict = await GATEWAYS[payment.gateway].check(payment.gatewayPaymentId, {
@@ -65,7 +80,7 @@ export const settlePayment = async (payment: Payment): Promise<PaymentStatus> =>
     return 'failed'
   }
 
-  await prisma.$transaction(async (tx) => {
+  const won = await prisma.$transaction(async (tx) => {
     const claimed = await tx.payment.updateMany({
       where: { id: payment.id, status: 'pending' },
       data: { status: 'succeeded', paidAt: now },
@@ -73,7 +88,10 @@ export const settlePayment = async (payment: Payment): Promise<PaymentStatus> =>
     if (claimed.count === 1 && payment.cvId) {
       await tx.cv.updateMany({ where: { id: payment.cvId, paidAt: null }, data: { paidAt: now } })
     }
+    return claimed.count === 1
   })
+  // Only the settler that moved the row sends it: a racing redirect and reconcile mail once.
+  if (won) void notifyPaymentSucceeded(payment.id, context?.request ?? null, context?.source ?? 'return')
   return 'succeeded'
 }
 
@@ -136,7 +154,7 @@ export const reversePayment = async (payment: Payment, kind: Reversal): Promise<
 }
 
 /** True when the CV is (now) paid. Gateway failures are logged, never thrown at a reader. */
-export const reconcileCvPayments = async (cvId: string): Promise<boolean> => {
+export const reconcileCvPayments = async (cvId: string, context?: SettleContext): Promise<boolean> => {
   const pending = await prisma.payment.findMany({
     where: {
       cvId,
@@ -151,7 +169,7 @@ export const reconcileCvPayments = async (cvId: string): Promise<boolean> => {
   let paid = false
   for (const payment of pending) {
     try {
-      if ((await settlePayment(payment)) === 'succeeded') paid = true
+      if ((await settlePayment(payment, context)) === 'succeeded') paid = true
     } catch (error) {
       console.error(`[payments] reconcile of ${payment.id} failed`, error instanceof Error ? error.message : error)
     }

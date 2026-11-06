@@ -56,7 +56,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
 | Buying without an account | `server/src/lib/guest.ts` (guest-key cookie) · `services/guestCvs.ts` (moved to the account on sign-in) · `CheckoutModal` · `docs/PAYMENTS.md` |
 | PDF | `server/src/services/pdf.ts` prints the web's `/render` page (`src/app/render/`) in headless Chrome |
-| Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` · delivery evidence for refunds: `PdfDownload` rows written by `GET /cvs/:id/pdf` |
+| Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` · admin mails on checkout and success `services/paymentNotifications.ts` · delivery evidence for refunds: `PdfDownload` rows written by `GET /cvs/:id/pdf` |
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` · emailed links (verify, reset, "password changed") in `server/src/lib/{email-verification,password-reset}.ts`. A password sign-up has no session until its verification link is opened |
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |

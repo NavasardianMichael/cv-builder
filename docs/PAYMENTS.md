@@ -29,6 +29,26 @@ A buyer who closes the tab before step 3 is covered by **reconcile-on-read**: `G
 and `GET /cvs/:id/pdf` re-check that CV's pending payments from the last 3 days.
 `Payment` rows outlive their CV and user (`SetNull`) — they are the accounting record.
 
+## Admin mails
+
+Two internal mails reach the admin inbox through the mail engine's internal endpoint
+(`server/src/services/paymentNotifications.ts`, built in `paymentMail.ts`):
+
+- **Checkout started** — sent by `startCheckout` once the gateway answered, so it carries the
+  order # (or says the bank page failed to open).
+- **Payment succeeded** — sent by `settlePayment` only when it wins the `pending → succeeded`
+  claim, so once per payment whether the bank redirect or reconcile-on-read settled it; it
+  says which.
+
+Both list the payment, the buyer (account or guest, earlier purchases), the CV (title,
+template, the name and contacts on it) and the device: IP, user agent with a readable
+summary, client hints, languages, and the browser's own facts the checkout sends
+(`src/helpers/clientInfo.ts` → `asClientInfo` in `server/src/lib/request-info.ts`; the keys
+are pinned by `twins.spec.ts`). The success mail's device is the request that confirmed it;
+the two mails share the order #. Best effort: never awaited, failures only logged, "started"
+capped at 30 an hour (the engine's 10-a-minute budget is shared with sign-up mail). Without
+`MAIL_API_*` in dev they print to the API's console.
+
 ## Without an account
 
 A guest who pays is warned first, in the dialog (`GuestWarning` in `CheckoutModal`): the CV
