@@ -69,7 +69,7 @@ export const isGoogleOAuthConfigured = (): boolean =>
 
 /**
  * Whether a checkout can be started. The mock gateway is a development tool: it hands out
- * paid CVs for a click, so it is never available in production whatever the env says.
+ * full access for a click, so it is never available in production whatever the env says.
  */
 export const isPaymentConfigured = (): boolean => {
   const { gateway, ameria } = config.payments

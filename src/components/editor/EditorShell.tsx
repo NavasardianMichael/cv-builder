@@ -84,7 +84,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
       const draft = readLocalDraft()
       if (!draft) return router.replace(newCvPath(DEFAULT_TEMPLATE_ID))
       if (!user) {
-        loadDocument({ cvId: DRAFT_ID, doc: draft, paidAt: null })
+        loadDocument({ cvId: DRAFT_ID, doc: draft })
         return setState({ phase: 'ready' })
       }
       setState({ phase: 'importing' })
@@ -106,7 +106,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
       const back = `${editorPath(cvId)}${autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''}`
       return router.replace(`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(back)}`)
     }
-    loadDocument({ cvId: cv.id, doc: { title: cv.title, content: cv.content, design: cv.design }, paidAt: cv.paidAt })
+    loadDocument({ cvId: cv.id, doc: { title: cv.title, content: cv.content, design: cv.design } })
     setState({ phase: 'ready' })
   }, [autoCheckout, cvId, loadDocument, router, user])
 

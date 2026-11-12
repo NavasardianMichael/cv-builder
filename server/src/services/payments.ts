@@ -1,30 +1,98 @@
 import type { Payment, PaymentStatus } from '@prisma/client'
+import { accessWindow, type PaidPass } from './entitlement.js'
 import { GATEWAYS } from './gateways/index.js'
 import { PAYMENT_PAGE_TIMEOUT_SECONDS } from './gateways/types.js'
-import { DUPLICATE_REASON, isDuplicateReason, type SettleSource } from './paymentMail.js'
-import { notifyCheckoutStarted, notifyDuplicatePayment, notifyPaymentSucceeded } from './paymentNotifications.js'
-import { CV_PRICE_AMD } from './pricing.js'
+import type { SettleSource } from './paymentMail.js'
+import { notifyCheckoutStarted, notifyPaymentSucceeded } from './paymentNotifications.js'
+import { PASS_DAYS, PASS_PRICE_AMD } from './pricing.js'
 import { config } from '../config.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
 import { prisma } from '../lib/prisma.js'
 import type { RequestInfo } from '../lib/request-info.js'
+import type { CvOwner } from '../middleware/auth.js'
 import { HttpError } from '../middleware/error.js'
 
 /**
- * One-time CV purchases (docs/PAYMENTS.md).
+ * Access passes (docs/PAYMENTS.md). What one payment buys is **time**: `PASS_DAYS` days of
+ * every template's designed PDF for every CV of its owner — an account, or a guest browser's
+ * key. The owner's succeeded payments are the passes (`accessWindow`); a pass bought while one
+ * runs adds its days on top.
  *
  * - `startCheckout` writes a `pending` Payment, asks the gateway for a payment page, and
  *   returns its URL. Nothing is unlocked here.
- * - `settlePayment` is the **only** writer of `succeeded` and of `Cv.paidAt`. It asks the
- *   gateway, server to server, and moves the row out of `pending` by compare-and-set, so the
- *   return redirect, a page reload and a reconcile racing each other settle it once.
- * - `reconcileCvPayments` covers the buyer who paid and closed the tab before the redirect:
- *   reading a CV re-checks its recent pending payments. Computed on read, no background job.
- *   It runs for paid CVs too, and before every new checkout: a second attempt that was paid
- *   as well is found and reversed (`releaseDuplicate`), and a paid one is never paid again.
+ * - `settlePayment` is the **only** writer of `succeeded`. It asks the gateway, server to
+ *   server, and moves the row out of `pending` by compare-and-set, so the return redirect, a
+ *   page reload and a reconcile racing each other settle it once.
+ * - `reconcileOwnerPayments` covers the buyer who paid and closed the tab before the redirect:
+ *   reading the owner's access, printing, and starting another checkout re-check their recent
+ *   pending payments. Computed on read, no background job.
+ * - `runningPass` re-checks a running pass for a refund made in the bank's panel before the
+ *   designed PDF prints.
  */
 
 const RECONCILE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
+
+/** The request that is settling a payment, for the "payment succeeded" mail. */
+export type SettleContext = { source: SettleSource; request: RequestInfo | null }
+
+/** The owner's succeeded payments, as passes. `paidAt` is set by `settlePayment` (a grant's by the release). */
+export const paidPasses = async (owner: CvOwner): Promise<PaidPass[]> => {
+  const rows = await prisma.payment.findMany({ where: { ...owner, status: 'succeeded' }, select: { id: true, paidAt: true, createdAt: true } })
+  return rows.map((row) => ({ id: row.id, paidAt: row.paidAt ?? row.createdAt }))
+}
+
+const windowOf = async (owner: CvOwner): Promise<ReturnType<typeof accessWindow>> => accessWindow(await paidPasses(owner), PASS_DAYS)
+
+const isRunning = (until: Date | null): until is Date => Boolean(until && until.getTime() > Date.now())
+
+/**
+ * When this owner's access ends — in the past once it has run out, null if they never had one.
+ * Pending payments from the last days are settled first.
+ */
+export const accessUntil = async (owner: CvOwner, context?: SettleContext): Promise<Date | null> => {
+  await reconcileOwnerPayments(owner, context)
+  return (await windowOf(owner)).until
+}
+
+/**
+ * The running pass, asked before the designed PDF prints: pending payments are settled first
+ * (a tab closed mid-redirect), and a running pass is re-checked for a refund made in the bank's
+ * panel since (`revalidatePass`). Returns the payment a download counts against — the latest
+ * of the running window — or null when no pass runs.
+ */
+export const runningPass = async (owner: CvOwner, context?: SettleContext): Promise<{ paymentId: string } | null> => {
+  await reconcileOwnerPayments(owner, context)
+  const before = await windowOf(owner)
+  if (!isRunning(before.until)) return null
+  await revalidatePass(before.chain)
+  const after = await windowOf(owner)
+  if (!isRunning(after.until)) return null
+  return { paymentId: after.chain[after.chain.length - 1].id }
+}
+
+/**
+ * A refund or void made later in the bank's panel takes its days back. Each payment of the
+ * running window is re-read from its gateway, and a reversed one becomes `refunded`; the caller
+ * then computes the window again. A gateway that cannot answer counts as still paid — an
+ * outage must not lock a buyer out. A grant has no gateway record and is not asked.
+ */
+const revalidatePass = async (chain: readonly PaidPass[]): Promise<void> => {
+  const payments = await prisma.payment.findMany({
+    where: { id: { in: chain.map((payment) => payment.id) }, status: 'succeeded', gatewayPaymentId: { not: null } },
+  })
+  const reversed: string[] = []
+  for (const payment of payments) {
+    try {
+      if (await GATEWAYS[payment.gateway].isReversed(payment.gatewayPaymentId!)) reversed.push(payment.id)
+    } catch (error) {
+      console.error(`[payments] revalidate of ${payment.id} failed`, error instanceof Error ? error.message : error)
+    }
+  }
+  if (reversed.length > 0) {
+    await prisma.payment.updateMany({ where: { id: { in: reversed }, status: 'succeeded' }, data: { status: 'refunded' } })
+    console.info(`[payments] ${reversed.length} payment(s) were refunded at the bank: ${reversed.join(', ')}`)
+  }
+}
 
 /**
  * How long an attempt the buyer never came back from may still be payable: the bank's page
@@ -36,20 +104,20 @@ const OPEN_PAYMENT_WINDOW_MS = (PAYMENT_PAGE_TIMEOUT_SECONDS + 2 * 60) * 1000
 export type OpenPayment = { id: string; minutesAgo: number }
 
 /**
- * An earlier attempt for this CV whose bank page may still be open — in another tab — and
+ * An earlier attempt of this owner's whose bank page may still be open — in another tab — and
  * payable: pending (the bank had nothing charged when last asked), younger than the page
- * timeout, and the buyer never came back from it (`returnedAt`). A new order then could be
- * paid as well as that one, so the buyer is offered that same order instead
+ * timeout, and the buyer never came back from it (`returnedAt`). Paying a new order as well
+ * would buy the days twice without meaning to, so the buyer is offered that same order instead
  * (`resumeOpenPayment`): one order is charged once, whichever tab they pay in.
  *
  * Null once it was resumed already: if the buyer is here again without the bank having sent
  * them, that page may not reopen, and they must not be sent to it in a loop — a new order.
  * Computed when asked; nothing expires it.
  */
-export const findOpenPayment = async (cvId: string): Promise<OpenPayment | null> => {
+export const findOpenPayment = async (owner: CvOwner): Promise<OpenPayment | null> => {
   const open = await prisma.payment.findFirst({
     where: {
-      cvId,
+      ...owner,
       status: 'pending',
       returnedAt: null,
       gatewayPaymentId: { not: null },
@@ -82,31 +150,26 @@ export const markReturned = async (paymentId: string): Promise<void> => {
   await prisma.payment.updateMany({ where: { id: paymentId, returnedAt: null }, data: { returnedAt: new Date() } })
 }
 
-/** The request that is settling a payment, for the "payment succeeded" mail. */
-export type SettleContext = { source: SettleSource; request: RequestInfo | null }
-
 /**
- * `userId` is null for a guest's CV; the payment is moved to the account if they sign in later.
- * `request` is the buyer's click, for the "checkout started" mail (`paymentNotifications.ts`).
+ * Starts buying a pass for this owner and returns the bank page's URL. `cvId` is only where the
+ * buyer started (the result page leads back to it) and must already be the owner's. `request`
+ * is the buyer's click, for the "checkout started" mail (`paymentNotifications.ts`).
  */
-export const startCheckout = async (
-  cv: { id: string; title: string; userId: string | null },
-  request: RequestInfo
-): Promise<string> => {
+export const startCheckout = async (owner: CvOwner, input: { cvId: string | null }, request: RequestInfo): Promise<string> => {
   const gatewayId = config.payments.gateway
   const gateway = GATEWAYS[gatewayId]
 
   const payment = await prisma.payment.create({
-    data: { userId: cv.userId, cvId: cv.id, amount: CV_PRICE_AMD, gateway: gatewayId },
+    data: { ...owner, cvId: input.cvId, amount: PASS_PRICE_AMD, gateway: gatewayId },
   })
 
   try {
     const { gatewayPaymentId, redirectUrl } = await gateway.init({
       orderNumber: payment.orderNumber,
       amount: payment.amount,
-      // Latin only: Ameria stores it without Unicode, so Armenian (and an Armenian CV title)
-      // reaches its merchant panel and the buyer's statement as "¿¿¿".
-      description: `CV PDF download, order #${payment.orderNumber}`,
+      // Latin only: Ameria stores it without Unicode, so Armenian reaches its merchant panel
+      // and the buyer's statement as "¿¿¿".
+      description: `CV builder: full access for ${PASS_DAYS} days, order #${payment.orderNumber}`,
       backUrl: `${config.apiPublicUrl}/payments/return/${gatewayId}`,
       opaque: payment.id,
     })
@@ -123,32 +186,25 @@ export const startCheckout = async (
 }
 
 /**
- * The row's status after a settle, or:
- * - `unpaid`: still `pending` in the database, but the gateway says nothing has been charged —
- *   the buyer has not paid (yet);
- * - `duplicate`: the CV was already paid, so this payment was reversed (or flagged to be).
+ * The row's status after a settle, or `unpaid`: still `pending` in the database, but the
+ * gateway says nothing has been charged — the buyer has not paid (yet).
  */
-export type SettleStatus = PaymentStatus | 'unpaid' | 'duplicate'
+export type SettleStatus = PaymentStatus | 'unpaid'
 
 const failPending = async (payment: Payment, reason: string): Promise<'failed'> => {
   await prisma.payment.updateMany({ where: { id: payment.id, status: 'pending' }, data: { status: 'failed', failureReason: reason } })
   return 'failed'
 }
 
-const isCvPaid = async (cvId: string | null): Promise<boolean> =>
-  cvId ? Boolean((await prisma.cv.findUnique({ where: { id: cvId }, select: { paidAt: true } }))?.paidAt) : false
-
 /**
- * One CV, one charge. Settling never confirms or keeps money for a CV that is already paid —
- * a second tab, a retry after a redirect that never arrived, a late return: that payment is
- * reversed here, and the buyer is told (the result page's `duplicate`).
+ * Settles a payment from the gateway's own record. A second payment of the same owner is not
+ * a mistake to undo: its days go on top of theirs (`accessWindow`). On a two-stage terminal an
+ * `approved` (blocked) amount is confirmed first, and only the record read after it settles.
  *
- * `context` names who is settling it, for the mails sent by the settler that wins the claim.
+ * `context` names who is settling it, for the mail sent by the settler that wins the claim.
  */
 export const settlePayment = async (payment: Payment, context?: SettleContext): Promise<SettleStatus> => {
-  if (payment.status !== 'pending' || !payment.gatewayPaymentId) {
-    return isDuplicateReason(payment.failureReason) ? 'duplicate' : payment.status
-  }
+  if (payment.status !== 'pending' || !payment.gatewayPaymentId) return payment.status
 
   const gateway = GATEWAYS[payment.gateway]
   const expected = { orderNumber: payment.orderNumber, amount: payment.amount }
@@ -156,142 +212,56 @@ export const settlePayment = async (payment: Payment, context?: SettleContext): 
   if (verdict.status === 'pending') return verdict.nothingCharged ? 'unpaid' : 'pending'
   if (verdict.status === 'failed') return failPending(payment, verdict.reason)
 
-  // Money is held (`approved`) or taken (`succeeded`). Paid already: give it back, never confirm.
-  if (await isCvPaid(payment.cvId)) return releaseDuplicate(payment, verdict.status, context)
-
   if (verdict.status === 'approved') {
     verdict = await gateway.confirm(payment.gatewayPaymentId, expected)
     if (verdict.status === 'failed') return failPending(payment, verdict.reason)
     if (verdict.status !== 'succeeded') return 'pending'
   }
 
-  const now = new Date()
-  const outcome = await prisma.$transaction(async (tx) => {
-    const claimed = await tx.payment.updateMany({
-      where: { id: payment.id, status: 'pending' },
-      data: { status: 'succeeded', paidAt: now },
-    })
-    if (claimed.count !== 1) return 'lost' as const
-    if (!payment.cvId) return 'won' as const
-    // The row lock makes this the arbiter: of two payments settling at once, one unlocks the CV.
-    const unlocked = await tx.cv.updateMany({ where: { id: payment.cvId, paidAt: null }, data: { paidAt: now } })
-    return unlocked.count === 1 ? ('won' as const) : ('duplicate' as const)
+  const claimed = await prisma.payment.updateMany({
+    where: { id: payment.id, status: 'pending' },
+    data: { status: 'succeeded', paidAt: new Date() },
   })
-
-  if (outcome === 'duplicate') return releaseDuplicate({ ...payment, status: 'succeeded' }, 'succeeded', context)
-  if (outcome === 'lost') {
-    // Another settler moved it first; answer what it decided.
-    const row = await prisma.payment.findUnique({ where: { id: payment.id } })
-    return row && isDuplicateReason(row.failureReason) ? 'duplicate' : (row?.status ?? 'pending')
-  }
   // Only the settler that moved the row sends it: a racing redirect and reconcile mail once.
-  void notifyPaymentSucceeded(payment.id, context?.request ?? null, context?.source ?? 'return')
+  if (claimed.count === 1) void notifyPaymentSucceeded(payment.id, context?.request ?? null, context?.source ?? 'return')
   return 'succeeded'
 }
 
 /**
- * Gives back a payment made for a CV that was already paid. `held`: blocked on the card
- * (two-stage, never confirmed) or charged. CancelPayment first — it releases a hold, and
- * reverses a charge within 72 hours so it never reaches the statement — then RefundPayment.
- * A bank that refuses both leaves it to a person: the row says so and the admin mail asks.
- *
- * A `pending` row is claimed first (→ `failed`, "being reversed"), so two settlers racing
- * over the same payment reverse and mail once.
+ * Re-checks this owner's recent pending payments. True when one of them has just succeeded —
+ * a payment whose redirect never arrived. Gateway failures are logged, never thrown at a reader.
  */
-const releaseDuplicate = async (
-  payment: Payment,
-  held: 'approved' | 'succeeded',
-  context?: SettleContext
-): Promise<'duplicate'> => {
-  if (payment.status === 'pending') {
-    const claimed = await prisma.payment.updateMany({
-      where: { id: payment.id, status: 'pending' },
-      data: { status: 'failed', failureReason: DUPLICATE_REASON.inProgress },
-    })
-    if (claimed.count !== 1) return 'duplicate'
-  }
-
-  const gateway = GATEWAYS[payment.gateway]
-  const gatewayPaymentId = payment.gatewayPaymentId!
-  const refusals: string[] = []
-  let reversed = false
-  try {
-    await gateway.cancel(gatewayPaymentId)
-    reversed = true
-  } catch (error) {
-    refusals.push(error instanceof Error ? error.message : String(error))
-    if (held === 'succeeded') {
-      try {
-        await gateway.refund(gatewayPaymentId, payment.amount)
-        reversed = true
-      } catch (refundError) {
-        refusals.push(refundError instanceof Error ? refundError.message : String(refundError))
-      }
-    }
-  }
-  // As in `reversePayment`: a refusal that took effect anyway shows in the payment's record.
-  if (!reversed) reversed = await gateway.isReversed(gatewayPaymentId).catch(() => false)
-
-  const data = reversed
-    ? held === 'approved'
-      ? { status: 'failed' as const, failureReason: DUPLICATE_REASON.released }
-      : { status: 'refunded' as const, failureReason: DUPLICATE_REASON.reversed }
-    : held === 'approved'
-      ? // Blocked, never charged: the bank lets the hold lapse; a person can release it sooner.
-        { status: 'failed' as const, failureReason: DUPLICATE_REASON.manual }
-      : // Charged and kept until a person returns it: `succeeded` is what the money says.
-        { status: 'succeeded' as const, failureReason: DUPLICATE_REASON.manual, paidAt: payment.paidAt ?? new Date() }
-  await prisma.payment.update({ where: { id: payment.id }, data })
-
-  if (reversed) console.info(`[payments] duplicate #${payment.orderNumber} for CV ${payment.cvId} reversed automatically`)
-  else console.error(`[payments] duplicate #${payment.orderNumber} for CV ${payment.cvId} NOT reversed: ${refusals.join(' | ')}`)
-  void notifyDuplicatePayment(payment.id, context?.request ?? null, context?.source ?? 'return')
-  return 'duplicate'
-}
-
-/**
- * Whether a paid CV is still paid, asked before its designed PDF is printed: a refund or void
- * made later in the bank's panel takes the PDF back from that CV's owner. Each `succeeded`
- * payment of the CV is re-read from its gateway; a reversed one becomes `refunded`, and the CV
- * loses `paidAt` once none is left (a CV paid twice and refunded once stays paid). A gateway
- * that cannot answer counts as still paid — an outage must not lock a buyer out — and a CV
- * with no gateway payment (the seed's) is left as it is.
- */
-export const revalidatePaidCv = async (cvId: string): Promise<boolean> => {
-  const payments = await prisma.payment.findMany({ where: { cvId, status: 'succeeded', gatewayPaymentId: { not: null } } })
-
-  const reversed: string[] = []
-  for (const payment of payments) {
-    try {
-      if (await GATEWAYS[payment.gateway].isReversed(payment.gatewayPaymentId!)) reversed.push(payment.id)
-    } catch (error) {
-      console.error(`[payments] revalidate of ${payment.id} failed`, error instanceof Error ? error.message : error)
-    }
-  }
-  if (reversed.length === 0) return true
-  return markRefunded(cvId, reversed)
-}
-
-/** `succeeded` → `refunded`; true while the CV still has another `succeeded` payment, else it is locked. */
-const markRefunded = (cvId: string | null, paymentIds: string[]): Promise<boolean> =>
-  prisma.$transaction(async (tx) => {
-    await tx.payment.updateMany({ where: { id: { in: paymentIds }, status: 'succeeded' }, data: { status: 'refunded' } })
-    if (!cvId) return false
-    if ((await tx.payment.count({ where: { cvId, status: 'succeeded' } })) > 0) return true
-    await tx.cv.updateMany({ where: { id: cvId }, data: { paidAt: null } })
-    console.info(`[payments] CV ${cvId} locked again: its payment was refunded at the bank`)
-    return false
+export const reconcileOwnerPayments = async (owner: CvOwner, context?: SettleContext): Promise<boolean> => {
+  const pending = await prisma.payment.findMany({
+    where: {
+      ...owner,
+      status: 'pending',
+      gatewayPaymentId: { not: null },
+      createdAt: { gte: new Date(Date.now() - RECONCILE_WINDOW_MS) },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
   })
+
+  let settled = false
+  for (const payment of pending) {
+    try {
+      if ((await settlePayment(payment, context)) === 'succeeded') settled = true
+    } catch (error) {
+      console.error(`[payments] reconcile of ${payment.id} failed`, error instanceof Error ? error.message : error)
+    }
+  }
+  return settled
+}
 
 export type Reversal = 'refund' | 'cancel'
 
 /**
  * An operator's refund or cancellation of a settled payment, through the gateway's API
- * (`pnpm payments:reverse`): the whole charge goes back to the card. Once the gateway says
- * "done" the payment is `refunded` and its CV locked unless paid again. Returns whether the
- * CV is still paid; throws the gateway's refusal (code and message) unchanged.
+ * (`pnpm payments:reverse`, only with `AMERIA_API_REVERSALS=true`): the whole charge goes back
+ * to the card and its days leave the owner's window. Throws the gateway's refusal unchanged.
  */
-export const reversePayment = async (payment: Payment, kind: Reversal): Promise<boolean> => {
+export const reversePayment = async (payment: Payment, kind: Reversal): Promise<void> => {
   if (payment.status !== 'succeeded' || !payment.gatewayPaymentId) {
     throw new Error(`payment #${payment.orderNumber} is ${payment.status}, only a succeeded one can be reversed`)
   }
@@ -304,29 +274,5 @@ export const reversePayment = async (payment: Payment, kind: Reversal): Promise<
     // it); a refusal that did take effect anyway shows in the payment's own record.
     if (!(await gateway.isReversed(payment.gatewayPaymentId).catch(() => false))) throw error
   }
-  return markRefunded(payment.cvId, [payment.id])
-}
-
-/** True when the CV is (now) paid. Gateway failures are logged, never thrown at a reader. */
-export const reconcileCvPayments = async (cvId: string, context?: SettleContext): Promise<boolean> => {
-  const pending = await prisma.payment.findMany({
-    where: {
-      cvId,
-      status: 'pending',
-      gatewayPaymentId: { not: null },
-      createdAt: { gte: new Date(Date.now() - RECONCILE_WINDOW_MS) },
-    },
-    orderBy: { createdAt: 'desc' },
-    take: 3,
-  })
-
-  let paid = false
-  for (const payment of pending) {
-    try {
-      if ((await settlePayment(payment, context)) === 'succeeded') paid = true
-    } catch (error) {
-      console.error(`[payments] reconcile of ${payment.id} failed`, error instanceof Error ? error.message : error)
-    }
-  }
-  return paid
+  await prisma.payment.updateMany({ where: { id: payment.id, status: 'succeeded' }, data: { status: 'refunded' } })
 }

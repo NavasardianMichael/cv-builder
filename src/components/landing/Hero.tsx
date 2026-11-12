@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { CATALOGUE_COUNTS } from '@constants/app'
 import { FONT_SLUGS } from '@constants/fonts'
-import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { formatAmd, PASS_DAYS, PASS_PRICE_AMD } from '@constants/pricing'
 import { newFreeCvPath, ROUTES } from '@constants/routes'
 import { TEMPLATE_IDS, templateDesign, type TemplateId } from '@constants/templates'
 import { sampleContent } from '@helpers/cvFactory'
@@ -23,7 +23,7 @@ const STACK: { id: TemplateId; className: string; tilt: string; delay: string }[
 
 export const Hero: FC = async () => {
   const t = await getTranslations('Home')
-  const price = formatAmd(CV_PRICE_AMD)
+  const price = formatAmd(PASS_PRICE_AMD)
 
   return (
     <section className='mesh-bg overflow-hidden'>
@@ -36,7 +36,7 @@ export const Hero: FC = async () => {
           <h1 className='text-balance mt-6 font-display text-title leading-[1.08] [--title-em:13] [--title-max:2.25rem] font-extrabold tracking-tight text-ink sm:text-5xl lg:text-5xl'>
             {t('heroTitle')} <span className='text-accent'>{t('heroTitleAccent')}</span>
           </h1>
-          <p className='mt-5 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg'>{t('heroSubtitle', { price, ...CATALOGUE_COUNTS })}</p>
+          <p className='mt-5 max-w-xl text-base leading-relaxed text-muted sm:mt-6 sm:text-lg'>{t('heroSubtitle', { price, days: PASS_DAYS, ...CATALOGUE_COUNTS })}</p>
           <div className='mt-8 flex flex-wrap items-center gap-3'>
             <Link
               href={ROUTES.templates}
@@ -56,7 +56,7 @@ export const Hero: FC = async () => {
             {[
               { value: String(TEMPLATE_IDS.length), label: t('stats.templates') },
               { value: String(FONT_SLUGS.length), label: t('stats.fonts') },
-              { value: price, label: t('stats.price') },
+              { value: price, label: t('stats.price', { days: PASS_DAYS }) },
             ].map((stat) => (
               <div key={stat.label}>
                 <dt className='sr-only'>{stat.label}</dt>

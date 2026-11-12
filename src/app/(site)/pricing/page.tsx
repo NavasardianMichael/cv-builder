@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { CATALOGUE_COUNTS } from '@constants/app'
-import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { formatAmd, PASS_DAYS, PASS_PRICE_AMD } from '@constants/pricing'
 import { ROUTES } from '@constants/routes'
 import { pageMetadata } from '@helpers/metadata'
 import { breadcrumbSchema, webApplicationSchema } from '@linkedDataSchema/site'
@@ -12,7 +12,11 @@ import { CheckOutlined, LockOutlined } from '@components/ui/icons'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('Pricing')
-  return pageMetadata({ title: t('metaTitle'), description: t('metaDescription', { price: formatAmd(CV_PRICE_AMD) }), path: ROUTES.pricing })
+  return pageMetadata({
+    title: t('metaTitle', { days: PASS_DAYS }),
+    description: t('metaDescription', { price: formatAmd(PASS_PRICE_AMD), days: PASS_DAYS }),
+    path: ROUTES.pricing,
+  })
 }
 
 export default async function PricingPage() {
@@ -38,7 +42,7 @@ export default async function PricingPage() {
       <div className='mx-auto max-w-5xl px-4 pt-10 sm:pt-14 md:px-6'>
         <div className='text-center'>
           <h1 className='font-display text-title font-extrabold tracking-tight text-ink sm:text-5xl'>{t('title')}</h1>
-          <p className='mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted sm:mt-5 sm:text-lg'>{t('subtitle')}</p>
+          <p className='mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted sm:mt-5 sm:text-lg'>{t('subtitle', { days: PASS_DAYS })}</p>
         </div>
 
         <div className='mt-10 grid gap-5 sm:mt-14 sm:gap-6 md:grid-cols-2'>
@@ -57,8 +61,8 @@ export default async function PricingPage() {
           <div className='relative overflow-hidden rounded-3xl bg-ink p-6 text-white shadow-2xl shadow-ink/30 sm:p-8'>
             <div className='pointer-events-none absolute -top-20 -right-20 size-60 rounded-full bg-accent opacity-30 blur-3xl' aria-hidden='true' />
             <h2 className='relative m-0 text-base font-bold text-white/70 sm:text-lg'>{t('paid')}</h2>
-            <p className='relative mt-2 mb-1 font-display text-4xl font-extrabold text-white sm:mt-3 sm:text-5xl'>{formatAmd(CV_PRICE_AMD)}</p>
-            <p className='relative mt-0 mb-6 text-white/60'>{t('perCv')}</p>
+            <p className='relative mt-2 mb-1 font-display text-4xl font-extrabold text-white sm:mt-3 sm:text-5xl'>{formatAmd(PASS_PRICE_AMD)}</p>
+            <p className='relative mt-0 mb-6 text-white/60'>{t('period', { days: PASS_DAYS })}</p>
             <ul className='relative m-0 flex list-none flex-col gap-3 p-0'>
               {paidItems.map((item) => (
                 <li key={item} className='flex gap-3'>
@@ -66,6 +70,7 @@ export default async function PricingPage() {
                 </li>
               ))}
             </ul>
+            <p className='relative mt-5 mb-0 text-sm leading-relaxed text-white/60'>{t('passNote', { days: PASS_DAYS })}</p>
             <Link
               href={ROUTES.templates}
               className='relative mt-6 flex justify-center rounded-full bg-accent px-5 py-3 sm:px-6 sm:py-3.5 font-semibold text-white no-underline transition hover:bg-accent-strong sm:mt-8'

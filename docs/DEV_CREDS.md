@@ -6,9 +6,9 @@ never seeded into production. Every account uses the password **`cv-builder-dev-
 | Email | State | Use it to test |
 |---|---|---|
 | `demo@cv-builder.local` | No CVs | First run: empty dashboard, creating a CV |
-| `ani@cv-builder.local` | 3 CVs: Modern **paid**, Creative unpaid, Classic blank | Download of a paid CV; checkout of an unpaid one; editing a blank one |
-| `gor@cv-builder.local` | 1 long Timeline CV (2 pages), unpaid | Pagination, page-break guides, a multi-page PDF after paying |
-| `paid@cv-builder.local` | 1 Modern CV, **paid** | "Already paid" paths: instant download, checkout refused (4020) |
+| `ani@cv-builder.local` | 3 CVs; **full access running** (paid 2 days ago) | Designed PDF of any CV in any template; the editor's days-left chip; buying more days on top |
+| `gor@cv-builder.local` | 1 long Timeline CV (2 pages), never bought | Pagination, page-break guides; the checkout; a multi-page PDF after paying |
+| `paid@cv-builder.local` | 1 Modern CV; **access ran out** (paid 30 days ago) | The "ended" banner; free PDF still works; designed PDF asks to pay again |
 
 Payments in dev go through the mock bank (`PAYMENT_GATEWAY=mock`): **Վճարել** succeeds,
 **Մերժել** declines. Password-reset links print to the API console instead of being emailed.

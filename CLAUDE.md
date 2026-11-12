@@ -1,8 +1,10 @@
 # cv-builder (Իմ ինքնակենսագրականը)
 
 An Armenian-only CV builder. Users pick one of 42 templates, edit the CV **in place** (text,
-colours, backgrounds and fonts per section), and pay once per CV (2,000 ֏) to download its
-designed PDF; a plain black-and-white PDF of the same text is free. Neither needs an account. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
+colours, backgrounds and fonts per section). One payment (2,000 ֏) buys **21 days of full
+access** — the designed PDF of every CV in any template — days adding up when bought while it
+runs; not a subscription, and nothing is deleted when it ends. A plain black-and-white PDF of
+the same text is always free. Neither needs an account. Next.js App Router frontend + an Express/Prisma API in `server/`, one pnpm workspace.
 Modelled on `../bookie` — same stack and conventions, smaller.
 
 **Stack:** Next.js 16 · React 19 · TypeScript · Ant Design 6 · Tailwind 4 · Zustand (immer) ·
@@ -57,7 +59,8 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | Guest drafts (localStorage) | `src/helpers/localDraft.ts` — imported on sign-in by `EditorShell` |
 | Buying without an account | `server/src/lib/guest.ts` (guest-key cookie) · `services/guestCvs.ts` (moved to the account on sign-in) · `CheckoutModal` · `docs/PAYMENTS.md` |
 | PDF | `server/src/services/pdf.ts` prints the web's `/render` page (`src/app/render/`) in headless Chrome |
-| Payments | `docs/PAYMENTS.md` · `server/src/services/payments.ts` · `server/src/services/gateways/` · admin mails on checkout and success `services/paymentNotifications.ts` · delivery evidence for refunds: `PdfDownload` rows written by `GET /cvs/:id/pdf` |
+| Payments (21-day full-access pass, the owner's — not a CV's) | `docs/PAYMENTS.md` · rule `server/src/services/entitlement.ts` (`accessWindow`) · `services/payments.ts` (`runningPass`, settle, reconcile) · `routes/purchases.ts` (access, checkout) · `services/gateways/` · admin mails `services/paymentNotifications.ts` · web `store/purchases`, `hooks/useAccess.ts`, `components/editor/download/{CheckoutModal,AccessChip}.tsx`, `dashboard/AccessBanner.tsx` · delivery evidence `PdfDownload` rows written by both PDF routes |
+| Retention (wholly unused for a year → deleted) | policy `server/src/services/retention.ts`, daily sweep `retentionSweep.ts`, `User.lastActiveAt` stamped in `middleware/auth.ts` |
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` · emailed links (verify, reset, "password changed") in `server/src/lib/{email-verification,password-reset}.ts`. A password sign-up has no session until its verification link is opened |
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
@@ -79,7 +82,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
   autosave runs on every pause. Colours must be `#rrggbb` (they reach `style`), fonts and
   templates must be in the catalogue, the photo a small base64 image data URL.
 - **Twins, pinned by `tests/unit/server/twins.spec.ts`:** template ids, font slugs, section
-  types, the price, the free PDF's design, the default title, the guest cookie's name, error codes, and the paths the server links to. Change both sides together.
+  types, the price and pass days, the retention days, the free PDF's design, the default title, the guest cookie's name, error codes, and the paths the server links to. Change both sides together.
 - **Print mechanics** live in `CvPage.tsx`: `@page { margin: 0 }`, a table whose empty
   `thead`/`tfoot` repeat the page padding on every page, and a sidebar strip that is
   `position: fixed` in print so it repeats too. Entries are `break-inside: avoid`.
@@ -87,7 +90,9 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
   `cvOwnerOf(req)` (`requireCvOwner`), which is also the Prisma `where`. Never filter CVs by
   `userId` alone.
 - **Payment is settled only from the gateway's own record** (`settlePayment`), never from the
-  return URL; reading an unpaid CV reconciles its recent pending payments.
+  return URL; reading the owner's access, a designed print and a new checkout reconcile their
+  recent pending payments. Access is the owner's (account or guest key: `Payment.userId` /
+  `guestKeyHash`), folded from their succeeded payments by `accessWindow` — never per CV.
 - **Server Components cannot import `@ant-design/icons`** (it reads context): import icons
   from `@components/ui/icons` there.
 - **Unlayered CSS beats Tailwind utilities.** Element defaults in `globals.css` are in

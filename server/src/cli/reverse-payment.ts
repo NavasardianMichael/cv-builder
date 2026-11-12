@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma.js'
 import { type Reversal, reversePayment } from '../services/payments.js'
+import { PASS_DAYS } from '../services/pricing.js'
 
 /**
  * `pnpm payments:reverse <refund|cancel> <order number>…` — money back for settled payments
@@ -24,9 +25,8 @@ for (const order of orders) {
     continue
   }
   try {
-    const stillPaid = await reversePayment(payment, kind as Reversal)
-    const cv = payment.cvId ? `CV ${payment.cvId} ${stillPaid ? 'still paid by another payment' : 'locked'}` : 'no CV'
-    console.log(`#${order}: ${kind} done (${payment.gateway} ${payment.gatewayPaymentId}) — ${cv}`)
+    await reversePayment(payment, kind as Reversal)
+    console.log(`#${order}: ${kind} done (${payment.gateway} ${payment.gatewayPaymentId}) — its ${PASS_DAYS} days left the buyer's access`)
   } catch (error) {
     failures += 1
     console.error(`#${order}: ${kind} failed — ${error instanceof Error ? error.message : String(error)}`)

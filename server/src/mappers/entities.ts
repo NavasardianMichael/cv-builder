@@ -18,7 +18,6 @@ export const mapCv = (cv: Cv) => ({
   title: cv.title,
   content: coerceContent(cv.content),
   design: coerceDesign(cv.design),
-  paidAt: cv.paidAt?.toISOString() ?? null,
   createdAt: cv.createdAt.toISOString(),
   updatedAt: cv.updatedAt.toISOString(),
 })

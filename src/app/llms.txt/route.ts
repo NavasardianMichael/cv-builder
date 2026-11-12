@@ -1,6 +1,6 @@
 import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN } from '@constants/app'
 import { FONT_SLUGS, FONTS } from '@constants/fonts'
-import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { formatAmd, PASS_DAYS, PASS_PRICE_AMD } from '@constants/pricing'
 import { ROUTES, templatePath } from '@constants/routes'
 import { KEYWORDS_EN, KEYWORDS_RU } from '@constants/seo'
 import { TEMPLATE_LIST } from '@constants/templates'
@@ -14,13 +14,14 @@ import { absoluteUrl } from '@helpers/url'
 export const dynamic = 'force-static'
 
 export function GET(): Response {
+  const price = formatAmd(PASS_PRICE_AMD)
   const body = buildLlmsTxt({
     title: `${APP_NAME} (${APP_NAME_LATIN})`,
-    summary: `${APP_DESCRIPTION} Պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF-ն անվճար է, պատրաստի, գունավոր, նկարով ձևանմուշով PDF-ը՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար (մեկանգամյա, առանց բաժանորդագրության)։`,
+    summary: `${APP_DESCRIPTION} Պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF-ն անվճար է բոլորի համար և միշտ։ ${price} մեկ վճարով՝ լիարժեք հասանելիություն ${PASS_DAYS} օրով․ Ձեր բոլոր ինքնակենսագրականների PDF-ները ցանկացած պատրաստի, գունավոր, նկարով ձևանմուշով, առանց սահմանափակման։ Բաժանորդագրություն չէ․ ոչինչ ինքնաշխատ չի գանձվում, ժամկետի ավարտից հետո ոչինչ չի ջնջվում, իսկ շուտ գնելիս նոր օրերը գումարվում են մնացածին։`,
     // The site itself is Armenian-only; these say the same in the languages people ask in.
     details: [
-      `In English: ${APP_NAME} (${APP_NAME_LATIN}) is an online builder for writing a CV (resume) in Armenian, for job seekers in Armenia and Armenian speakers abroad. Pick one of ${TEMPLATE_LIST.length} templates (from plain to gradient and illustrated-background designs), type straight onto the CV, and set colours, backgrounds and fonts (${FONT_SLUGS.length} Armenian fonts) per section. A PDF in the plain black-and-white template, without a photo, is free; a PDF in a ready-made colour template with a photo is a one-time ${CV_PRICE_AMD} AMD per CV, no subscription, and no account needed. Also searched as: ${KEYWORDS_EN.join(', ')}.`,
-      `По-русски: ${APP_NAME} (${APP_NAME_LATIN}) — онлайн-конструктор резюме на армянском языке для тех, кто ищет работу в Армении, и армяноязычных соискателей за рубежом. ${TEMPLATE_LIST.length} шаблонов (от строгих до градиентных и с иллюстрированным фоном), редактирование прямо на резюме, цвета, фоны и шрифты (${FONT_SLUGS.length} армянских шрифтов) для каждого раздела. PDF в простом чёрно-белом шаблоне без фото — бесплатно; PDF в готовом цветном шаблоне с фото — ${CV_PRICE_AMD} драмов один раз за резюме, без подписки и без регистрации. Также ищут как: ${KEYWORDS_RU.join(', ')}.`,
+      `In English: ${APP_NAME} (${APP_NAME_LATIN}) is an online builder for writing a CV (resume) in Armenian, for job seekers in Armenia and Armenian speakers abroad. Pick one of ${TEMPLATE_LIST.length} templates (from plain to gradient and illustrated-background designs), type straight onto the CV, and set colours, backgrounds and fonts (${FONT_SLUGS.length} Armenian fonts) per section. A PDF in the plain black-and-white template, without a photo, is free for anyone, always. One payment of ${PASS_PRICE_AMD} AMD opens full access for ${PASS_DAYS} days: unlimited PDFs of every CV you have or make, in any ready-made colour template with a photo. It is not a subscription: nothing renews or charges automatically, buying again while access runs adds ${PASS_DAYS} days on top, and when it ends nothing is deleted. No account needed. Also searched as: ${KEYWORDS_EN.join(', ')}.`,
+      `По-русски: ${APP_NAME} (${APP_NAME_LATIN}) — онлайн-конструктор резюме на армянском языке для тех, кто ищет работу в Армении, и армяноязычных соискателей за рубежом. ${TEMPLATE_LIST.length} шаблонов (от строгих до градиентных и с иллюстрированным фоном), редактирование прямо на резюме, цвета, фоны и шрифты (${FONT_SLUGS.length} армянских шрифтов) для каждого раздела. PDF в простом чёрно-белом шаблоне без фото — бесплатно для всех и всегда. Один платёж ${PASS_PRICE_AMD} драмов открывает полный доступ на ${PASS_DAYS} дней: PDF всех ваших резюме в любом готовом цветном шаблоне с фото, без ограничений. Это не подписка: ничего не продлевается и не списывается автоматически, повторная покупка до окончания доступа добавляет ещё ${PASS_DAYS} дней, а по окончании ничего не удаляется. Регистрация не нужна. Также ищут как: ${KEYWORDS_RU.join(', ')}.`,
     ],
     sections: [
       {
@@ -35,7 +36,7 @@ export function GET(): Response {
           {
             name: 'Գինը',
             url: absoluteUrl(ROUTES.pricing),
-            note: `պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF՝ անվճար, պատրաստի, գունավոր, նկարով ձևանմուշով PDF՝ ${formatAmd(CV_PRICE_AMD)} մեկ ինքնակենսագրականի համար`,
+            note: `պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF՝ անվճար․ լիարժեք հասանելիություն ${PASS_DAYS} օրով՝ ${price}, բոլոր պատրաստի, գունավոր, նկարով ձևանմուշները բոլոր ինքնակենսագրականների համար`,
           },
           { name: 'Կապ մեզ հետ', url: absoluteUrl(ROUTES.contact), note: 'հարցեր և առաջարկներ' },
         ],

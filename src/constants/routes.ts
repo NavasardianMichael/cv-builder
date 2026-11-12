@@ -39,10 +39,10 @@ export const PROTECTED_PREFIXES = [ROUTES.dashboard, ROUTES.account]
 
 /**
  * `ROUTES.paymentResult`'s `?status=`, set by the API's return from the bank (twin in
- * `server/src/lib/return-path.ts`). `duplicate`: the CV was already paid, so this payment is
- * being given back.
+ * `server/src/lib/return-path.ts`), with `payment` (the Payment's id) and `cv` (where the
+ * buyer started, if anywhere).
  */
-export const PAYMENT_RESULT_STATUSES = ['succeeded', 'failed', 'pending', 'duplicate'] as const
+export const PAYMENT_RESULT_STATUSES = ['succeeded', 'failed', 'pending'] as const
 export type PaymentResultStatus = (typeof PAYMENT_RESULT_STATUSES)[number]
 
 /** Query names shared across pages. */

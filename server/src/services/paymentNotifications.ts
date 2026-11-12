@@ -1,5 +1,7 @@
 import { coerceContent } from './cvDocument.js'
+import { accessWindow } from './entitlement.js'
 import { buildPaymentMail, type PaymentFacts, type PaymentMailEvent, type SettleSource } from './paymentMail.js'
+import { PASS_DAYS } from './pricing.js'
 import { config } from '../config.js'
 import { type InternalMailPayload, isMailConfigured, sendInternalMail } from '../lib/mail.js'
 import { prisma } from '../lib/prisma.js'
@@ -31,15 +33,19 @@ const loadFacts = async (paymentId: string): Promise<PaymentFacts | null> => {
   })
   if (!payment) return null
 
-  const [attempt, paidBefore, guestCvCount] = await Promise.all([
-    payment.cvId
-      ? prisma.payment.count({ where: { cvId: payment.cvId, createdAt: { lte: payment.createdAt } } })
-      : Promise.resolve(1),
-    payment.userId
-      ? prisma.payment.count({ where: { userId: payment.userId, status: 'succeeded', id: { not: payment.id } } })
-      : Promise.resolve(0),
-    payment.cv?.guestKeyHash ? prisma.cv.count({ where: { guestKeyHash: payment.cv.guestKeyHash } }) : Promise.resolve(0),
+  // The pass is the buyer's: an account, or a guest browser's key.
+  const owner = payment.userId ? { userId: payment.userId } : payment.guestKeyHash ? { guestKeyHash: payment.guestKeyHash } : null
+  const [attempt, paidBefore, guestCvCount, passes] = await Promise.all([
+    owner ? prisma.payment.count({ where: { ...owner, createdAt: { lte: payment.createdAt } } }) : Promise.resolve(1),
+    owner ? prisma.payment.count({ where: { ...owner, status: 'succeeded', id: { not: payment.id } } }) : Promise.resolve(0),
+    payment.guestKeyHash ? prisma.cv.count({ where: { guestKeyHash: payment.guestKeyHash } }) : Promise.resolve(0),
+    owner && payment.status === 'succeeded'
+      ? prisma.payment.findMany({ where: { ...owner, status: 'succeeded' }, select: { id: true, paidAt: true, createdAt: true } })
+      : Promise.resolve([]),
   ])
+  const accessUntil = passes.length
+    ? accessWindow(passes.map((row) => ({ id: row.id, paidAt: row.paidAt ?? row.createdAt })), PASS_DAYS).until
+    : null
 
   const { user, cv } = payment
   const basics = cv ? coerceContent(cv.content).basics : null
@@ -59,6 +65,7 @@ const loadFacts = async (paymentId: string): Promise<PaymentFacts | null> => {
       createdAt: payment.createdAt,
       paidAt: payment.paidAt,
       attempt,
+      accessUntil,
     },
     buyer: user
       ? {
@@ -129,13 +136,6 @@ const notify = async (
 /** Never rejects. */
 export const notifyCheckoutStarted = (paymentId: string, request: RequestInfo | null): Promise<void> =>
   notify('started', paymentId, request)
-
-/** Never rejects. Sent once, by the settler that handled the duplicate. */
-export const notifyDuplicatePayment = (
-  paymentId: string,
-  request: RequestInfo | null,
-  source: SettleSource
-): Promise<void> => notify('duplicate', paymentId, request, source)
 
 /** Never rejects. */
 export const notifyPaymentSucceeded = (

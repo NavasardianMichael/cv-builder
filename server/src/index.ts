@@ -1,5 +1,6 @@
 import { createApp } from './app.js'
 import { config, isPaymentConfigured } from './config.js'
+import { scheduleRetention } from './services/retentionSweep.js'
 
 import './load-env.js'
 
@@ -11,4 +12,5 @@ app.listen(config.port, config.host, () => {
   if (!isPaymentConfigured()) {
     console.warn(`[payments] gateway "${config.payments.gateway}" is not configured — checkout answers 503`)
   }
+  scheduleRetention()
 })

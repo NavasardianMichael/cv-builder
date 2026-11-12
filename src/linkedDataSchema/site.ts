@@ -10,7 +10,7 @@ import {
 } from '@constants/app'
 import { FONT_SLUGS } from '@constants/fonts'
 import { PALETTE_PRESETS } from '@constants/palettes'
-import { CURRENCY, CV_PRICE_AMD } from '@constants/pricing'
+import { CURRENCY, PASS_DAYS, PASS_PRICE_AMD } from '@constants/pricing'
 import { ROUTES, templatePath } from '@constants/routes'
 import { ALTERNATE_NAMES, SEARCH_KEYWORDS } from '@constants/seo'
 import { TEMPLATE_LIST } from '@constants/templates'
@@ -63,7 +63,10 @@ export const websiteSchema = (): WithContext<WebSite> => ({
   publisher: { '@id': ORGANIZATION_ID },
 })
 
-/** The product itself, with its two offers, so answer engines can quote what it costs. */
+/**
+ * The product itself, with its two offers, so answer engines can quote what it costs: the free
+ * black-and-white PDF, and full access to every template for `PASS_DAYS` days (one payment).
+ */
 export const webApplicationSchema = (): WithContext<WebApplication> => ({
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
@@ -91,14 +94,16 @@ export const webApplicationSchema = (): WithContext<WebApplication> => ({
       '@type': 'Offer',
       price: 0,
       priceCurrency: CURRENCY,
-      description: 'Ինքնակենսագրականի PDF ներբեռնում՝ պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով',
+      description: 'Ինքնակենսագրականի PDF ներբեռնում՝ պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով, միշտ անվճար',
       availability: 'https://schema.org/InStock',
     },
     {
       '@type': 'Offer',
-      price: CV_PRICE_AMD,
+      name: `Լիարժեք հասանելիություն ${PASS_DAYS} օրով`,
+      price: PASS_PRICE_AMD,
       priceCurrency: CURRENCY,
-      description: 'Մեկ ինքնակենսագրականի PDF ներբեռնում՝ պատրաստի, գունավոր, նկարով ձևանմուշով, մեկանգամյա վճար',
+      description: `Լիարժեք հասանելիություն ${PASS_DAYS} օրով՝ բոլոր ինքնակենսագրականների PDF-ների անսահմանափակ ներբեռնում ցանկացած պատրաստի, գունավոր, նկարով ձևանմուշով։ Մեկ վճար, առանց բաժանորդագրության և ինքնաշխատ երկարաձգման։`,
+      eligibleDuration: { '@type': 'QuantitativeValue', value: PASS_DAYS, unitCode: 'DAY' },
       availability: 'https://schema.org/InStock',
     },
   ],

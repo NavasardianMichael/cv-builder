@@ -24,7 +24,6 @@ import { ROUTES } from '@constants/routes'
 import { stepZoom } from '@helpers/canvasZoom'
 import { BrandMark } from '@components/layout/BrandLogo'
 import { HintTooltip } from '@components/ui/HintTooltip'
-import { PaidBadge } from '@components/ui/PaidBadge'
 import { DownloadButton } from './download/DownloadButton'
 
 type Props = {
@@ -70,7 +69,6 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, au
   const tCommon = useTranslations('Common')
   // Narrow selectors: this bar must not re-render on every keystroke in the CV.
   const title = useCvEditorStoreBase((state) => state.doc?.title)
-  const paidAt = useCvEditorStore.use.paidAt()
   const canUndo = useCvEditorStoreBase((state) => state.past.length > 0)
   const canRedo = useCvEditorStoreBase((state) => state.future.length > 0)
   const undo = useCvEditorStore.use.undo()
@@ -96,7 +94,6 @@ export const EditorTopBar: FC<Props> = ({ zoom, fitZoom, pages, onZoomChange, au
         maxLength={120}
         onChange={(event) => setTitle(event.target.value)}
       />
-      {paidAt && <PaidBadge className='hidden md:inline-flex' />}
       <SaveIndicator />
 
       <div className='ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1'>

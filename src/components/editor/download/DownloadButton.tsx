@@ -7,52 +7,71 @@ import { useTranslations } from 'next-intl'
 import type { PdfVariant } from '@api/cvs/types'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
+import { usePurchasesStore, usePurchasesStoreBase } from '@store/purchases/store'
+import { accessActiveNow } from '@hooks/useAccess'
 import { usePdfDownload } from '@hooks/usePdfDownload'
+import { PASS_DAYS } from '@constants/pricing'
+import { formatDateTime } from '@helpers/date'
 import { HintTooltip } from '@components/ui/HintTooltip'
-import { CheckoutModal } from './CheckoutModal'
+import { AccessChip } from './AccessChip'
+import { CheckoutModal, moveDraftToServer } from './CheckoutModal'
 import { SignInToDownloadModal } from './SignInToDownloadModal'
 import { flushSave } from '../useAutosave'
 
 type Props = {
-  /** Open the purchase step on mount (the user came back from sign-in to download). */
+  /** Open the purchase step on mount (the user came back from sign-in to buy, or the dashboard's Download). */
   autoOpen?: boolean
 }
 
 /**
- * Paid → the PDF itself. Otherwise the download dialog: the free black-and-white PDF, or
- * checkout. Neither needs an account — a guest's draft prints as it is, and buying without
- * one warns first (CheckoutModal).
+ * While the owner's full access runs → the designed PDF itself, of any CV in any template.
+ * Otherwise the download dialog: the free black-and-white PDF, or buying `PASS_DAYS` days of
+ * full access. Neither needs an account — a guest's draft prints as it is, and buying without
+ * one warns first (CheckoutModal). The days-left chip beside it opens the same dialog to add
+ * days on top.
  */
 export const DownloadButton: FC<Props> = ({ autoOpen }) => {
   const t = useTranslations('Editor.download')
   const { message } = App.useApp()
   const cvId = useCvEditorStore.use.cvId()
-  const paidAt = useCvEditorStore.use.paidAt()
+  const setCvId = useCvEditorStore.use.setCvId()
   const title = useCvEditorStoreBase((state) => state.doc?.title) ?? ''
+  const refreshAccess = usePurchasesStore.use.refresh()
   const { download, downloadDraft, isDownloading } = usePdfDownload()
   // The bar mounts once the document has loaded, so the returning buyer's checkout can open
   // straight away rather than from an effect.
-  const [modal, setModal] = useState<'signIn' | 'checkout' | null>(() =>
-    autoOpen && cvId && cvId !== DRAFT_ID && !paidAt ? 'checkout' : null
-  )
+  const [modal, setModal] = useState<'signIn' | 'checkout' | null>(() => (autoOpen && cvId && cvId !== DRAFT_ID ? 'checkout' : null))
 
   const downloadNow = async (variant: PdfVariant = 'designed') => {
     if (!cvId) return
     await flushSave()
-    // A draft exists only in this browser, so it is sent to be printed; it can only be the free PDF.
     const doc = useCvEditorStoreBase.getState().doc
-    const done = cvId === DRAFT_ID ? Boolean(doc) && (await downloadDraft(doc!)) : await download(cvId, title, variant)
+    if (!doc) return
+    if (cvId === DRAFT_ID && variant === 'basic') {
+      // A draft exists only in this browser, so it is sent to be printed as it is.
+      if (await downloadDraft(doc)) setModal(null)
+      return
+    }
+    // The designed PDF prints from the server: a draft is saved there first (the guest key owns it).
+    const id = cvId === DRAFT_ID ? await moveDraftToServer(setCvId) : cvId
+    const done = await download(id, title, variant)
     if (done && variant === 'basic') setModal(null)
+    // Refused for want of access (it ran out while the page was open): the dialog explains.
+    if (!done && variant === 'designed') {
+      const { until } = await refreshAccess()
+      if (!until || until <= Date.now()) setModal('checkout')
+    }
   }
 
   const start = () => {
     if (!cvId) return
-    if (paidAt) void downloadNow()
+    if (accessActiveNow()) void downloadNow()
     else setModal('checkout')
   }
 
   return (
     <>
+      <AccessChip onClick={() => setModal('checkout')} />
       <HintTooltip title={t('button')}>
         <Button
           type='primary'
@@ -67,11 +86,12 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
       <CheckoutModal
         open={modal === 'checkout'}
         onClose={() => setModal(null)}
-        onAlreadyPaid={() => {
-          // An earlier attempt went through (its redirect was lost): say so, then download,
-          // so the buyer does not think the click charged them again.
+        onEarlierPayment={() => {
+          // A payment whose redirect was lost went through: say so, so the buyer does not think
+          // the click charged them again, then download.
           setModal(null)
-          void message.success({ content: t('alreadyPaid'), duration: 8 })
+          const { until } = usePurchasesStoreBase.getState()
+          void message.success({ content: t('earlierPayment', { date: until ? formatDateTime(until) : '', days: PASS_DAYS }), duration: 8 })
           void downloadNow()
         }}
         onDownloadBasic={() => void downloadNow('basic')}
@@ -81,3 +101,4 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
     </>
   )
 }
+

@@ -1,3 +1,4 @@
+import { PASS_DAYS } from './pricing.js'
 import type { InternalMailPayload } from '../lib/mail.js'
 import { type ClientInfoKey, describeUserAgent, type RequestInfo } from '../lib/request-info.js'
 
@@ -11,25 +12,14 @@ import { type ClientInfoKey, describeUserAgent, type RequestInfo } from '../lib/
  * name, email and CV title travel in `details`.
  */
 
-/** `duplicate`: a CV already paid was paid again, and that second payment was handled (`settlePayment`). */
-export type PaymentMailEvent = 'started' | 'succeeded' | 'duplicate'
-
-/** How a payment got settled: the bank's redirect, or reconcile-on-read (`reconcileCvPayments`). */
-export type SettleSource = 'return' | 'cv-open' | 'pdf-download' | 'checkout'
+export type PaymentMailEvent = 'started' | 'succeeded'
 
 /**
- * `Payment.failureReason` of a payment made for a CV that was already paid. The rest of the
- * text says what became of the money; the result page and these mails read the prefixes.
+ * How a payment got settled: the bank's redirect, or reconcile-on-read
+ * (`reconcileOwnerPayments`) when the buyer's access was read, a PDF was printed, or another
+ * checkout was started.
  */
-export const DUPLICATE_REASON = {
-  prefix: 'duplicate',
-  reversed: 'duplicate: reversed automatically, the CV was already paid',
-  released: 'duplicate: hold released automatically, the CV was already paid',
-  inProgress: 'duplicate: being reversed',
-  manual: 'duplicate: NOT reversed, return it by hand',
-} as const
-
-export const isDuplicateReason = (reason: string | null): boolean => reason?.startsWith(DUPLICATE_REASON.prefix) ?? false
+export type SettleSource = 'return' | 'access' | 'pdf-download' | 'checkout'
 
 export type BuyerFacts =
   | {
@@ -59,8 +49,10 @@ export type PaymentFacts = {
     failureReason: string | null
     createdAt: Date
     paidAt: Date | null
-    /** 1 for the first checkout of this CV. */
+    /** 1 for this buyer's first checkout. */
     attempt: number
+    /** When the buyer's full access ends with this payment counted; null before it settles. */
+    accessUntil: Date | null
   }
   buyer: BuyerFacts
   /** Null once the CV was deleted (the payment outlives it). */
@@ -79,7 +71,7 @@ export type PaymentFacts = {
 
 const SOURCE_LABEL: Record<SettleSource, string> = {
   return: 'the bank redirected the buyer back to the site',
-  'cv-open': 'reconciled when the buyer opened the CV (no bank redirect seen)',
+  access: "reconciled when the buyer's access was read: editor, dashboard or result page (no bank redirect seen)",
   'pdf-download': 'reconciled when the buyer downloaded the PDF (no bank redirect seen)',
   checkout: 'reconciled when the buyer started another checkout (no bank redirect seen)',
 }
@@ -129,7 +121,7 @@ const paymentDetails = ({ payment }: PaymentFacts, event: PaymentMailEvent, sour
     Gateway: payment.gatewayTestMode ? `${payment.gateway} (test mode)` : payment.gateway,
     'Gateway payment id': payment.gatewayPaymentId ?? '— (none)',
     'Payment id': payment.id,
-    'Attempt for this CV': payment.attempt === 1 ? '1st' : `#${payment.attempt}`,
+    "Buyer's checkouts": payment.attempt === 1 ? '1st' : `#${payment.attempt}`,
     'Checkout started': formatYerevan(payment.createdAt),
   }
   if (event === 'started') {
@@ -142,11 +134,7 @@ const paymentDetails = ({ payment }: PaymentFacts, event: PaymentMailEvent, sour
     details['Paid at'] = formatYerevan(payment.paidAt)
     details['Time to pay'] = formatDuration(payment.paidAt.getTime() - payment.createdAt.getTime())
     if (source) details['Confirmed'] = SOURCE_LABEL[source]
-  }
-  if (event === 'duplicate') {
-    details['What happened'] = payment.failureReason ?? '— (no reason recorded)'
-    details['Payment status now'] = payment.status
-    if (source) details['Noticed'] = SOURCE_LABEL[source]
+    if (payment.accessUntil) details['Full access until'] = formatYerevan(payment.accessUntil)
   }
   return details
 }
@@ -200,7 +188,7 @@ const deviceDetails = (request: RequestInfo): Details => {
 const who = ({ buyer }: PaymentFacts): string =>
   buyer.kind === 'guest' ? 'A guest (no account)' : `${buyer.fullName} <${buyer.email}>`
 
-const cvName = ({ cv }: PaymentFacts): string => (cv ? `the CV «${cv.title}»` : 'a since-deleted CV')
+const cvName = ({ cv }: PaymentFacts): string => (cv ? `the CV «${cv.title}»` : 'no saved CV')
 
 /**
  * One mail per event. `request` is the request that caused it: the click on "pay" for
@@ -215,29 +203,20 @@ export const buildPaymentMail = (
   const { payment } = facts
   const amount = formatAmount(payment.amount, payment.currency)
   const failed = event === 'started' && payment.status === 'failed'
-  const byHand = event === 'duplicate' && payment.failureReason === DUPLICATE_REASON.manual
 
   const subject =
-    event === 'duplicate'
-      ? byHand
-        ? `DUPLICATE payment — return it by hand · order #${payment.orderNumber} · ${amount}`
-        : `Duplicate payment reversed · order #${payment.orderNumber} · ${amount}`
-      : event === 'succeeded'
-        ? `Payment succeeded · order #${payment.orderNumber} · ${amount}`
-        : failed
-          ? `Checkout FAILED to start · order #${payment.orderNumber}`
-          : `Checkout started · order #${payment.orderNumber} · ${amount}`
+    event === 'succeeded'
+      ? `Payment succeeded · order #${payment.orderNumber} · ${amount}`
+      : failed
+        ? `Checkout FAILED to start · order #${payment.orderNumber}`
+        : `Checkout started · order #${payment.orderNumber} · ${amount}`
 
   const body =
-    event === 'duplicate'
-      ? byHand
-        ? `${who(facts)} paid ${amount} again for ${cvName(facts)}, which was already paid, and it was not returned automatically (the reason is in the API log). Return this payment by hand: Cancel (within 72 hours) or Refund order #${payment.orderNumber} in the bank's merchant panel. The buyer was told to contact us if they were charged twice.`
-        : `${who(facts)} paid ${amount} again for ${cvName(facts)}, which was already paid. This second payment was reversed automatically. Nothing to do; the buyer was told to contact us if they were charged twice.`
-      : event === 'succeeded'
-        ? `${who(facts)} paid ${amount} for ${cvName(facts)}. The CV is unlocked: its designed PDF can be downloaded.`
-        : failed
-          ? `${who(facts)} clicked "Վճարել" (${amount}) for ${cvName(facts)}, but the gateway refused to open its payment page. Nothing was charged.`
-          : `${who(facts)} clicked "Վճարել" (${amount}) for ${cvName(facts)} and was sent to the bank's payment page. A "Payment succeeded" mail with the same order # follows if they pay.`
+    event === 'succeeded'
+      ? `${who(facts)} paid ${amount} for ${PASS_DAYS} days of full access (started from ${cvName(facts)}). Every template's designed PDF of every CV they have is unlocked${payment.accessUntil ? ` until ${formatYerevan(payment.accessUntil)}` : ''}.`
+      : failed
+        ? `${who(facts)} clicked "Վճարել" (${amount}, ${PASS_DAYS} days of full access) from ${cvName(facts)}, but the gateway refused to open its payment page. Nothing was charged.`
+        : `${who(facts)} clicked "Վճարել" (${amount}, ${PASS_DAYS} days of full access) from ${cvName(facts)} and was sent to the bank's payment page. A "Payment succeeded" mail with the same order # follows if they pay.`
 
   const deviceHeading = event === 'started' ? '— Device —' : '— Device (confirming request) —'
   const details: Details = {

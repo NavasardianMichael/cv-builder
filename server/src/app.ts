@@ -11,7 +11,8 @@ import { cvsRouter } from './routes/cvs.js'
 import { identityRouter } from './routes/identity.js'
 import { paymentsRouter } from './routes/payments.js'
 import { pdfRouter } from './routes/pdf.js'
-import { CV_PRICE_AMD } from './services/pricing.js'
+import { purchasesRouter } from './routes/purchases.js'
+import { PASS_DAYS, PASS_PRICE_AMD } from './services/pricing.js'
 
 export function createApp() {
   const app = express()
@@ -35,11 +36,12 @@ export function createApp() {
 
   app.get('/health', (_req, res) => {
     // `google` decides whether the web renders the Google button; one source of truth.
-    ok(res, { status: 'ok', google: isGoogleOAuthConfigured(), payments: isPaymentConfigured(), priceAmd: CV_PRICE_AMD })
+    ok(res, { status: 'ok', google: isGoogleOAuthConfigured(), payments: isPaymentConfigured(), priceAmd: PASS_PRICE_AMD, passDays: PASS_DAYS })
   })
 
   app.use('/identity', identityRouter)
   app.use('/cvs', cvsRouter)
+  app.use('/purchases', purchasesRouter)
   app.use('/contact', contactRouter)
   app.use('/pdf', pdfRouter)
 

@@ -2,10 +2,8 @@ import type { Cv } from '@store/cvs/single/types'
 import type { APIResponse } from '@interfaces/api'
 import { API_PDF_TIMEOUT_MS } from '@constants/app'
 import { ENDPOINTS } from './endpoints'
-import { processCheckoutResponse, processCvResponse, processCvsResponse, processUpdateCvResponse } from './processors'
+import { processCvResponse, processCvsResponse, processUpdateCvResponse } from './processors'
 import type {
-  CheckoutCvAPI,
-  CheckoutResponse,
   CreateCvAPI,
   DeleteCvAPI,
   DownloadCvPdfAPI,
@@ -50,14 +48,6 @@ export const duplicateCvAPI: DuplicateCvAPI['api'] = async ({ id }) => {
 
 export const deleteCvAPI: DeleteCvAPI['api'] = async ({ id }) => {
   await axiosInstance.delete(`${ENDPOINTS.remove}/${encodeURIComponent(id)}`)
-}
-
-export const checkoutCvAPI: CheckoutCvAPI['api'] = async ({ id, client, resume }) => {
-  const { data } = await axiosInstance.post<APIResponse<CheckoutResponse>>(
-    `${ENDPOINTS.checkout}/${encodeURIComponent(id)}/checkout`,
-    { client, ...(resume ? { resume: true } : {}) }
-  )
-  return processCheckoutResponse(data)
 }
 
 /**

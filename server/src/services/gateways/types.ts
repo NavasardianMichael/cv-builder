@@ -29,7 +29,7 @@ export type GatewayVerdict =
   | { status: 'succeeded' }
   /**
    * Two-stage terminals only: the amount is blocked on the card, not taken. `settlePayment`
-   * decides: `confirm` charges it, or — when the CV is already paid — `cancel` releases it.
+   * then `confirm`s it, and only the record read after that settles it.
    */
   | { status: 'approved' }
   /**

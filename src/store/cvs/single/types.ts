@@ -117,7 +117,6 @@ export type CvDocument = {
 /** A saved CV as the API returns it. */
 export type Cv = CvDocument & {
   id: string
-  paidAt: string | null
   createdAt: string
   updatedAt: string
 }
@@ -131,7 +130,6 @@ export type CvEditorState = {
   /** A server id, or `DRAFT_ID`. Null until a document is loaded. */
   cvId: string | null
   doc: CvDocument | null
-  paidAt: string | null
   saveStatus: SaveStatus
   /** Undo/redo stacks of whole documents — cheap, since immer shares unchanged subtrees. */
   past: CvDocument[]
@@ -148,10 +146,9 @@ export type BasicsTextField = 'fullName' | 'headline'
 export type MoveDirection = -1 | 1
 
 export type CvEditorActions = {
-  loadDocument: (payload: { cvId: string; doc: CvDocument; paidAt: string | null }) => void
+  loadDocument: (payload: { cvId: string; doc: CvDocument }) => void
   reset: () => void
   setSaveStatus: (status: SaveStatus) => void
-  setPaidAt: (paidAt: string | null) => void
   setCvId: (cvId: string) => void
   undo: () => void
   redo: () => void

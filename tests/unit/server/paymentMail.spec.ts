@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { asClientInfo, describeUserAgent, type RequestInfo } from '../../../server/src/lib/request-info'
-import {
-  buildPaymentMail,
-  DUPLICATE_REASON,
-  formatDuration,
-  isDuplicateReason,
-  type PaymentFacts,
-} from '../../../server/src/services/paymentMail'
+import { buildPaymentMail, formatDuration, type PaymentFacts } from '../../../server/src/services/paymentMail'
 
 const UA = {
   chromeWindows:
@@ -67,6 +61,7 @@ const facts = (overrides: Partial<PaymentFacts> = {}): PaymentFacts => ({
     createdAt: new Date('2026-11-06T10:00:00Z'),
     paidAt: null,
     attempt: 1,
+    accessUntil: null,
   },
   buyer: {
     kind: 'account',
@@ -103,7 +98,7 @@ const request: RequestInfo = {
 
 describe('buildPaymentMail', () => {
   it('keeps visitor text out of the subject and sender, which the engine does not escape', () => {
-    for (const event of ['started', 'succeeded', 'duplicate'] as const) {
+    for (const event of ['started', 'succeeded'] as const) {
       const mail = buildPaymentMail(event, facts(), request)
       expect(mail.subject).not.toMatch(/[<>]|Աննա|Իմ CV/)
       expect(mail.firstName).toMatch(/^(Checkout|Payment)$/)
@@ -142,39 +137,24 @@ describe('buildPaymentMail', () => {
     const paid = facts({ buyer: { kind: 'guest', guestCvCount: 1 } })
     paid.payment.status = 'succeeded'
     paid.payment.paidAt = new Date('2026-11-06T10:03:30Z')
-    const mail = buildPaymentMail('succeeded', paid, request, 'cv-open')
+    const mail = buildPaymentMail('succeeded', paid, request, 'access')
     expect(mail.subject).toBe('Payment succeeded · order #42 · 2,000 AMD')
     expect(mail.details).toMatchObject({
       Buyer: 'guest — no account',
       'Time to pay': '3m 30s',
-      Confirmed: expect.stringContaining('opened the CV'),
+      Confirmed: expect.stringContaining("buyer's access was read"),
     })
     expect(mail.details).toHaveProperty(['— Device (confirming request) —'])
   })
 
-  it('reports a duplicate reversed on its own as needing nothing', () => {
-    const duplicate = facts()
-    duplicate.payment.status = 'refunded'
-    duplicate.payment.failureReason = DUPLICATE_REASON.reversed
-    const mail = buildPaymentMail('duplicate', duplicate, request, 'return')
-    expect(mail.subject).toBe('Duplicate payment reversed · order #42 · 2,000 AMD')
-    expect(mail.body).toContain('Nothing to do')
-    expect(mail.details).toMatchObject({ 'What happened': DUPLICATE_REASON.reversed, 'Payment status now': 'refunded' })
-  })
-
-  it('asks for a hand when the bank refused to reverse a duplicate', () => {
-    const duplicate = facts()
-    duplicate.payment.status = 'succeeded'
-    duplicate.payment.failureReason = DUPLICATE_REASON.manual
-    const mail = buildPaymentMail('duplicate', duplicate, request, 'cv-open')
-    expect(mail.subject).toBe('DUPLICATE payment — return it by hand · order #42 · 2,000 AMD')
-    expect(mail.body).toContain('Refund order #42')
-  })
-
-  it('recognises every duplicate reason, and nothing else', () => {
-    for (const reason of Object.values(DUPLICATE_REASON)) expect(isDuplicateReason(reason)).toBe(true)
-    expect(isDuplicateReason('declined')).toBe(false)
-    expect(isDuplicateReason(null)).toBe(false)
+  it('says until when the bought access runs', () => {
+    const paid = facts()
+    paid.payment.status = 'succeeded'
+    paid.payment.paidAt = new Date('2026-11-06T10:03:30Z')
+    paid.payment.accessUntil = new Date('2026-11-27T10:03:30Z')
+    const mail = buildPaymentMail('succeeded', paid, request, 'return')
+    expect(mail.body).toContain('21 days of full access')
+    expect(mail.details?.['Full access until']).toContain('27 Nov 2026')
   })
 
   it('still sends when the CV is gone and no request is known', () => {

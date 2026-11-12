@@ -9,12 +9,14 @@ import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
 import { useCvsListStore } from '@store/cvs/list/store'
 import { type Cv, type CvDocument, DRAFT_ID } from '@store/cvs/single/types'
+import { useAccessActive } from '@hooks/useAccess'
 import { usePdfDownload } from '@hooks/usePdfDownload'
 import { RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { classifyError, errorCopyKey } from '@helpers/error'
 import { clearLocalDraft, hasLocalDraft, readLocalDraftEntry } from '@helpers/localDraft'
 import { reportError } from '@helpers/reportError'
 import { ErrorState } from '@components/ui/ErrorState'
+import { AccessBanner } from './AccessBanner'
 import { CvCard } from './CvCard'
 
 export const DashboardClient: FC = () => {
@@ -26,6 +28,7 @@ export const DashboardClient: FC = () => {
   const isResolved = useAuthStore.use.isResolved()
   // Signed out here means a guest whose cookie lists the CVs they bought (src/proxy.ts).
   const isGuest = isResolved && !user
+  const accessActive = useAccessActive()
   const isLoaded = useCvsListStore.use.isLoaded()
   const getCvs = useCvsListStore.use.getCvs()
   const duplicateCv = useCvsListStore.use.duplicateCv()
@@ -80,7 +83,7 @@ export const DashboardClient: FC = () => {
   const onDelete = (cv: Cv) =>
     modal.confirm({
       title: t('deleteTitle', { title: cv.title }),
-      content: cv.paidAt ? t('deletePaid') : t('deleteText'),
+      content: t('deleteText'),
       okText: tCommon('delete'),
       okButtonProps: { danger: true },
       cancelText: tCommon('cancel'),
@@ -106,7 +109,7 @@ export const DashboardClient: FC = () => {
 
   /** The draft drawn as a CV card; its id opens `/editor/draft`, which imports it when signed in. */
   const draftCv: Cv | null = draft
-    ? { ...draft.doc, id: DRAFT_ID, paidAt: null, createdAt: draft.savedAt, updatedAt: draft.savedAt }
+    ? { ...draft.doc, id: DRAFT_ID, createdAt: draft.savedAt, updatedAt: draft.savedAt }
     : null
   const cvs = list.allIds.map((id) => list.byId[id])
   const loaded = isLoaded || noOwner
@@ -146,7 +149,14 @@ export const DashboardClient: FC = () => {
           <CvCard cv={draftCv} onDelete={onDeleteDraft} onDownload={() => void downloadDraft(draft.doc)} />
         )}
         {cvs.map((cv) => (
-          <CvCard key={cv.id} cv={cv} onDuplicate={onDuplicate} onDelete={onDelete} onDownload={(item, variant) => void download(item.id, item.title, variant)} />
+          <CvCard
+            key={cv.id}
+            cv={cv}
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+            onDownload={(item, variant) => void download(item.id, item.title, variant)}
+            designed={accessActive ? 'download' : 'buy'}
+          />
         ))}
       </div>
     )
@@ -158,6 +168,7 @@ export const DashboardClient: FC = () => {
         <div className='min-w-0 flex-1'>
           <h1 className='m-0 font-display text-title font-extrabold tracking-tight text-ink sm:text-4xl'>{t('title')}</h1>
           <p className='mt-2 mb-0 text-muted'>{t('subtitle')}</p>
+          <p className='mt-1 mb-0 text-xs text-muted'>{t('kept')}</p>
         </div>
         {/* With no CVs the empty state carries its own button. */}
         {loaded && !loadError && count > 0 && (
@@ -168,6 +179,7 @@ export const DashboardClient: FC = () => {
           </Tooltip>
         )}
       </div>
+      <AccessBanner className='mt-6' />
       {/* Margin on a wrapper: antd's Alert styles are unlayered and reset `margin`. */}
       {isGuest && !nothingHere && (
         <div className='mt-6'>

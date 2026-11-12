@@ -1,6 +1,5 @@
 import { Prisma } from '@prisma/client'
 import { type Request, Router } from 'express'
-import { isPaymentConfigured } from '../config.js'
 import { fail, ok } from '../lib/api-response.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
 import { ensureGuestKeyHash } from '../lib/guest.js'
@@ -13,7 +12,7 @@ import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware
 import { asyncHandler, HttpError } from '../middleware/error.js'
 import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
 import { coerceContent, coerceDesign, coerceTitle, DEFAULT_CV_TITLE } from '../services/cvDocument.js'
-import { findOpenPayment, reconcileCvPayments, resumeOpenPayment, revalidatePaidCv, startCheckout } from '../services/payments.js'
+import { runningPass } from '../services/payments.js'
 
 /**
  * A user's CVs — or a guest's: the CVs a browser bought without an account, owned by its
@@ -27,7 +26,6 @@ const MAX_CVS_PER_USER = 50
 const MAX_CVS_PER_GUEST = 10
 
 const guestCreateLimiter = createRateLimiter({ limit: 10, windowMs: 60 * 60 * 1000 })
-const checkoutLimiter = createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 })
 const pdfLimiter = createRateLimiter({ limit: 30, windowMs: 10 * 60 * 1000 })
 
 const maxCvs = (owner: CvOwner): number => ('userId' in owner ? MAX_CVS_PER_USER : MAX_CVS_PER_GUEST)
@@ -85,17 +83,10 @@ cvsRouter.get(
   })
 )
 
-/**
- * Reading a CV re-checks its recent pending payments: unpaid, one may have gone through with
- * its redirect lost (a tab closed); paid, another attempt may have been paid too, and is
- * reversed (`settlePayment`). Payments the bank has closed stop being asked.
- */
 cvsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    let cv = await loadOwnedCv(req)
-    if (await reconcileCvPayments(cv.id, { source: 'cv-open', request: readRequestInfo(req) })) cv = await loadOwnedCv(req)
-    ok(res, mapCv(cv))
+    ok(res, mapCv(await loadOwnedCv(req)))
   })
 )
 
@@ -113,120 +104,58 @@ cvsRouter.put(
       data.templateId = design.templateId
     }
     const updated = await prisma.cv.update({ where: { id: cv.id }, data })
-    ok(res, { updatedAt: updated.updatedAt.toISOString(), paidAt: updated.paidAt?.toISOString() ?? null })
-  })
-)
-
-/** A copy is a new document: it is not paid for. */
-cvsRouter.post(
-  '/:id/duplicate',
-  asyncHandler(async (req, res) => {
-    const source = await loadOwnedCv(req)
-    const owner = cvOwnerOf(req)
-    if ((await prisma.cv.count({ where: owner })) >= maxCvs(owner)) {
-      return fail(res, 'CV limit reached', ERROR_CODE.cvLimitReached, 409)
-    }
-    const copy = await prisma.cv.create({
-      data: {
-        ...owner,
-        title: coerceTitle(`${source.title} (պատճեն)`, DEFAULT_CV_TITLE),
-        templateId: source.templateId,
-        content: asJson(source.content),
-        design: asJson(source.design),
-      },
-    })
-    ok(res, mapCv(copy), 201)
-  })
-)
-
-cvsRouter.delete(
-  '/:id',
-  asyncHandler(async (req, res) => {
-    const cv = await loadOwnedCv(req)
-    await prisma.cv.delete({ where: { id: cv.id } })
-    ok(res, null)
-  })
-)
-
-cvsRouter.post(
-  '/:id/checkout',
-  asyncHandler(async (req, res) => {
-    const cv = await loadOwnedCv(req)
-    if (cv.paidAt) return fail(res, 'This CV is already paid for', ERROR_CODE.cvAlreadyPaid, 409)
-    if (!isPaymentConfigured()) return fail(res, 'Payments are unavailable', ERROR_CODE.paymentsUnavailable, 503)
-
-    const verdict = checkoutLimiter(ownerKey(cvOwnerOf(req)))
-    if (!verdict.allowed) return fail(res, 'Too many attempts', ERROR_CODE.rateLimited, 429)
-
-    // An earlier attempt may have been paid with its redirect lost: ask the bank before a
-    // second charge. The page answers "already paid" and downloads instead.
-    if (await reconcileCvPayments(cv.id, { source: 'checkout', request: readRequestInfo(req) })) {
-      return fail(res, 'This CV is already paid for', ERROR_CODE.cvAlreadyPaid, 409)
-    }
-
-    // An earlier bank page may still be open in another tab: a new order could be paid as well
-    // as that one, so the buyer is offered that same order instead. Not an error — the page
-    // asks, and resends with `resume` to be sent to it.
-    const openPayment = await findOpenPayment(cv.id)
-    if (openPayment) {
-      if ((req.body as { resume?: unknown } | undefined)?.resume !== true) {
-        return ok(res, { openPayment: { minutesAgo: openPayment.minutesAgo } })
-      }
-      const resumeUrl = await resumeOpenPayment(openPayment.id)
-      if (resumeUrl) return ok(res, { redirectUrl: resumeUrl })
-    }
-
-    const redirectUrl = await startCheckout({ id: cv.id, title: cv.title, userId: cv.userId }, readRequestInfo(req))
-    ok(res, { redirectUrl })
+    ok(res, { updatedAt: updated.updatedAt.toISOString() })
   })
 )
 
 /**
- * The designed PDF: the CV as the user styled it. Paid — and asked again, so a refund takes it
- * back. Every one sent in full is recorded against its payment (`PdfDownload`): the evidence a
- * "could not download it" refund claim is checked against.
+ * The designed PDF: the CV as the user styled it, in any template — while its owner's access
+ * pass runs (`runningPass`, which also settles a payment whose redirect was lost and drops the
+ * days of one refunded at the bank). Every one sent in full is recorded against the pass's
+ * latest payment (`PdfDownload`): the evidence a "could not download it" refund claim is
+ * checked against, and a sign of use for the retention rule.
  */
 cvsRouter.get(
   '/:id/pdf',
   asyncHandler(async (req, res) => {
-    let cv = await loadOwnedCv(req)
-    if (await reconcileCvPayments(cv.id, { source: 'pdf-download', request: readRequestInfo(req) })) cv = await loadOwnedCv(req)
-    else if (cv.paidAt && !(await revalidatePaidCv(cv.id))) cv = await loadOwnedCv(req)
-    if (!cv.paidAt) return fail(res, 'Payment required', ERROR_CODE.cvNotPaid, 402)
+    const cv = await loadOwnedCv(req)
+    const pass = await runningPass(cvOwnerOf(req), { source: 'pdf-download', request: readRequestInfo(req) })
+    if (!pass) return fail(res, 'Full access required', ERROR_CODE.accessRequired, 402)
     if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
 
-    const cvId = cv.id
     const ip = req.ip ?? null
     const userAgent = req.get('user-agent')?.slice(0, 500) ?? null
     await sendPdf(
       res,
-      cvId,
+      cv.id,
       { title: cv.title, content: coerceContent(cv.content), design: coerceDesign(cv.design), watermark: false },
       async (bytes) => {
-        // Two succeeded payments are a double charge; the download counts against the latest.
-        const payment = await prisma.payment.findFirst({
-          where: { cvId, status: 'succeeded' },
-          orderBy: { paidAt: 'desc' },
-          select: { id: true },
-        })
-        await prisma.pdfDownload.create({ data: { cvId, paymentId: payment?.id ?? null, bytes, ip, userAgent } })
+        await prisma.pdfDownload.create({ data: { cvId: cv.id, paymentId: pass.paymentId, variant: 'designed', bytes, ip, userAgent } })
       }
     )
   })
 )
 
-/** The free PDF: the same text in the fixed black-and-white design (`services/basicCv.ts`), watermarked. */
+/**
+ * The free PDF, for anyone, with or without a pass: the same text in the fixed black-and-white
+ * design (`services/basicCv.ts`), watermarked. Recorded too (`variant: basic`): a download is
+ * a sign of use for the retention rule.
+ */
 cvsRouter.get(
   '/:id/pdf/basic',
   asyncHandler(async (req, res) => {
     const cv = await loadOwnedCv(req)
     if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
 
-    await sendPdf(res, cv.id, {
-      title: cv.title,
-      content: basicContent(coerceContent(cv.content)),
-      design: BASIC_DESIGN,
-      watermark: true,
-    })
+    const ip = req.ip ?? null
+    const userAgent = req.get('user-agent')?.slice(0, 500) ?? null
+    await sendPdf(
+      res,
+      cv.id,
+      { title: cv.title, content: basicContent(coerceContent(cv.content)), design: BASIC_DESIGN, watermark: true },
+      async (bytes) => {
+        await prisma.pdfDownload.create({ data: { cvId: cv.id, paymentId: null, variant: 'basic', bytes, ip, userAgent } })
+      }
+    )
   })
 )

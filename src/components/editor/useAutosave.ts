@@ -16,7 +16,7 @@ let inFlight: Promise<void> = Promise.resolve()
 
 const saveCurrent = (): Promise<void> => {
   inFlight = inFlight.then(async () => {
-    const { cvId, doc, saveStatus, setSaveStatus, setPaidAt } = useCvEditorStoreBase.getState()
+    const { cvId, doc, saveStatus, setSaveStatus } = useCvEditorStoreBase.getState()
     if (!cvId || !doc || saveStatus === 'saved') return
 
     if (cvId === DRAFT_ID) {
@@ -26,8 +26,7 @@ const saveCurrent = (): Promise<void> => {
 
     setSaveStatus('saving')
     try {
-      const result = await updateCvAPI({ id: cvId, title: doc.title, content: doc.content, design: doc.design })
-      setPaidAt(result.paidAt)
+      await updateCvAPI({ id: cvId, title: doc.title, content: doc.content, design: doc.design })
       // An edit made while the request was out leaves the document newer than what was sent.
       setSaveStatus(useCvEditorStoreBase.getState().doc === doc ? 'saved' : 'dirty')
     } catch (error) {

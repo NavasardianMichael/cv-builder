@@ -1,4 +1,5 @@
 import { FONT_SLUGS } from './fonts'
+import { PASS_DAYS } from './pricing'
 import { TEMPLATE_IDS } from './templates'
 
 /** Brand and site-wide facts. */
@@ -10,7 +11,7 @@ export const APP_TAGLINE = 'Հայերեն ինքնակենսագրականի (C
 
 export const APP_DESCRIPTION =
   `Ստեղծեք պրոֆեսիոնալ հայերեն ինքնակենսագրական (CV) րոպեների ընթացքում՝ ${TEMPLATE_IDS.length} ձևանմուշ, ${FONT_SLUGS.length} հայերեն տառատեսակ,` +
-  ' ամբողջական խմբագրում հենց էջի վրա։ Պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF-ն անվճար է, պատրաստի, գունավոր, նկարով ձևանմուշովը՝ մեկանգամյա վճարով։'
+  ` ամբողջական խմբագրում հենց էջի վրա։ Պարզ, սև-սպիտակ PDF-ն անվճար է, իսկ մեկ վճարով ${PASS_DAYS} օր ներբեռնեք Ձեր բոլոր ինքնակենսագրականները ցանկացած գունավոր, նկարով ձևանմուշով։`
 
 /** The catalogue's sizes, for copy that names them (`{templates}`, `{fonts}` in hy.json). */
 export const CATALOGUE_COUNTS = { templates: TEMPLATE_IDS.length, fonts: FONT_SLUGS.length }

@@ -12,8 +12,10 @@ export const ERROR_CODE = {
   emailNotVerified: 4006,
   verifyTokenInvalid: 4007,
   cvLimitReached: 4010,
-  cvAlreadyPaid: 4020,
-  cvNotPaid: 4021,
+  /** Starting a checkout: an earlier payment turned out to have gone through — access is running. */
+  earlierPaymentSucceeded: 4020,
+  /** The designed PDF needs a running access pass. */
+  accessRequired: 4021,
   paymentsUnavailable: 4022,
   paymentInitFailed: 4023,
   pdfFailed: 4030,

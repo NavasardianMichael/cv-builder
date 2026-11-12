@@ -3,7 +3,7 @@ import { GUEST_COOKIE, RESET_TOKEN_QUERY, VERIFY_TOKEN_QUERY } from '@constants/
 import { CONTACT_TYPES, MAX_CONTACTS } from '@constants/contacts'
 import { ERROR_CODES } from '@constants/errors'
 import { FONT_SLUGS } from '@constants/fonts'
-import { CV_PRICE_AMD } from '@constants/pricing'
+import { PASS_DAYS, PASS_PRICE_AMD, RETENTION_DAYS } from '@constants/pricing'
 import { PAYMENT_RESULT_STATUSES, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { SECTION_TYPES } from '@constants/sections'
 import { BASIC_DESIGN, TEMPLATE_IDS } from '@constants/templates'
@@ -17,7 +17,8 @@ import { asClientInfo } from '../../../server/src/lib/request-info'
 import * as returnPath from '../../../server/src/lib/return-path'
 import * as serverBasic from '../../../server/src/services/basicCv'
 import { CV_LIMITS as SERVER_CV_LIMITS, DEFAULT_CV_TITLE as SERVER_DEFAULT_TITLE } from '../../../server/src/services/cvDocument'
-import { CV_PRICE_AMD as SERVER_PRICE } from '../../../server/src/services/pricing'
+import { PASS_DAYS as SERVER_PASS_DAYS, PASS_PRICE_AMD as SERVER_PRICE } from '../../../server/src/services/pricing'
+import { RETENTION_DAYS as SERVER_RETENTION_DAYS } from '../../../server/src/services/retention'
 
 /**
  * Strings and numbers that live twice, once per package, with no import path between them.
@@ -42,8 +43,13 @@ describe('server/web twins', () => {
     expect(SERVER_CV_LIMITS.contacts).toBe(MAX_CONTACTS)
   })
 
-  it('charge what the pages print', () => {
-    expect(SERVER_PRICE).toBe(CV_PRICE_AMD)
+  it('charge, and give, what the pages print', () => {
+    expect(SERVER_PRICE).toBe(PASS_PRICE_AMD)
+    expect(SERVER_PASS_DAYS).toBe(PASS_DAYS)
+  })
+
+  it('keep data as long as the pages promise', () => {
+    expect(SERVER_RETENTION_DAYS).toBe(RETENTION_DAYS)
   })
 
   it('print the free PDF the way the download dialog previews it', () => {

@@ -31,8 +31,8 @@ const queryParam = (req: Request, name: string): string => {
  * What the buyer is shown. `unpaid` — back from the bank with nothing charged — means they
  * left its page without paying (Back, a changed mind, the 20-minute limit, an error on the
  * bank's page), so "the bank has not confirmed yet" would be wrong: it is shown as not paid.
- * The row stays pending, so a payment made after all still unlocks the CV the next time it
- * is read. Only when the bank's redirect itself claims success (`resposneCode` 00 — its
+ * The row stays pending, so a payment made after all still counts the next time the buyer's
+ * access is read. Only when the bank's redirect itself claims success (`resposneCode` 00 — its
  * spelling) is it worth waiting for its record to catch up. A refunded payment (a reload of
  * an old return) has charged nothing that is kept: not paid.
  */
@@ -80,7 +80,8 @@ paymentsRouter.get(
     } catch (error) {
       console.error(`[payments] settle on return failed for ${payment.id}`, error instanceof Error ? error.message : error)
     }
-    toResult(res, { status: resultStatus(settled, req), ...(payment.cvId ? { cv: payment.cvId } : {}) })
+    // `payment`: the result page re-reads this payment's status (`GET /purchases?payment=`).
+    toResult(res, { status: resultStatus(settled, req), payment: payment.id, ...(payment.cvId ? { cv: payment.cvId } : {}) })
   })
 )
 

@@ -22,10 +22,10 @@ export const RETURN_TO_QUERY = 'returnTo'
 export const PAYMENT_RESULT_PATH = '/payment/result'
 
 /**
- * Its `?status=` (`PAYMENT_RESULT_STATUSES` on the web). `duplicate`: the CV was already paid,
- * so this payment is being given back.
+ * Its `?status=` (`PAYMENT_RESULT_STATUSES` on the web), with `payment` (the Payment's id) and
+ * `cv` (where the buyer started, if anywhere).
  */
-export const PAYMENT_RESULT_STATUSES = ['succeeded', 'failed', 'pending', 'duplicate'] as const
+export const PAYMENT_RESULT_STATUSES = ['succeeded', 'failed', 'pending'] as const
 export type PaymentResultStatus = (typeof PAYMENT_RESULT_STATUSES)[number]
 
 /** Where Google sign-in errors land (`ROUTES.signIn`), with `?error=`. */

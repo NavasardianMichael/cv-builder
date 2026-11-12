@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { hashPassword } from '../src/lib/password.js'
 import { coerceContent, coerceDesign } from '../src/services/cvDocument.js'
+import { PASS_PRICE_AMD } from '../src/services/pricing.js'
 
 // The API's own loader, so the seed reads the same env files as the API and `prisma migrate`
 // (`.env.development.local` first) — `dotenv/config` reads only `server/.env`.
@@ -33,49 +34,52 @@ const fixtures = JSON.parse(
   readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/cvs.json'), 'utf8')
 ) as Record<FixtureKey, Fixture>
 
-type SeedUser = { email: string; fullName: string; cvs: { fixture: FixtureKey; paid?: boolean }[] }
+/** `pass`: a full-access pass that is still running, or one that ran out. */
+type SeedUser = { email: string; fullName: string; pass?: 'running' | 'ended'; cvs: { fixture: FixtureKey }[] }
 
 const USERS: SeedUser[] = [
   // A brand-new account: empty dashboard, first-run experience.
   { email: 'demo@cv-builder.local', fullName: 'Արամ Պետրոսյան', cvs: [] },
-  // A returning customer: one paid CV (downloadable), one unpaid (checkout), one blank.
+  // Full access running (a pass paid 2 days ago): any template downloads; the editor's chip shows days left.
   {
     email: 'ani@cv-builder.local',
     fullName: 'Անի Հովհաննիսյան',
-    cvs: [{ fixture: 'paidModern', paid: true }, { fixture: 'unpaidCreative' }, { fixture: 'blankClassic' }],
+    pass: 'running',
+    cvs: [{ fixture: 'paidModern' }, { fixture: 'unpaidCreative' }, { fixture: 'blankClassic' }],
   },
-  // A long, two-page CV, for pagination and the page-break guides.
+  // A long, two-page CV, for pagination and the page-break guides. Never bought: checkout.
   { email: 'gor@cv-builder.local', fullName: 'Գոռ Մարտիրոսյան', cvs: [{ fixture: 'longTimeline' }] },
-  // Every CV paid: the "already paid" paths (download straight away, checkout refused).
-  { email: 'paid@cv-builder.local', fullName: 'Լիլիթ Սարգսյան', cvs: [{ fixture: 'paidModern', paid: true }] },
+  // Access that ran out (paid 30 days ago): the CVs stay, the free PDF prints, the designed one asks to pay again.
+  { email: 'paid@cv-builder.local', fullName: 'Լիլիթ Սարգսյան', pass: 'ended', cvs: [{ fixture: 'paidModern' }] },
 ]
 
 const asJson = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue
 
-const seedCv = async (userId: string, fixtureKey: FixtureKey, paid: boolean): Promise<void> => {
+const seedCv = async (userId: string, fixtureKey: FixtureKey): Promise<void> => {
   const fixture = fixtures[fixtureKey]
   const design = coerceDesign(fixture.design)
   const existing = await prisma.cv.findFirst({ where: { userId, title: fixture.title } })
-  const cv =
-    existing ??
-    (await prisma.cv.create({
-      data: {
-        userId,
-        title: fixture.title,
-        templateId: design.templateId,
-        content: asJson(coerceContent(fixture.content)),
-        design: asJson(design),
-        paidAt: paid ? new Date() : null,
-      },
-    }))
+  if (existing) return
+  await prisma.cv.create({
+    data: {
+      userId,
+      title: fixture.title,
+      templateId: design.templateId,
+      content: asJson(coerceContent(fixture.content)),
+      design: asJson(design),
+    },
+  })
+}
 
-  if (!paid) return
-  const payment = await prisma.payment.findFirst({ where: { cvId: cv.id, status: 'succeeded' } })
-  if (!payment) {
-    await prisma.payment.create({
-      data: { userId, cvId: cv.id, amount: 2000, gateway: 'mock', status: 'succeeded', paidAt: cv.paidAt ?? new Date() },
-    })
-  }
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** One mock pass, paid `daysAgo` days ago (21 days of full access from then). Once per account. */
+const seedPass = async (userId: string, daysAgo: number): Promise<void> => {
+  if (await prisma.payment.findFirst({ where: { userId, status: 'succeeded' } })) return
+  const paidAt = new Date(Date.now() - daysAgo * DAY_MS)
+  await prisma.payment.create({
+    data: { userId, amount: PASS_PRICE_AMD, gateway: 'mock', status: 'succeeded', paidAt, createdAt: paidAt },
+  })
 }
 
 const main = async (): Promise<void> => {
@@ -87,7 +91,8 @@ const main = async (): Promise<void> => {
       update: { emailVerifiedAt: new Date() },
       create: { email: seed.email, fullName: seed.fullName, passwordHash, emailVerifiedAt: new Date() },
     })
-    for (const cv of seed.cvs) await seedCv(user.id, cv.fixture, Boolean(cv.paid))
+    for (const cv of seed.cvs) await seedCv(user.id, cv.fixture)
+    if (seed.pass) await seedPass(user.id, seed.pass === 'running' ? 2 : 30)
     console.log(`[seed] ${seed.email} / ${PASSWORD} — ${seed.cvs.length} CV(s)`)
   }
 }

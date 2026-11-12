@@ -10,13 +10,16 @@ import type { PdfVariant } from '@api/cvs/types'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
+import { usePurchasesStore } from '@store/purchases/store'
+import { useAccessUntil, useNow } from '@hooks/useAccess'
 import { useCapabilities } from '@hooks/useCapabilities'
 import { useCheckout } from '@hooks/useCheckout'
 import { ERROR_CODES } from '@constants/errors'
-import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { formatAmd, isAccessActive, PASS_DAYS, PASS_PRICE_AMD } from '@constants/pricing'
 import { editorPath, ROUTES } from '@constants/routes'
 import { BASIC_DESIGN } from '@constants/templates'
 import { basicContent } from '@helpers/basicCv'
+import { formatDateTime } from '@helpers/date'
 import { classifyError } from '@helpers/error'
 import { markGuestCvs } from '@helpers/guestCvs'
 import { clearLocalDraft } from '@helpers/localDraft'
@@ -27,8 +30,8 @@ import { flushSave } from '../useAutosave'
 type Props = {
   open: boolean
   onClose: () => void
-  /** The CV turned out to be paid already (another tab, a reconcile): download instead. */
-  onAlreadyPaid: () => void
+  /** An earlier payment turned out to have gone through (its redirect was lost): access runs now. */
+  onEarlierPayment: () => void
   /** Download the free black-and-white PDF. */
   onDownloadBasic: () => void
   /** A guest chose to sign in rather than buy without an account. */
@@ -85,7 +88,7 @@ const DownloadOption: FC<OptionProps> = ({ variant, name, price, items, children
  * by this browser's guest key (the API mints it). The editor carries on with that CV in place:
  * same document, new id, and the URL follows without a reload.
  */
-const moveDraftToServer = async (setCvId: (id: string) => void): Promise<string> => {
+export const moveDraftToServer = async (setCvId: (id: string) => void): Promise<string> => {
   const { doc } = useCvEditorStoreBase.getState()
   if (!doc) throw new Error('No document to buy')
   const created = await createCvAPI(doc)
@@ -117,16 +120,40 @@ const GuestWarning: FC<{ redirecting: boolean; onContinue: () => void; onSignIn:
 }
 
 /**
- * The two downloads: the free black-and-white PDF, and the designed one with the button that
- * sends the buyer to the bank. The document is saved first either way, so what is printed or
- * paid for is what is on screen. Neither needs an account; buying without one is warned about
- * once, on the way to the bank.
+ * When the days start and end — or, while access runs, the date a new payment extends it to —
+ * and what stays once they are over. Said before the bank page, not after (docs/PAYMENTS.md).
+ * The dates are this device's estimate; the server counts from the moment it settles.
  */
-export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownloadBasic, onSignIn, isDownloading }) => {
+const PassTerms: FC = () => {
+  const t = useTranslations('Editor.download')
+  const until = useAccessUntil()
+  const now = useNow()
+  if (now === 0) return null
+  const active = until !== undefined && isAccessActive(until, now)
+  const end = (active ? until! : now) + PASS_DAYS * DAY_MS
+  return (
+    <p className='m-0 mt-3 text-xs leading-relaxed text-muted'>
+      {active
+        ? t('extendNote', { until: formatDateTime(until!), days: PASS_DAYS, date: formatDateTime(end) })
+        : t('startsNow', { days: PASS_DAYS, date: formatDateTime(end) })}
+    </p>
+  )
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/**
+ * The two downloads: the free black-and-white PDF, and full access — every template's designed
+ * PDF of every CV for `PASS_DAYS` days — with the button that sends the buyer to the bank. The
+ * document is saved first either way, so what is printed is what is on screen. Neither needs an
+ * account; buying without one is warned about once, on the way to the bank. While access runs
+ * (opened from the days-left chip) the paid side extends it: the new days go on top.
+ */
+export const CheckoutModal: FC<Props> = ({ open, onClose, onEarlierPayment, onDownloadBasic, onSignIn, isDownloading }) => {
   const t = useTranslations('Editor.download')
   const cvId = useCvEditorStore.use.cvId()
   const setCvId = useCvEditorStore.use.setCvId()
-  const setPaidAt = useCvEditorStore.use.setPaidAt()
+  const refreshAccess = usePurchasesStore.use.refresh()
   const isGuest = !useAuthStore.use.user()
   const capabilities = useCapabilities()
   const checkout = useCheckout()
@@ -150,9 +177,9 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
       if (!(await checkout(id))) setRedirecting(false)
     } catch (failure) {
       setRedirecting(false)
-      if (classifyError(failure).code === ERROR_CODES.cvAlreadyPaid) {
-        setPaidAt(new Date().toISOString())
-        onAlreadyPaid()
+      if (classifyError(failure).code === ERROR_CODES.earlierPaymentSucceeded) {
+        await refreshAccess()
+        onEarlierPayment()
         return
       }
       setError(failure)
@@ -177,9 +204,9 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
 
         <DownloadOption
           variant='designed'
-          name={t('payName')}
-          price={formatAmd(CV_PRICE_AMD)}
-          items={t.raw('payIncludes') as string[]}
+          name={t('payName', { days: PASS_DAYS })}
+          price={formatAmd(PASS_PRICE_AMD)}
+          items={(t.raw('payIncludes') as string[]).map((item) => item.replaceAll('{days}', String(PASS_DAYS)))}
           featured
         >
           {unavailable && <Alert type='warning' showIcon className='mb-4' title={t('unavailable')} />}
@@ -196,11 +223,17 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
               disabled={unavailable}
               onClick={() => (isGuest ? setConfirmingGuest(true) : void pay())}
             >
-              {redirecting ? t('redirecting') : t('pay', { price: formatAmd(CV_PRICE_AMD) })}
+              {redirecting ? t('redirecting') : t('pay', { price: formatAmd(PASS_PRICE_AMD) })}
             </Button>
           )}
+          <PassTerms />
         </DownloadOption>
       </div>
+      <section className='mt-4 rounded-xl bg-canvas p-4 text-sm'>
+        <h3 className='m-0 text-sm font-bold text-ink'>{t('afterTitle', { days: PASS_DAYS })}</h3>
+        <p className='m-0 mt-1 leading-relaxed'>{t('afterText', { days: PASS_DAYS })}</p>
+        <p className='m-0 mt-2 text-xs leading-relaxed text-muted'>{t('keptText')}</p>
+      </section>
       <p className='mt-4 mb-0 text-xs leading-relaxed'>{t('secure')}</p>
       <p className='mt-1 mb-0 text-xs'>
         {t.rich('agree', {
