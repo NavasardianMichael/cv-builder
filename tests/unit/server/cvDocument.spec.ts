@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { templateDesign } from '@constants/templates'
+import { TEMPLATE_IDS, templateDesign } from '@constants/templates'
 import { newCvDocument, sampleContent } from '@helpers/cvFactory'
 import { coerceContent, coerceDesign, coerceTitle, CV_LIMITS } from '../../../server/src/services/cvDocument'
 
@@ -7,6 +7,13 @@ describe('coerceContent', () => {
   it('keeps a document the web builds exactly as it is', () => {
     const content = sampleContent()
     expect(coerceContent(content)).toEqual(content)
+  })
+
+  it('keeps every template\'s example as it is', () => {
+    for (const templateId of TEMPLATE_IDS) {
+      const content = sampleContent(templateId)
+      expect(coerceContent(content)).toEqual(content)
+    }
   })
 
   it('keeps a blank document', () => {
