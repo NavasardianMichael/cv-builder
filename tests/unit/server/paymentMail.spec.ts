@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { asClientInfo, describeUserAgent, type RequestInfo } from '../../../server/src/lib/request-info'
-import { buildPaymentMail, formatDuration, type PaymentFacts } from '../../../server/src/services/paymentMail'
+import {
+  buildPaymentMail,
+  DUPLICATE_REASON,
+  formatDuration,
+  isDuplicateReason,
+  type PaymentFacts,
+} from '../../../server/src/services/paymentMail'
 
 const UA = {
   chromeWindows:
@@ -97,7 +103,7 @@ const request: RequestInfo = {
 
 describe('buildPaymentMail', () => {
   it('keeps visitor text out of the subject and sender, which the engine does not escape', () => {
-    for (const event of ['started', 'succeeded'] as const) {
+    for (const event of ['started', 'succeeded', 'duplicate'] as const) {
       const mail = buildPaymentMail(event, facts(), request)
       expect(mail.subject).not.toMatch(/[<>]|Աննա|Իմ CV/)
       expect(mail.firstName).toMatch(/^(Checkout|Payment)$/)
@@ -144,6 +150,31 @@ describe('buildPaymentMail', () => {
       Confirmed: expect.stringContaining('opened the CV'),
     })
     expect(mail.details).toHaveProperty(['— Device (confirming request) —'])
+  })
+
+  it('reports a duplicate reversed on its own as needing nothing', () => {
+    const duplicate = facts()
+    duplicate.payment.status = 'refunded'
+    duplicate.payment.failureReason = DUPLICATE_REASON.reversed
+    const mail = buildPaymentMail('duplicate', duplicate, request, 'return')
+    expect(mail.subject).toBe('Duplicate payment reversed · order #42 · 2,000 AMD')
+    expect(mail.body).toContain('Nothing to do')
+    expect(mail.details).toMatchObject({ 'What happened': DUPLICATE_REASON.reversed, 'Payment status now': 'refunded' })
+  })
+
+  it('asks for a hand when the bank refused to reverse a duplicate', () => {
+    const duplicate = facts()
+    duplicate.payment.status = 'succeeded'
+    duplicate.payment.failureReason = DUPLICATE_REASON.manual
+    const mail = buildPaymentMail('duplicate', duplicate, request, 'cv-open')
+    expect(mail.subject).toBe('DUPLICATE payment — return it by hand · order #42 · 2,000 AMD')
+    expect(mail.body).toContain('Cancel or Refund order #42')
+  })
+
+  it('recognises every duplicate reason, and nothing else', () => {
+    for (const reason of Object.values(DUPLICATE_REASON)) expect(isDuplicateReason(reason)).toBe(true)
+    expect(isDuplicateReason('declined')).toBe(false)
+    expect(isDuplicateReason(null)).toBe(false)
   })
 
   it('still sends when the CV is gone and no request is known', () => {

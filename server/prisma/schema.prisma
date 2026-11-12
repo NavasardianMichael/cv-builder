@@ -97,6 +97,9 @@ model Payment {
   status           PaymentStatus  @default(pending)
   failureReason    String?
   paidAt           DateTime?
+  /// When the bank first sent the buyer back to us. Null: they never came back — the bank's
+  /// page may still be open in another tab (`findOpenPayment`).
+  returnedAt       DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 

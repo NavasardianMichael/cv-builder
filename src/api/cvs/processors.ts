@@ -6,4 +6,7 @@ export const processCvResponse: GetCvAPI['processor'] & CreateCvAPI['processor']
 
 export const processUpdateCvResponse: UpdateCvAPI['processor'] = (response) => response.value
 
-export const processCheckoutResponse: CheckoutCvAPI['processor'] = (response) => response.value.redirectUrl
+export const processCheckoutResponse: CheckoutCvAPI['processor'] = (response) =>
+  'openPayment' in response.value
+    ? { kind: 'open', minutesAgo: response.value.openPayment.minutesAgo }
+    : { kind: 'redirect', url: response.value.redirectUrl }

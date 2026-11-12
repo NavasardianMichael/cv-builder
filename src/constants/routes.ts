@@ -37,6 +37,14 @@ export const newFreeCvPath = (): string => `${ROUTES.editorNew}?${FREE_QUERY}=1`
 /** Signed-in areas; `src/proxy.ts` sends a visitor without a session cookie to sign-in. */
 export const PROTECTED_PREFIXES = [ROUTES.dashboard, ROUTES.account]
 
+/**
+ * `ROUTES.paymentResult`'s `?status=`, set by the API's return from the bank (twin in
+ * `server/src/lib/return-path.ts`). `duplicate`: the CV was already paid, so this payment is
+ * being given back.
+ */
+export const PAYMENT_RESULT_STATUSES = ['succeeded', 'failed', 'pending', 'duplicate'] as const
+export type PaymentResultStatus = (typeof PAYMENT_RESULT_STATUSES)[number]
+
 /** Query names shared across pages. */
 export const RETURN_TO_QUERY = 'returnTo'
 export const CHECKOUT_QUERY = 'checkout'

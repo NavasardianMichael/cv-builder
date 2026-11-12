@@ -1,4 +1,4 @@
-import type { GatewayVerdict } from './types.js'
+import { type GatewayVerdict, PAYMENT_PAGE_TIMEOUT_SECONDS } from './types.js'
 
 /**
  * Ameriabank vPOS 3.1 (REST, JSON) — the request and response shapes. Pure and import-free
@@ -58,8 +58,8 @@ export type AmeriaResultResponse = {
   Opaque?: string | null
 }
 
-/** A gateway verdict, plus the wire-only "blocked, not yet charged" of a two-stage terminal. */
-export type AmeriaVerdict = GatewayVerdict | { status: 'approved' }
+/** A gateway verdict; `approved` is the "blocked, not yet charged" of a two-stage terminal. */
+export type AmeriaVerdict = GatewayVerdict
 
 export const buildInitPaymentBody = (
   credentials: AmeriaCredentials,
@@ -75,7 +75,7 @@ export const buildInitPaymentBody = (
   BackURL: input.backUrl,
   Opaque: input.opaque,
   // Seconds the payment page stays valid.
-  Timeout: 1200,
+  Timeout: PAYMENT_PAGE_TIMEOUT_SECONDS,
 })
 
 export const buildDetailsBody = (credentials: AmeriaCredentials, paymentId: string) => ({
@@ -152,6 +152,12 @@ export const interpretDetails = (
   if (status === 6 || state === 'payment_declined') return { status: 'failed', reason: 'declined' }
   if (status === 3 || status === 4 || state === 'payment_void' || state === 'payment_refunded') {
     return { status: 'failed', reason: state || `status ${status}` }
+  }
+
+  // 0 / "payment_started": registered, no card entered yet. 5 / "payment_autoauthorized":
+  // 3-D Secure began but did not authorise. Either way no money has moved.
+  if (status === 0 || status === 5 || state === 'payment_started' || state === 'payment_autoauthorized') {
+    return { status: 'pending', nothingCharged: true }
   }
 
   const deposited = status === 2 || state === 'payment_deposited'

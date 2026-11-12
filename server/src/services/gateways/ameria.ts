@@ -46,6 +46,12 @@ const post = async <T>(operation: string, body: object): Promise<T> => {
   return (await response.json()) as T
 }
 
+const readDetails = async (gatewayPaymentId: string, expected: { orderNumber: number; amount: number }) =>
+  interpretDetails(
+    await post<AmeriaDetailsResponse>('GetPaymentDetails', buildDetailsBody(credentials(), gatewayPaymentId)),
+    { orderId: orderIdOf(expected.orderNumber), amount: chargeOf(expected.amount) }
+  )
+
 export const ameriaGateway: PaymentGatewayClient = {
   async init(input) {
     const body = buildInitPaymentBody(credentials(), {
@@ -61,24 +67,21 @@ export const ameriaGateway: PaymentGatewayClient = {
   },
 
   async check(gatewayPaymentId, expected) {
-    const target = { orderId: orderIdOf(expected.orderNumber), amount: chargeOf(expected.amount) }
-    const readDetails = async () =>
-      interpretDetails(
-        await post<AmeriaDetailsResponse>('GetPaymentDetails', buildDetailsBody(credentials(), gatewayPaymentId)),
-        target
-      )
+    return readDetails(gatewayPaymentId, expected)
+  },
 
-    const verdict = await readDetails()
-    if (verdict.status !== 'approved') return verdict
-
-    // A two-stage terminal only blocked the amount; ConfirmPayment charges it. The verdict
-    // still comes from the bank's record, read again, not from the confirmation's answer.
+  // A two-stage terminal only blocked the amount; ConfirmPayment charges it. The verdict
+  // still comes from the bank's record, read again, not from the confirmation's answer.
+  async confirm(gatewayPaymentId, expected) {
     const confirmed = readResultResponse(
       'ConfirmPayment',
-      await post<AmeriaResultResponse>('ConfirmPayment', buildConfirmBody(credentials(), gatewayPaymentId, target.amount))
+      await post<AmeriaResultResponse>(
+        'ConfirmPayment',
+        buildConfirmBody(credentials(), gatewayPaymentId, chargeOf(expected.amount))
+      )
     )
     if (!confirmed.ok) throw new GatewayError(confirmed.message)
-    const after = await readDetails()
+    const after = await readDetails(gatewayPaymentId, expected)
     return after.status === 'approved' ? { status: 'pending' } : after
   },
 

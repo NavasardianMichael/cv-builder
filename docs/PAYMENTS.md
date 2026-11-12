@@ -29,6 +29,33 @@ A buyer who closes the tab before step 3 is covered by **reconcile-on-read**: `G
 and `GET /cvs/:id/pdf` re-check that CV's pending payments from the last 3 days.
 `Payment` rows outlive their CV and user (`SetNull`) — they are the accounting record.
 
+### One CV, one charge
+
+Every retry is a new `Payment` (a new order number: the bank refuses a reused OrderID), so a
+buyer with two tabs, or one whose first redirect was lost, could pay twice. Four guards:
+
+0. **An attempt that may still be open is asked about** (`findOpenPayment`): pending, younger
+   than the bank page's timeout plus 2 minutes for clock drift (`PAYMENT_PAGE_TIMEOUT_SECONDS`
+   is what we send as Ameria's `Timeout`), and never returned from — the return route stamps
+   `Payment.returnedAt`, so a retry after Back or a bank error is not asked. Checkout then
+   answers `{ openPayment: { minutesAgo } }` instead of starting one (`useCheckout` confirms,
+   then resends with `startNew`). Minutes and the window are this server's clock only.
+
+1. **Before a new checkout**, `POST /cvs/:id/checkout` reconciles the CV's pending payments;
+   one that turns out paid answers `cvAlreadyPaid`, and the editor says "your earlier
+   payment went through" and downloads.
+2. **Reconcile runs for paid CVs too** (`GET /cvs/:id`, the PDF, and checkout), so a second
+   attempt that was paid as well is found even without its redirect.
+3. **`settlePayment` never keeps money for a paid CV.** A payment found held or charged for a
+   CV whose `paidAt` is set — or that loses the `cv.paidAt` compare-and-set to another payment
+   settling at the same moment — is a duplicate: never confirmed, `CancelPayment` (releases a
+   hold; reverses a charge within 72 h), else `RefundPayment`. It ends `refunded` (or `failed`
+   for a released hold) with `failureReason` "duplicate: …"; the buyer lands on
+   `/payment/result?status=duplicate` ("already paid, the money is coming back") with the
+   download; the admin gets a "Duplicate payment reversed" mail. If the bank refuses both, the
+   row stays `succeeded` with "duplicate: NOT reversed…" and the mail's subject says
+   **return it by hand**.
+
 ## Admin mails
 
 Two internal mails reach the admin inbox through the mail engine's internal endpoint
@@ -46,8 +73,9 @@ summary, client hints, languages, and the browser's own facts the checkout sends
 (`src/helpers/clientInfo.ts` → `asClientInfo` in `server/src/lib/request-info.ts`; the keys
 are pinned by `twins.spec.ts`). The success mail's device is the request that confirmed it;
 the two mails share the order #. Best effort: never awaited, failures only logged, "started"
-capped at 30 an hour (the engine's 10-a-minute budget is shared with sign-up mail). Without
-`MAIL_API_*` in dev they print to the API's console.
+capped at 30 an hour (the engine's 10-a-minute budget is shared with sign-up mail). Sent
+only when `NODE_ENV=production`; anywhere else they print to the API's console, even with
+`MAIL_API_*` set, so local test purchases never reach the admin inbox.
 
 ## Without an account
 
@@ -101,7 +129,10 @@ Going live:
 
 What is verified on return: `ResponseCode "00"`, `OrderStatus 2` / `payment_deposited`, the
 OrderID equals ours and the charged amount is at least ours. Declined, void and refunded are
-`failed`; anything else stays `pending`.
+`failed`; anything else stays `pending`. A return whose record is still `OrderStatus` 0 / 5
+(nothing charged — the buyer pressed Back or gave up on the bank's page) shows the buyer
+"not paid" rather than "processing", unless the redirect's own `resposneCode` is `00`; the
+row stays `pending`, so a payment made after all still unlocks the CV when it is next read.
 
 A two-stage terminal answers `OrderStatus 1` / `payment_approved` instead: the amount is
 only blocked. After the same OrderID and (blocked) amount checks, `check` sends

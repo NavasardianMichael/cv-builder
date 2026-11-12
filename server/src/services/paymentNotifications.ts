@@ -88,15 +88,19 @@ const loadFacts = async (paymentId: string): Promise<PaymentFacts | null> => {
   }
 }
 
-/** Unconfigured is normal in dev, where the mail prints here instead. */
+/**
+ * Sent only in production: a dev machine with the mail engine configured (for verification
+ * and reset mail) would otherwise fill the admin inbox with test purchases. Elsewhere the
+ * mail prints here instead.
+ */
 const deliver = async (payload: InternalMailPayload): Promise<void> => {
-  if (!isMailConfigured()) {
-    if (config.nodeEnv === 'production') {
-      console.error(`[notify] "${payload.subject}" not sent: MAIL_API_URL or MAIL_API_KEY is empty`)
-      return
-    }
+  if (config.nodeEnv !== 'production') {
     const lines = Object.entries(payload.details ?? {}).map(([key, value]) => (value === '' ? key : `  ${key}: ${value}`))
-    console.log(`[notify] ${payload.subject}\n${payload.body}\n${lines.join('\n')}`)
+    console.log(`[notify] ${payload.subject} (not sent outside production)\n${payload.body}\n${lines.join('\n')}`)
+    return
+  }
+  if (!isMailConfigured()) {
+    console.error(`[notify] "${payload.subject}" not sent: MAIL_API_URL or MAIL_API_KEY is empty`)
     return
   }
   const result = await sendInternalMail(payload)
@@ -125,6 +129,13 @@ const notify = async (
 /** Never rejects. */
 export const notifyCheckoutStarted = (paymentId: string, request: RequestInfo | null): Promise<void> =>
   notify('started', paymentId, request)
+
+/** Never rejects. Sent once, by the settler that handled the duplicate. */
+export const notifyDuplicatePayment = (
+  paymentId: string,
+  request: RequestInfo | null,
+  source: SettleSource
+): Promise<void> => notify('duplicate', paymentId, request, source)
 
 /** Never rejects. */
 export const notifyPaymentSucceeded = (

@@ -5,19 +5,18 @@ import { CheckOutlined, DownloadOutlined, LockOutlined } from '@ant-design/icons
 import { Alert, Button, Modal } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { checkoutCvAPI, createCvAPI } from '@api/cvs/main'
+import { createCvAPI } from '@api/cvs/main'
 import type { PdfVariant } from '@api/cvs/types'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { useCapabilities } from '@hooks/useCapabilities'
+import { useCheckout } from '@hooks/useCheckout'
 import { ERROR_CODES } from '@constants/errors'
-import { CURRENCY, CV_PRICE_AMD, formatAmd } from '@constants/pricing'
+import { CV_PRICE_AMD, formatAmd } from '@constants/pricing'
 import { editorPath, ROUTES } from '@constants/routes'
 import { BASIC_DESIGN } from '@constants/templates'
-import { trackEvent } from '@helpers/analytics'
 import { basicContent } from '@helpers/basicCv'
-import { collectClientInfo } from '@helpers/clientInfo'
 import { classifyError } from '@helpers/error'
 import { markGuestCvs } from '@helpers/guestCvs'
 import { clearLocalDraft } from '@helpers/localDraft'
@@ -130,6 +129,7 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
   const setPaidAt = useCvEditorStore.use.setPaidAt()
   const isGuest = !useAuthStore.use.user()
   const capabilities = useCapabilities()
+  const checkout = useCheckout()
   const [redirecting, setRedirecting] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [confirmingGuest, setConfirmingGuest] = useState(false)
@@ -146,9 +146,8 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onAlreadyPaid, onDownl
     try {
       await flushSave()
       const id = cvId === DRAFT_ID ? await moveDraftToServer(setCvId) : cvId
-      const checkoutUrl = await checkoutCvAPI({ id, client: collectClientInfo() })
-      trackEvent('begin_checkout', { currency: CURRENCY, value: CV_PRICE_AMD })
-      window.location.assign(checkoutUrl)
+      // False: an earlier payment may still be open, and the buyer chose not to start another.
+      if (!(await checkout(id))) setRedirecting(false)
     } catch (failure) {
       setRedirecting(false)
       if (classifyError(failure).code === ERROR_CODES.cvAlreadyPaid) {

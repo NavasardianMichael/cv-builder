@@ -52,10 +52,10 @@ export const deleteCvAPI: DeleteCvAPI['api'] = async ({ id }) => {
   await axiosInstance.delete(`${ENDPOINTS.remove}/${encodeURIComponent(id)}`)
 }
 
-export const checkoutCvAPI: CheckoutCvAPI['api'] = async ({ id, client }) => {
+export const checkoutCvAPI: CheckoutCvAPI['api'] = async ({ id, client, startNew }) => {
   const { data } = await axiosInstance.post<APIResponse<CheckoutResponse>>(
     `${ENDPOINTS.checkout}/${encodeURIComponent(id)}/checkout`,
-    { client }
+    { client, ...(startNew ? { startNew: true } : {}) }
   )
   return processCheckoutResponse(data)
 }

@@ -4,7 +4,7 @@ import { CONTACT_TYPES, MAX_CONTACTS } from '@constants/contacts'
 import { ERROR_CODES } from '@constants/errors'
 import { FONT_SLUGS } from '@constants/fonts'
 import { CV_PRICE_AMD } from '@constants/pricing'
-import { RETURN_TO_QUERY, ROUTES } from '@constants/routes'
+import { PAYMENT_RESULT_STATUSES, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { SECTION_TYPES } from '@constants/sections'
 import { BASIC_DESIGN, TEMPLATE_IDS } from '@constants/templates'
 import { basicContent } from '@helpers/basicCv'
@@ -79,6 +79,7 @@ describe('server/web twins', () => {
     expect(returnPath.EMAIL_VERIFY_QUERY).toBe(VERIFY_TOKEN_QUERY)
     expect(returnPath.RETURN_TO_QUERY).toBe(RETURN_TO_QUERY)
     expect(returnPath.PAYMENT_RESULT_PATH).toBe(ROUTES.paymentResult)
+    expect([...returnPath.PAYMENT_RESULT_STATUSES]).toEqual([...PAYMENT_RESULT_STATUSES])
     expect(returnPath.SIGN_IN_PATH).toBe(ROUTES.signIn)
     expect(returnPath.DASHBOARD_PATH).toBe(ROUTES.dashboard)
   })

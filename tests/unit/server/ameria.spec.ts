@@ -69,9 +69,17 @@ describe('Ameria GetPaymentDetails → verdict', () => {
     expect(interpretDetails({ ResponseCode: '00', OrderStatus: '4' }, expected).status).toBe('failed')
   })
 
-  it('keeps a started or unconfirmed payment pending', () => {
-    expect(interpretDetails({ ResponseCode: '00', OrderStatus: 0 }, expected)).toEqual({ status: 'pending' })
+  it('keeps a started payment pending, marked as nothing charged', () => {
+    const unpaid = { status: 'pending', nothingCharged: true }
+    expect(interpretDetails({ ResponseCode: '00', OrderStatus: 0 }, expected)).toEqual(unpaid)
+    expect(interpretDetails({ ResponseCode: '0-100', OrderStatus: '0', PaymentState: 'payment_started' }, expected)).toEqual(unpaid)
+    expect(interpretDetails({ ResponseCode: '00', OrderStatus: '5', PaymentState: 'payment_autoauthorized' }, expected)).toEqual(unpaid)
+  })
+
+  it('keeps an unreadable or unconfirmed record plainly pending', () => {
     expect(interpretDetails({ ...deposited, ResponseCode: '01' }, expected)).toEqual({ status: 'pending' })
+    // What the live server answered once for a bad request: no status at all.
+    expect(interpretDetails({ Message: 'An error has occurred.' } as never, expected)).toEqual({ status: 'pending' })
   })
 
   describe('two-stage (OrderStatus 1, payment_approved)', () => {

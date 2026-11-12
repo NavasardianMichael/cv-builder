@@ -2,7 +2,7 @@
 
 import { type FC, useState } from 'react'
 import { DownloadOutlined } from '@ant-design/icons'
-import { Button } from 'antd'
+import { App, Button } from 'antd'
 import { useTranslations } from 'next-intl'
 import type { PdfVariant } from '@api/cvs/types'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
@@ -25,6 +25,7 @@ type Props = {
  */
 export const DownloadButton: FC<Props> = ({ autoOpen }) => {
   const t = useTranslations('Editor.download')
+  const { message } = App.useApp()
   const cvId = useCvEditorStore.use.cvId()
   const paidAt = useCvEditorStore.use.paidAt()
   const title = useCvEditorStoreBase((state) => state.doc?.title) ?? ''
@@ -67,7 +68,10 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
         open={modal === 'checkout'}
         onClose={() => setModal(null)}
         onAlreadyPaid={() => {
+          // An earlier attempt went through (its redirect was lost): say so, then download,
+          // so the buyer does not think the click charged them again.
           setModal(null)
+          void message.success({ content: t('alreadyPaid'), duration: 8 })
           void downloadNow()
         }}
         onDownloadBasic={() => void downloadNow('basic')}

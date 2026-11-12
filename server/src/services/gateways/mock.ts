@@ -34,6 +34,11 @@ export const mockGateway: PaymentGatewayClient = {
     return payment.verdict
   },
 
+  // One-stage: the mock bank never blocks an amount, so there is nothing to confirm.
+  async confirm() {
+    throw new GatewayError('The mock bank has no two-stage payments')
+  },
+
   // The mock bank has no refunds.
   async refund() {
     throw new GatewayError('The mock bank has no refunds')

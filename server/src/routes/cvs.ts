@@ -13,7 +13,7 @@ import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware
 import { asyncHandler, HttpError } from '../middleware/error.js'
 import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
 import { coerceContent, coerceDesign, coerceTitle, DEFAULT_CV_TITLE } from '../services/cvDocument.js'
-import { reconcileCvPayments, revalidatePaidCv, startCheckout } from '../services/payments.js'
+import { findOpenPayment, reconcileCvPayments, revalidatePaidCv, startCheckout } from '../services/payments.js'
 
 /**
  * A user's CVs — or a guest's: the CVs a browser bought without an account, owned by its
@@ -85,13 +85,16 @@ cvsRouter.get(
   })
 )
 
-/** Reading an unpaid CV re-checks its recent pending payments (a tab closed mid-redirect). */
+/**
+ * Reading a CV re-checks its recent pending payments: unpaid, one may have gone through with
+ * its redirect lost (a tab closed); paid, another attempt may have been paid too, and is
+ * reversed (`settlePayment`). Payments the bank has closed stop being asked.
+ */
 cvsRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
     let cv = await loadOwnedCv(req)
-    if (!cv.paidAt && (await reconcileCvPayments(cv.id, { source: 'cv-open', request: readRequestInfo(req) })))
-      cv = await loadOwnedCv(req)
+    if (await reconcileCvPayments(cv.id, { source: 'cv-open', request: readRequestInfo(req) })) cv = await loadOwnedCv(req)
     ok(res, mapCv(cv))
   })
 )
@@ -155,6 +158,19 @@ cvsRouter.post(
     const verdict = checkoutLimiter(ownerKey(cvOwnerOf(req)))
     if (!verdict.allowed) return fail(res, 'Too many attempts', ERROR_CODE.rateLimited, 429)
 
+    // An earlier attempt may have been paid with its redirect lost: ask the bank before a
+    // second charge. The page answers "already paid" and downloads instead.
+    if (await reconcileCvPayments(cv.id, { source: 'checkout', request: readRequestInfo(req) })) {
+      return fail(res, 'This CV is already paid for', ERROR_CODE.cvAlreadyPaid, 409)
+    }
+
+    // An earlier bank page may still be open in another tab: ask before a second one, which
+    // could be paid as well. Not an error — the page asks, and resends with `startNew`.
+    if ((req.body as { startNew?: unknown } | undefined)?.startNew !== true) {
+      const openPayment = await findOpenPayment(cv.id)
+      if (openPayment) return ok(res, { openPayment })
+    }
+
     const redirectUrl = await startCheckout({ id: cv.id, title: cv.title, userId: cv.userId }, readRequestInfo(req))
     ok(res, { redirectUrl })
   })
@@ -169,8 +185,7 @@ cvsRouter.get(
   '/:id/pdf',
   asyncHandler(async (req, res) => {
     let cv = await loadOwnedCv(req)
-    if (!cv.paidAt && (await reconcileCvPayments(cv.id, { source: 'pdf-download', request: readRequestInfo(req) })))
-      cv = await loadOwnedCv(req)
+    if (await reconcileCvPayments(cv.id, { source: 'pdf-download', request: readRequestInfo(req) })) cv = await loadOwnedCv(req)
     else if (cv.paidAt && !(await revalidatePaidCv(cv.id))) cv = await loadOwnedCv(req)
     if (!cv.paidAt) return fail(res, 'Payment required', ERROR_CODE.cvNotPaid, 402)
     if (!pdfAllowed(req)) return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)
