@@ -47,6 +47,8 @@ export type PaymentGatewayClient = {
    * Reads only: it never moves money.
    */
   check(gatewayPaymentId: string, expected: { orderNumber: number; amount: number }): Promise<GatewayVerdict>
+  /** The payment page of a payment already started (the one `init` answered), to send the buyer back to. */
+  pageUrl(gatewayPaymentId: string): string
   /**
    * Charges an `approved` (blocked) payment, then answers the gateway's record read again:
    * `succeeded` once it shows charged, `pending` while it does not yet. Throws on a refusal.

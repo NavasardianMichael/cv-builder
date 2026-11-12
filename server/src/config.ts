@@ -56,6 +56,8 @@ export const config = {
       password: process.env.AMERIA_PASSWORD ?? '',
       testMode: process.env.AMERIA_TEST_MODE !== 'false',
       orderIdOffset: Number(process.env.AMERIA_ORDER_ID_OFFSET ?? 0) || 0,
+      /** CancelPayment / RefundPayment need a permission the bank grants on request; off, money goes back by hand. */
+      apiReversals: process.env.AMERIA_API_REVERSALS === 'true',
       /** The test terminal accepts only 10 AMD; null charges the real price. */
       amountOverride: process.env.AMERIA_AMOUNT_OVERRIDE ? Number(process.env.AMERIA_AMOUNT_OVERRIDE) : null,
     },

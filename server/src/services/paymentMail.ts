@@ -231,8 +231,8 @@ export const buildPaymentMail = (
   const body =
     event === 'duplicate'
       ? byHand
-        ? `${who(facts)} paid ${amount} again for ${cvName(facts)}, which was already paid, and the automatic reversal was refused by the bank (the reason is in the API log). Return this payment by hand: Cancel or Refund order #${payment.orderNumber} in the bank's merchant panel.`
-        : `${who(facts)} paid ${amount} again for ${cvName(facts)}, which was already paid. This second payment was reversed automatically and the buyer was told the money is coming back. Nothing to do.`
+        ? `${who(facts)} paid ${amount} again for ${cvName(facts)}, which was already paid, and it was not returned automatically (the reason is in the API log). Return this payment by hand: Cancel (within 72 hours) or Refund order #${payment.orderNumber} in the bank's merchant panel. The buyer was told to contact us if they were charged twice.`
+        : `${who(facts)} paid ${amount} again for ${cvName(facts)}, which was already paid. This second payment was reversed automatically. Nothing to do; the buyer was told to contact us if they were charged twice.`
       : event === 'succeeded'
         ? `${who(facts)} paid ${amount} for ${cvName(facts)}. The CV is unlocked: its designed PDF can be downloaded.`
         : failed

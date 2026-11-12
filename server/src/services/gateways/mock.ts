@@ -12,6 +12,8 @@ type MockPayment = { orderNumber: number; amount: number; backUrl: string; opaqu
 
 const payments = new Map<string, MockPayment>()
 
+const mockPageUrl = (id: string): string => `${config.apiPublicUrl}/payments/mock/${id}`
+
 export const mockGateway: PaymentGatewayClient = {
   async init(input) {
     const id = randomUUID()
@@ -22,7 +24,11 @@ export const mockGateway: PaymentGatewayClient = {
       opaque: input.opaque,
       verdict: { status: 'pending' },
     })
-    return { gatewayPaymentId: id, redirectUrl: `${config.apiPublicUrl}/payments/mock/${id}` }
+    return { gatewayPaymentId: id, redirectUrl: mockPageUrl(id) }
+  },
+
+  pageUrl(gatewayPaymentId) {
+    return mockPageUrl(gatewayPaymentId)
   },
 
   async check(gatewayPaymentId, expected) {

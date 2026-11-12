@@ -33,13 +33,20 @@ const RECONCILE_WINDOW_MS = 3 * 24 * 60 * 60 * 1000
  */
 const OPEN_PAYMENT_WINDOW_MS = (PAYMENT_PAGE_TIMEOUT_SECONDS + 2 * 60) * 1000
 
+export type OpenPayment = { id: string; minutesAgo: number }
+
 /**
  * An earlier attempt for this CV whose bank page may still be open — in another tab — and
  * payable: pending (the bank had nothing charged when last asked), younger than the page
- * timeout, and the buyer never came back from it (`returnedAt`). Starting another one then
- * risks paying both, so the buyer is asked first. Computed when asked; nothing expires it.
+ * timeout, and the buyer never came back from it (`returnedAt`). A new order then could be
+ * paid as well as that one, so the buyer is offered that same order instead
+ * (`resumeOpenPayment`): one order is charged once, whichever tab they pay in.
+ *
+ * Null once it was resumed already: if the buyer is here again without the bank having sent
+ * them, that page may not reopen, and they must not be sent to it in a loop — a new order.
+ * Computed when asked; nothing expires it.
  */
-export const findOpenPayment = async (cvId: string): Promise<{ minutesAgo: number } | null> => {
+export const findOpenPayment = async (cvId: string): Promise<OpenPayment | null> => {
   const open = await prisma.payment.findFirst({
     where: {
       cvId,
@@ -50,8 +57,24 @@ export const findOpenPayment = async (cvId: string): Promise<{ minutesAgo: numbe
     },
     orderBy: { createdAt: 'desc' },
   })
-  if (!open) return null
-  return { minutesAgo: Math.max(1, Math.round((Date.now() - open.createdAt.getTime()) / 60_000)) }
+  if (!open || open.reopenedAt) return null
+  return { id: open.id, minutesAgo: Math.max(1, Math.round((Date.now() - open.createdAt.getTime()) / 60_000)) }
+}
+
+/**
+ * Sends the buyer back to an open payment's own bank page, once (`reopenedAt`, claimed by
+ * compare-and-set). Null when it is no longer open or was resumed already: start a new one.
+ */
+export const resumeOpenPayment = async (paymentId: string): Promise<string | null> => {
+  const claimed = await prisma.payment.updateMany({
+    where: { id: paymentId, status: 'pending', returnedAt: null, reopenedAt: null, gatewayPaymentId: { not: null } },
+    data: { reopenedAt: new Date() },
+  })
+  if (claimed.count !== 1) return null
+  const payment = await prisma.payment.findUnique({ where: { id: paymentId } })
+  if (!payment?.gatewayPaymentId) return null
+  console.info(`[payments] buyer sent back to the open payment #${payment.orderNumber}`)
+  return GATEWAYS[payment.gateway].pageUrl(payment.gatewayPaymentId)
 }
 
 /** The buyer is back from the bank's page for this payment: it is no longer open in some tab. */

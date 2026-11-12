@@ -24,10 +24,11 @@ export type CheckoutResponse = { redirectUrl: string } | { openPayment: { minute
 export type CheckoutResult = { kind: 'redirect'; url: string } | { kind: 'open'; minutesAgo: number }
 /**
  * `client`: the device facts for the admin's "checkout started" mail (`@helpers/clientInfo`).
- * `startNew`: the buyer was told about the open attempt and starts another one anyway.
+ * `resume`: the buyer chose to continue that open attempt — sent to its own bank page, so
+ * only one order exists to be paid (a new one if it can no longer be resumed).
  */
 export type CheckoutCvAPI = Endpoint<{
-  payload: { id: string; client: ClientInfo; startNew?: boolean }
+  payload: { id: string; client: ClientInfo; resume?: boolean }
   response: CheckoutResponse
   processed: CheckoutResult
 }>

@@ -42,8 +42,9 @@ const PENDING_MAX_POLLS = 8
  * buyer saw the price, terms and guest warning moments ago. Never offered while pending — the
  * first payment may yet be charged, and a second one would charge twice.
  *
- * `duplicate`: the CV was paid by an earlier attempt, so the one just made is being given
- * back (the API reversed it). The CV is theirs: download, and a word on the money.
+ * `duplicate`: the CV was paid by an earlier attempt. The CV is theirs: download. Nothing is
+ * promised about the second payment's money — whether the API returned it depends on the
+ * bank's permission — so a buyer charged twice is asked to contact us, and is refunded.
  */
 export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
   const t = useTranslations('Payment')
@@ -165,6 +166,11 @@ export const PaymentResultClient: FC<Props> = ({ cvId, status }) => {
         {cvId && (
           <Link href={editorPath(cvId)}>
             <Button size='large'>{t('toEditor')}</Button>
+          </Link>
+        )}
+        {effective === 'duplicate' && (
+          <Link href={ROUTES.contact}>
+            <Button size='large'>{t('contactUs')}</Button>
           </Link>
         )}
         <Link href={ROUTES.dashboard}>

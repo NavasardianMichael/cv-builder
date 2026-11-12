@@ -168,7 +168,7 @@ describe('buildPaymentMail', () => {
     duplicate.payment.failureReason = DUPLICATE_REASON.manual
     const mail = buildPaymentMail('duplicate', duplicate, request, 'cv-open')
     expect(mail.subject).toBe('DUPLICATE payment — return it by hand · order #42 · 2,000 AMD')
-    expect(mail.body).toContain('Cancel or Refund order #42')
+    expect(mail.body).toContain('Refund order #42')
   })
 
   it('recognises every duplicate reason, and nothing else', () => {

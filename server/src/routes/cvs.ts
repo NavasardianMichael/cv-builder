@@ -13,7 +13,7 @@ import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware
 import { asyncHandler, HttpError } from '../middleware/error.js'
 import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
 import { coerceContent, coerceDesign, coerceTitle, DEFAULT_CV_TITLE } from '../services/cvDocument.js'
-import { findOpenPayment, reconcileCvPayments, revalidatePaidCv, startCheckout } from '../services/payments.js'
+import { findOpenPayment, reconcileCvPayments, resumeOpenPayment, revalidatePaidCv, startCheckout } from '../services/payments.js'
 
 /**
  * A user's CVs — or a guest's: the CVs a browser bought without an account, owned by its
@@ -164,11 +164,16 @@ cvsRouter.post(
       return fail(res, 'This CV is already paid for', ERROR_CODE.cvAlreadyPaid, 409)
     }
 
-    // An earlier bank page may still be open in another tab: ask before a second one, which
-    // could be paid as well. Not an error — the page asks, and resends with `startNew`.
-    if ((req.body as { startNew?: unknown } | undefined)?.startNew !== true) {
-      const openPayment = await findOpenPayment(cv.id)
-      if (openPayment) return ok(res, { openPayment })
+    // An earlier bank page may still be open in another tab: a new order could be paid as well
+    // as that one, so the buyer is offered that same order instead. Not an error — the page
+    // asks, and resends with `resume` to be sent to it.
+    const openPayment = await findOpenPayment(cv.id)
+    if (openPayment) {
+      if ((req.body as { resume?: unknown } | undefined)?.resume !== true) {
+        return ok(res, { openPayment: { minutesAgo: openPayment.minutesAgo } })
+      }
+      const resumeUrl = await resumeOpenPayment(openPayment.id)
+      if (resumeUrl) return ok(res, { redirectUrl: resumeUrl })
     }
 
     const redirectUrl = await startCheckout({ id: cv.id, title: cv.title, userId: cv.userId }, readRequestInfo(req))

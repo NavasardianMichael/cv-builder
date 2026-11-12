@@ -34,12 +34,16 @@ and `GET /cvs/:id/pdf` re-check that CV's pending payments from the last 3 days.
 Every retry is a new `Payment` (a new order number: the bank refuses a reused OrderID), so a
 buyer with two tabs, or one whose first redirect was lost, could pay twice. Four guards:
 
-0. **An attempt that may still be open is asked about** (`findOpenPayment`): pending, younger
-   than the bank page's timeout plus 2 minutes for clock drift (`PAYMENT_PAGE_TIMEOUT_SECONDS`
-   is what we send as Ameria's `Timeout`), and never returned from — the return route stamps
-   `Payment.returnedAt`, so a retry after Back or a bank error is not asked. Checkout then
-   answers `{ openPayment: { minutesAgo } }` instead of starting one (`useCheckout` confirms,
-   then resends with `startNew`). Minutes and the window are this server's clock only.
+0. **An attempt that may still be open is continued, not duplicated** (`findOpenPayment`):
+   pending, younger than the bank page's timeout plus 2 minutes for clock drift
+   (`PAYMENT_PAGE_TIMEOUT_SECONDS` is what we send as Ameria's `Timeout`), and never returned
+   from — the return route stamps `Payment.returnedAt`, so a retry after Back or a bank error
+   starts a new order without asking. Checkout answers `{ openPayment: { minutesAgo } }`;
+   `useCheckout` offers to continue it and resends with `resume`, and the buyer is sent to
+   **that order's own bank page** (`resumeOpenPayment`, the gateway's `pageUrl`): one order is
+   charged once, whichever tab pays. Once only (`Payment.reopenedAt`): back again without the
+   bank sending them, that page may not reopen, so the next click starts a new order — never a
+   loop. Minutes and the window are this server's clock only.
 
 1. **Before a new checkout**, `POST /cvs/:id/checkout` reconciles the CV's pending payments;
    one that turns out paid answers `cvAlreadyPaid`, and the editor says "your earlier
@@ -51,10 +55,16 @@ buyer with two tabs, or one whose first redirect was lost, could pay twice. Four
    settling at the same moment — is a duplicate: never confirmed, `CancelPayment` (releases a
    hold; reverses a charge within 72 h), else `RefundPayment`. It ends `refunded` (or `failed`
    for a released hold) with `failureReason` "duplicate: …"; the buyer lands on
-   `/payment/result?status=duplicate` ("already paid, the money is coming back") with the
-   download; the admin gets a "Duplicate payment reversed" mail. If the bank refuses both, the
-   row stays `succeeded` with "duplicate: NOT reversed…" and the mail's subject says
+   `/payment/result?status=duplicate` ("already paid — charged twice? contact us, we
+   refund", with the download and a contact link; no promise of an automatic return); the
+   admin gets a "Duplicate payment reversed" mail. If the bank refuses both, the row stays
+   `succeeded` with "duplicate: NOT reversed…" and the mail's subject says
    **return it by hand**.
+
+   Both calls are sent only with `AMERIA_API_REVERSALS=true`, which needs the bank's
+   reverse/refund permission (refused otherwise with 514 / 513). Unset — the live setup —
+   nothing is sent: a duplicate mails "return it by hand" at once, `reverse-payment` stops
+   with "use the dashboard", and money goes back in Ameria's merchant dashboard.
 
 ## Admin mails
 
@@ -139,9 +149,13 @@ only blocked. After the same OrderID and (blocked) amount checks, `check` sends
 `ConfirmPayment` for our amount and reads `GetPaymentDetails` again; only that second read
 can settle it. Whether the terminal is one- or two-stage is the bank's setting.
 
-Money goes back by an operator, in the bank's merchant panel or with
+Money goes back by an operator, in the bank's merchant panel — **the live setup**: there is
+no API reversal permission, so `AMERIA_API_REVERSALS` is unset. A refund made there is read
+back on the CV's next PDF download (`revalidatePaidCv`), which locks the CV. With the
+permission and `AMERIA_API_REVERSALS=true`, also
 `pnpm payments:reverse <refund|cancel> <order number>…` (`server/src/cli/reverse-payment.ts`,
-order numbers are `Payment.orderNumber`). That calls `RefundPayment` (the whole charge) or
+order numbers are `Payment.orderNumber`; on the server `node dist/src/cli/reverse-payment.js`
+with the API's env). That calls `RefundPayment` (the whole charge) or
 `CancelPayment` (only within 72 hours of InitPayment) — the bank's refund/reverse permission,
 codes 513/514 — then marks the payment `refunded` and locks its CV. Re-running it is safe:
 the bank refuses a second reversal, and one that took effect despite an unclear answer is

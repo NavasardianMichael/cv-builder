@@ -46,6 +46,16 @@ const post = async <T>(operation: string, body: object): Promise<T> => {
   return (await response.json()) as T
 }
 
+/**
+ * Without the bank's reverse/refund permission both calls are refused (codes 514 / 513), so
+ * they are not sent at all: the caller's "return it by hand" path takes over at once.
+ */
+const assertReversalsOn = (): void => {
+  if (!settings().apiReversals) {
+    throw new GatewayError('API reversals are off (AMERIA_API_REVERSALS): return the money in the Ameria dashboard')
+  }
+}
+
 const readDetails = async (gatewayPaymentId: string, expected: { orderNumber: number; amount: number }) =>
   interpretDetails(
     await post<AmeriaDetailsResponse>('GetPaymentDetails', buildDetailsBody(credentials(), gatewayPaymentId)),
@@ -64,6 +74,10 @@ export const ameriaGateway: PaymentGatewayClient = {
     const answer = readInitResponse(await post<AmeriaInitResponse>('InitPayment', body))
     if (!answer.ok) throw new GatewayError(answer.message)
     return { gatewayPaymentId: answer.paymentId, redirectUrl: paymentPageUrl(baseUrl(), answer.paymentId) }
+  },
+
+  pageUrl(gatewayPaymentId) {
+    return paymentPageUrl(baseUrl(), gatewayPaymentId)
   },
 
   async check(gatewayPaymentId, expected) {
@@ -86,6 +100,7 @@ export const ameriaGateway: PaymentGatewayClient = {
   },
 
   async refund(gatewayPaymentId, amount) {
+    assertReversalsOn()
     const answer = readResultResponse(
       'RefundPayment',
       await post<AmeriaResultResponse>('RefundPayment', buildRefundBody(credentials(), gatewayPaymentId, chargeOf(amount)))
@@ -94,6 +109,7 @@ export const ameriaGateway: PaymentGatewayClient = {
   },
 
   async cancel(gatewayPaymentId) {
+    assertReversalsOn()
     const answer = readResultResponse(
       'CancelPayment',
       await post<AmeriaResultResponse>('CancelPayment', buildCancelBody(credentials(), gatewayPaymentId))

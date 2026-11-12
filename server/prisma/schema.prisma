@@ -100,6 +100,9 @@ model Payment {
   /// When the bank first sent the buyer back to us. Null: they never came back — the bank's
   /// page may still be open in another tab (`findOpenPayment`).
   returnedAt       DateTime?
+  /// When the buyer was sent back to this payment's still-open bank page rather than a new
+  /// order (`resumeOpenPayment`). Once only: a second time, a new order is started.
+  reopenedAt       DateTime?
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 

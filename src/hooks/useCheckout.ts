@@ -11,8 +11,9 @@ import { collectClientInfo } from '@helpers/clientInfo'
 /**
  * Starts a payment for a saved CV and leaves for the bank's page. When an earlier attempt's
  * bank page may still be open in another tab (the API answers `open` instead of starting
- * one), the buyer is asked first: paying on both would charge twice. The minutes come from
- * the server's clock, never this device's.
+ * one), the buyer is offered to continue that same payment: one order can be charged only
+ * once, whichever tab it is paid in. The minutes come from the server's clock, never this
+ * device's.
  *
  * Resolves true when the browser is on its way to the bank, false when the buyer chose to
  * stay. API failures — `cvAlreadyPaid` among them — are thrown to the caller, which knows
@@ -26,14 +27,14 @@ export const useCheckout = (): ((cvId: string) => Promise<boolean>) => {
     async (cvId: string) => {
       let result = await checkoutCvAPI({ id: cvId, client: collectClientInfo() })
       if (result.kind === 'open') {
-        const startNew = await modal.confirm({
+        const resume = await modal.confirm({
           title: t('title'),
           content: t('text', { minutes: result.minutesAgo }),
           okText: t('continue'),
           cancelText: t('cancel'),
         })
-        if (!startNew) return false
-        result = await checkoutCvAPI({ id: cvId, client: collectClientInfo(), startNew: true })
+        if (!resume) return false
+        result = await checkoutCvAPI({ id: cvId, client: collectClientInfo(), resume: true })
         if (result.kind !== 'redirect') return false
       }
       trackEvent('begin_checkout', { currency: CURRENCY, value: CV_PRICE_AMD })
