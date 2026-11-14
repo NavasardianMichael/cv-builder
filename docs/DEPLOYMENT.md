@@ -160,6 +160,9 @@ journalctl -u cv-builder-web -f
 journalctl -u cv-builder-api -f
 systemctl status cv-builder-web cv-builder-api
 
+# backup now (before a deploy that adds a migration); restore: docs/DRIVE_BACKUP.md
+/home/michael/apps/cv-builder/shared/backup-db.sh
+
 # rollback — migrations do NOT roll back
 ls -t /home/michael/apps/cv-builder/web/releases
 ln -sfn /home/michael/apps/cv-builder/web/releases/<sha> /home/michael/apps/cv-builder/web/current
@@ -199,5 +202,5 @@ assistants.
 - **Changing `NEXT_PUBLIC_*` requires a rebuild** — they are inlined.
 - **Never add `proxy_cache`** to the web host, **never strip `Origin`/`Referer`** on the API
   host, **one API process only** — see `deployment/CLAUDE.md`.
-- **The database is the only state** — back up the Postgres volume; releases and Chrome are
-  disposable.
+- **The database is the only state** — releases and Chrome are disposable. The nightly Drive
+  backup ([DRIVE_BACKUP.md](DRIVE_BACKUP.md)) dumps it, 22 days kept.

@@ -11,6 +11,7 @@ deployment/
   cv-builder-web.service          systemd, Next standalone
   cv-builder-api.service          systemd, Express + headless Chrome
   docker-compose.prod.yml         production Postgres, loopback-bound on 5009
+  backup-db.sh                    nightly pg_dump streamed to Google Drive (rclone), michael's crontab
   db.env.example                  shape of $APP_DIR/db/.env — the first deploy writes it from DATABASE_URL
 ```
 

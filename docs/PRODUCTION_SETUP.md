@@ -445,3 +445,11 @@ sitemap, and Site information → Regional settings → Armenia.
 
 Nothing to submit for AI engines: `robots.txt` welcomes their crawlers by name, and
 `/llms.txt` describes the service in Armenian, English and Russian.
+
+## 12. Backups to Google Drive **[SRV]** (once)
+
+After the first deploy, once the database exists: a nightly cron job dumps the database to
+Google Drive (`cv-builder-backups`, dumps kept 22 days). It uses the rclone `gdrive` remote
+already on the server. Follow [DRIVE_BACKUP.md](DRIVE_BACKUP.md): install
+[backup-db.sh](../deployment/backup-db.sh), run it once, add the cron line, and do the restore
+drill. Its real-restore section is what to follow after data loss.
