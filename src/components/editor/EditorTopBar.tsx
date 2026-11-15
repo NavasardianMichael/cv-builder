@@ -1,6 +1,6 @@
 'use client'
 
-import type { FC } from 'react'
+import { type FC, useEffect } from 'react'
 import {
   ArrowLeftOutlined,
   CheckCircleFilled,
@@ -14,7 +14,7 @@ import {
   ZoomInOutlined,
   ZoomOutOutlined,
 } from '@ant-design/icons'
-import { Button, Input } from 'antd'
+import { App, Button, Input } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
@@ -36,12 +36,45 @@ type Props = {
   onPreviewChange: (previewing: boolean) => void
 }
 
-/** The save state; under `md` the icon alone, its words left to screen readers. */
+/**
+ * The save state; under `md` the icon alone, its words left to screen readers. A save that
+ * cannot go through — the CV was saved elsewhere since (`conflict`), or a refusal retrying
+ * cannot fix (`stopped`) — also says so once in a message, since the icon alone is easy to miss.
+ */
 const SaveIndicator: FC = () => {
   const t = useTranslations('Editor.status')
+  const { message } = App.useApp()
   const status = useCvEditorStore.use.saveStatus()
   const isDraft = useCvEditorStore.use.cvId() === DRAFT_ID
 
+  useEffect(() => {
+    if (status === 'conflict') void message.warning({ content: t('conflictHint'), duration: 8 })
+    if (status === 'stopped') void message.error({ content: t('stoppedHint'), duration: 8 })
+  }, [message, status, t])
+
+  if (status === 'conflict') {
+    return (
+      <HintTooltip title={t('conflictHint')}>
+        <Button
+          size='small'
+          danger
+          icon={<ExclamationCircleFilled />}
+          aria-label={`${t('conflict')}. ${t('reload')}`}
+          onClick={() => window.location.reload()}
+          className='shrink-0'
+        >
+          <span className='hidden md:inline'>{t('reload')}</span>
+        </Button>
+      </HintTooltip>
+    )
+  }
+  if (status === 'stopped') {
+    return (
+      <span className='flex shrink-0 items-center gap-1.5 text-xs text-danger' title={t('stoppedHint')}>
+        <ExclamationCircleFilled /> <span className='sr-only md:not-sr-only'>{t('error')}</span>
+      </span>
+    )
+  }
   if (status === 'error') {
     return (
       <span className='flex shrink-0 items-center gap-1.5 text-xs text-danger' title={t('error')}>

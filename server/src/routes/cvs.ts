@@ -6,6 +6,7 @@ import { ensureGuestKeyHash } from '../lib/guest.js'
 import { sendPdf } from '../lib/pdf-response.js'
 import { prisma } from '../lib/prisma.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
+import { clientAddress } from '../lib/request.js'
 import { readRequestInfo } from '../lib/request-info.js'
 import { mapCv } from '../mappers/entities.js'
 import { type CvOwner, cvOwnerOf, ownerKey, requireCvOwner } from '../middleware/auth.js'
@@ -52,7 +53,7 @@ cvsRouter.post(
     let owner: CvOwner
     if (req.session) owner = { userId: req.session.userId }
     else {
-      const verdict = guestCreateLimiter(req.ip ?? 'unknown')
+      const verdict = guestCreateLimiter(clientAddress(req))
       if (!verdict.allowed) return fail(res, 'Too many attempts', ERROR_CODE.rateLimited, 429)
       owner = { guestKeyHash: ensureGuestKeyHash(req, res) }
     }
@@ -90,11 +91,23 @@ cvsRouter.get(
   })
 )
 
-/** The autosave. Partial: only the fields sent are written. Answers the stamps, not the body. */
+/**
+ * The autosave. Partial: only the fields sent are written. Answers the stamps, not the body.
+ *
+ * `baseUpdatedAt` is the stamp of the copy the editor started from. When the CV has been saved
+ * since — another tab, another device — the write is refused (409 `cvChangedElsewhere`)
+ * instead of silently replacing that work; the editor asks to reload. The check and the write
+ * are one compare-and-set. Without the field (an older client) the write goes through as before.
+ */
 cvsRouter.put(
   '/:id',
   asyncHandler(async (req, res) => {
     const cv = await loadOwnedCv(req)
+    const base = typeof req.body?.baseUpdatedAt === 'string' ? new Date(req.body.baseUpdatedAt) : null
+    const expected = base && !Number.isNaN(base.getTime()) ? base : null
+    if (expected && expected.getTime() !== cv.updatedAt.getTime()) {
+      return fail(res, 'The CV was changed elsewhere', ERROR_CODE.cvChangedElsewhere, 409)
+    }
     const data: Prisma.CvUpdateInput = {}
     if (req.body?.title !== undefined) data.title = coerceTitle(req.body.title, cv.title)
     if (req.body?.content !== undefined) data.content = asJson(coerceContent(req.body.content))
@@ -102,6 +115,13 @@ cvsRouter.put(
       const design = coerceDesign(req.body.design)
       data.design = asJson(design)
       data.templateId = design.templateId
+    }
+    // Nothing to write (an empty body) is not a conflict: `updateMany` would count no row.
+    if (expected && Object.keys(data).length > 0) {
+      const written = await prisma.cv.updateMany({ where: { id: cv.id, updatedAt: expected }, data: data as Prisma.CvUpdateManyMutationInput })
+      if (written.count !== 1) return fail(res, 'The CV was changed elsewhere', ERROR_CODE.cvChangedElsewhere, 409)
+      const fresh = await prisma.cv.findUniqueOrThrow({ where: { id: cv.id }, select: { updatedAt: true } })
+      return ok(res, { updatedAt: fresh.updatedAt.toISOString() })
     }
     const updated = await prisma.cv.update({ where: { id: cv.id }, data })
     ok(res, { updatedAt: updated.updatedAt.toISOString() })

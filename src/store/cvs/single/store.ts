@@ -23,6 +23,7 @@ const COALESCE_MS = 1000
 const initialState: CvEditorState = {
   cvId: null,
   doc: null,
+  serverUpdatedAt: null,
   saveStatus: 'saved',
   past: [],
   future: [],
@@ -66,8 +67,11 @@ export const useCvEditorStoreBase = create<CvEditorState & CvEditorActions>()(
     combine(
       initialState,
       (set): CvEditorActions => ({
-        loadDocument: ({ cvId, doc }) => {
-          set((state) => ({ ...state, ...initialState, cvId, doc }))
+        loadDocument: ({ cvId, doc, updatedAt }) => {
+          set((state) => ({ ...state, ...initialState, cvId, doc, serverUpdatedAt: updatedAt ?? null }))
+        },
+        setServerUpdatedAt: (serverUpdatedAt) => {
+          set({ serverUpdatedAt })
         },
         reset: () => {
           set((state) => ({ ...state, ...initialState }))

@@ -124,12 +124,19 @@ export type Cv = CvDocument & {
 /** `draft` is a guest's CV, kept in localStorage until they sign in. */
 export const DRAFT_ID = 'draft'
 
-export type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error'
+/**
+ * `error` retries on its own (network, server). `conflict`: the CV was saved elsewhere since this
+ * copy was loaded, so saving it would overwrite that — the editor asks to reload. `stopped`: a
+ * refusal retrying cannot fix (signed out, deleted, too large). Both stay until the next edit.
+ */
+export type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'stopped'
 
 export type CvEditorState = {
   /** A server id, or `DRAFT_ID`. Null until a document is loaded. */
   cvId: string | null
   doc: CvDocument | null
+  /** The server's `updatedAt` of the copy being edited — sent with each save (`baseUpdatedAt`). Null for a draft. */
+  serverUpdatedAt: string | null
   saveStatus: SaveStatus
   /** Undo/redo stacks of whole documents — cheap, since immer shares unchanged subtrees. */
   past: CvDocument[]
@@ -146,7 +153,8 @@ export type BasicsTextField = 'fullName' | 'headline'
 export type MoveDirection = -1 | 1
 
 export type CvEditorActions = {
-  loadDocument: (payload: { cvId: string; doc: CvDocument }) => void
+  loadDocument: (payload: { cvId: string; doc: CvDocument; updatedAt?: string }) => void
+  setServerUpdatedAt: (updatedAt: string) => void
   reset: () => void
   setSaveStatus: (status: SaveStatus) => void
   setCvId: (cvId: string) => void

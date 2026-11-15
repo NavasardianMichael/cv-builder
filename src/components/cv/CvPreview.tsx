@@ -10,6 +10,9 @@ export const A4_WIDTH_PX = 793.7
 /** 297mm at 96dpi. */
 export const A4_HEIGHT_PX = 1122.5
 
+/** How far outside the screen (or a scrolling panel) a card starts drawing, so it is ready by the time it shows. */
+const AHEAD = '300px'
+
 type Props = {
   content: CvContent
   design: CvDesign
@@ -23,12 +26,18 @@ type Props = {
  * landing page. Measures its own width, so it works in any grid. `inert` keeps the scaled
  * copy's links out of the tab order and away from screen readers; the page around it says
  * what it is.
+ *
+ * A card (`firstPageOnly`) keeps the paper's proportions from the start and draws its CV — and
+ * so fetches its fonts — only once it comes within `AHEAD` of the screen, then stays drawn. A
+ * page of 42 template cards thus draws the ones shown, not all of them. A whole-CV preview
+ * draws at once: its height is the CV's.
  */
 export const CvPreview: FC<Props> = ({ content, design, className, firstPageOnly = true }) => {
   const frameRef = useRef<HTMLDivElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0)
   const [sheetHeight, setSheetHeight] = useState(A4_HEIGHT_PX)
+  const [seen, setSeen] = useState(!firstPageOnly)
   // The same element across renders, so measuring (a re-render per preview) never re-renders
   // the CV itself — a page of template cards would otherwise redraw every CV once on load.
   const cv = useMemo(() => <CvDocument content={content} design={design} />, [content, design])
@@ -45,6 +54,23 @@ export const CvPreview: FC<Props> = ({ content, design, className, firstPageOnly
     observer.observe(sheet)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    const frame = frameRef.current
+    if (!frame || seen) return
+    if (typeof IntersectionObserver === 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSeen(true)
+      return
+    }
+    // `scrollMargin` stretches the margin into scrolling panels too (the editor's Templates tab).
+    const observer = new IntersectionObserver((entries) => entries.some((entry) => entry.isIntersecting) && setSeen(true), {
+      rootMargin: AHEAD,
+      scrollMargin: AHEAD,
+    })
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [seen])
 
   return (
     <div
@@ -63,7 +89,7 @@ export const CvPreview: FC<Props> = ({ content, design, className, firstPageOnly
         className='absolute top-0 left-0 origin-top-left'
         style={{ width: A4_WIDTH_PX, transform: `scale(${scale})`, visibility: scale ? 'visible' : 'hidden' }}
       >
-        {cv}
+        {seen && cv}
       </div>
     </div>
   )

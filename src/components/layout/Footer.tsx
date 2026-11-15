@@ -1,9 +1,11 @@
-import type { FC } from 'react'
+import type { FC, ReactNode } from 'react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { APP_NAME } from '@constants/app'
 import { FONTS_SOURCE_URL } from '@constants/fonts'
 import { ROUTES } from '@constants/routes'
+import { GA_ID } from '@helpers/analytics'
+import { ConsentSettingsLink } from '@components/analytics/ConsentSettingsLink'
 import { BrandLogo } from './BrandLogo'
 import { PreferredSourceBadge } from './PreferredSourceBadge'
 
@@ -11,7 +13,7 @@ export const Footer: FC = async () => {
   const t = await getTranslations('Footer')
   const tNav = await getTranslations('Nav')
 
-  const columns = [
+  const columns: { title: string; links: { href: string; label: string }[]; extra?: ReactNode }[] = [
     {
       title: t('product'),
       links: [
@@ -28,6 +30,12 @@ export const Footer: FC = async () => {
         { href: ROUTES.privacy, label: t('privacy') },
         { href: ROUTES.refundPolicy, label: t('refund') },
       ],
+      // Reopens the analytics banner, to change the answer (helpers/consent.ts).
+      extra: GA_ID ? (
+        <li>
+          <ConsentSettingsLink className='cursor-pointer border-0 bg-transparent p-0 text-left font-[inherit] text-sm text-muted hover:text-ink' />
+        </li>
+      ) : null,
     },
   ]
 
@@ -61,6 +69,7 @@ export const Footer: FC = async () => {
                   </Link>
                 </li>
               ))}
+              {column.extra}
             </ul>
           </nav>
         ))}

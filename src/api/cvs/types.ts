@@ -7,7 +7,8 @@ export type CreateCvAPI = Endpoint<{ payload: CvDocument; response: Cv; processe
 
 export type GetCvAPI = Endpoint<{ payload: { id: string }; response: Cv; processed: Cv }>
 
-export type UpdateCvPayload = { id: string } & Partial<CvDocument>
+/** `baseUpdatedAt`: the stamp of the copy the edit started from; the API refuses a write over a newer one (409). */
+export type UpdateCvPayload = { id: string; baseUpdatedAt?: string } & Partial<CvDocument>
 export type UpdateCvResponse = { updatedAt: string }
 export type UpdateCvAPI = Endpoint<{ payload: UpdateCvPayload; response: UpdateCvResponse; processed: UpdateCvResponse }>
 

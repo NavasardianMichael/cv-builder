@@ -66,7 +66,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
 | SEO / GEO | `src/helpers/metadata.ts`, `src/constants/seo.ts` (hy/en/ru keywords, verification tags), `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
 | Share cards (OpenGraph / X) | `src/app/socialCard.tsx` draws them; `app/opengraph-image.tsx` (site) and `templates/[templateId]/{opengraph,twitter}-image.tsx` (per template). `pageMetadata` names the site image on every page — a page's own `openGraph` would otherwise drop it — except with `ownImage: true` |
-| Error reporting, analytics | Sentry (web only): `src/helpers/sentry.ts`, `src/instrumentation{,-client}.ts`, `reportError` · GA4: `src/helpers/analytics.ts` (`trackEvent`), `components/analytics/Analytics.tsx` · both off while their `NEXT_PUBLIC_*` is empty, never on `/render` |
+| Error reporting, analytics | Sentry (web only): `src/helpers/sentry.ts`, `src/instrumentation{,-client}.ts`, `reportError` · GA4: `src/helpers/analytics.ts` (`trackEvent`), `components/analytics/Analytics.tsx` · consent (asked only in the EU/EEA, UK, Switzerland, by time zone): `src/helpers/consent.ts`, `constants/consent.ts`, `ConsentBanner` · both off while their `NEXT_PUBLIC_*` is empty, never on `/render` |
 | Copy | `src/messages/hy.json` (UI) · `src/constants/legal.ts` (draft legal pages) |
 | App design tokens | `src/styles/tokens.ts` → `theme.ts` → `globals.css` |
 

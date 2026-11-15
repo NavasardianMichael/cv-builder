@@ -23,6 +23,23 @@ const { PrismaClient } = await import('@prisma/client')
  * CV documents come from prisma/fixtures/cvs.json, generated from the web's own factory by
  * scripts/build-seed-fixtures.ts.
  */
+/**
+ * The accounts below have a published password, so they must never reach a real database: the
+ * seed refuses anything but a database on this machine. A developer whose local env happens to
+ * name the production URL would otherwise create them there.
+ */
+const databaseHost = (() => {
+  try {
+    return new URL(process.env.DATABASE_URL ?? '').hostname
+  } catch {
+    return ''
+  }
+})()
+if (process.env.NODE_ENV === 'production' || !['localhost', '127.0.0.1', '::1', '[::1]'].includes(databaseHost)) {
+  console.error(`[seed] refused: the test accounts are seeded only into a local database (DATABASE_URL host: ${databaseHost || 'none'})`)
+  process.exit(1)
+}
+
 const prisma = new PrismaClient()
 
 const PASSWORD = 'cv-builder-dev-1234'

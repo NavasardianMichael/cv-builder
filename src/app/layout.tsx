@@ -7,6 +7,7 @@ import { SEARCH_KEYWORDS, SITE_VERIFICATION } from '@constants/seo'
 import { cn } from '@helpers/cn'
 import { getSiteUrl } from '@helpers/url'
 import { Analytics } from '@components/analytics/Analytics'
+import { AnalyticsConsentDefaults } from '@components/analytics/AnalyticsConsentDefaults'
 import { App } from '@components/App'
 import '@styles/globals.css'
 import { fontUi } from '@styles/fonts'
@@ -59,6 +60,8 @@ export default function RootLayout({ children }: Props) {
       style={BRAND_CSS_VARS as CSSProperties}
     >
       <body>
+        {/* Before the GA tag below: analytics cookies wait for consent where asked (helpers/consent.ts). */}
+        <AnalyticsConsentDefaults />
         <AntdRegistry>
           <NextIntlClientProvider>
             <App>{children}</App>

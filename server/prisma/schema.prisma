@@ -37,6 +37,9 @@ model User {
 
   cvs      Cv[]
   payments Payment[]
+
+  /// The daily retention sweep finds accounts by it (services/retentionSweep.ts).
+  @@index([lastActiveAt])
 }
 
 /// One CV document. `content` and `design` are JSON coerced by services/cvDocument.ts on

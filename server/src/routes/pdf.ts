@@ -3,6 +3,7 @@ import { fail } from '../lib/api-response.js'
 import { ERROR_CODE } from '../lib/error-codes.js'
 import { sendPdf } from '../lib/pdf-response.js'
 import { createRateLimiter } from '../lib/rateLimit.js'
+import { clientAddress } from '../lib/request.js'
 import { asyncHandler } from '../middleware/error.js'
 import { BASIC_DESIGN, basicContent } from '../services/basicCv.js'
 import { coerceContent, coerceTitle, DEFAULT_CV_TITLE } from '../services/cvDocument.js'
@@ -20,7 +21,7 @@ const basicPdfLimiter = createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 
 pdfRouter.post(
   '/basic',
   asyncHandler(async (req, res) => {
-    const verdict = basicPdfLimiter(req.ip ?? 'unknown')
+    const verdict = basicPdfLimiter(clientAddress(req))
     if (!verdict.allowed) {
       res.setHeader('Retry-After', String(verdict.retryAfterSeconds))
       return fail(res, 'Too many downloads', ERROR_CODE.rateLimited, 429)

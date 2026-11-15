@@ -1,7 +1,7 @@
 'use client'
 
 import { type FC, useEffect, useState } from 'react'
-import { ArrowLeftOutlined, CheckCircleFilled, ClockCircleFilled, CloseCircleFilled, DownloadOutlined, LockOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, CheckCircleFilled, ClockCircleFilled, CloseCircleFilled, DownloadOutlined, LockOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Alert, Button, Spin } from 'antd'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
@@ -131,12 +131,14 @@ export const PaymentResultClient: FC<Props> = ({ status, paymentId, cvId }) => {
     )
   }
 
-  const date = until ? formatDateTime(until) : ''
+  // No date when the access could not be read here (another browser, a failed read).
+  const succeededText = until ? t('succeededText', { date: formatDateTime(until), days: PASS_DAYS }) : t('succeededTextNoDate', { days: PASS_DAYS })
+  const unconfirmed = effective === 'pending' && polls >= PENDING_MAX_POLLS
   const view = {
-    succeeded: { icon: <CheckCircleFilled className='text-success' />, title: t('succeeded'), text: t('succeededText', { date, days: PASS_DAYS }) },
+    succeeded: { icon: <CheckCircleFilled className='text-success' />, title: t('succeeded'), text: succeededText },
     failed: { icon: <CloseCircleFilled className='text-danger' />, title: t('failed'), text: t('failedText') },
     pending:
-      polls < PENDING_MAX_POLLS
+      !unconfirmed
         ? { icon: <ClockCircleFilled className='text-accent' />, title: t('pending'), text: t('pendingText') }
         : { icon: <ClockCircleFilled className='text-accent' />, title: t('unconfirmed'), text: t('unconfirmedText') },
   }[effective]
@@ -179,6 +181,12 @@ export const PaymentResultClient: FC<Props> = ({ status, paymentId, cvId }) => {
         {effective === 'failed' && (
           <Button type='primary' size='large' icon={<LockOutlined />} loading={retrying} onClick={() => void retry()}>
             {retrying ? t('redirecting') : t('tryAgain')}
+          </Button>
+        )}
+        {/* Asks the bank again, as a refresh would, and polls once more for a while. */}
+        {unconfirmed && paymentId && (
+          <Button type='primary' size='large' icon={<ReloadOutlined />} onClick={() => setPolls(0)}>
+            {t('checkAgain')}
           </Button>
         )}
         {cvId ? (

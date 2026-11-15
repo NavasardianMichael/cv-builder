@@ -1,3 +1,5 @@
+import { CV_FONTS_VERSION } from './cvFontsVersion'
+
 /**
  * The forty Armenian fonts a CV can use, self-hosted from `public/fonts/` (woff2, subset to
  * Latin, Cyrillic and Armenian by `scripts/fonts/build_fonts.py`). Source: fonter.am's most
@@ -122,5 +124,8 @@ export const FONTS_SOURCE_URL = 'https://fonter.am'
 /** The face's own (Armenian) page on fonter.am; every slug here is that page's slug. */
 export const fontSourceUrl = (slug: FontSlug): string => `${FONTS_SOURCE_URL}/hy/fonts/${slug}`
 
-/** Served by Next from `public/`; linked only by pages that render CVs. */
-export const CV_FONTS_STYLESHEET = '/fonts/cv-fonts.css'
+/**
+ * Served by Next from `public/`; linked only by pages that render CVs. `/fonts/` is cached
+ * `immutable`, so the URL carries the stylesheet's hash (`pnpm fonts:css` writes both).
+ */
+export const CV_FONTS_STYLESHEET = `/fonts/cv-fonts.css?v=${CV_FONTS_VERSION}`

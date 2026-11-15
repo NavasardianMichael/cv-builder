@@ -5,6 +5,8 @@ import { updateCvAPI } from '@api/cvs/main'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { useLeaveGuard } from '@hooks/useLeaveGuard'
+import { ERROR_CODES } from '@constants/errors'
+import { classifyError } from '@helpers/error'
 import { writeLocalDraft } from '@helpers/localDraft'
 import { reportError } from '@helpers/reportError'
 
@@ -16,8 +18,8 @@ let inFlight: Promise<void> = Promise.resolve()
 
 const saveCurrent = (): Promise<void> => {
   inFlight = inFlight.then(async () => {
-    const { cvId, doc, saveStatus, setSaveStatus } = useCvEditorStoreBase.getState()
-    if (!cvId || !doc || saveStatus === 'saved') return
+    const { cvId, doc, saveStatus, serverUpdatedAt, setSaveStatus, setServerUpdatedAt } = useCvEditorStoreBase.getState()
+    if (!cvId || !doc || saveStatus === 'saved' || saveStatus === 'conflict' || saveStatus === 'stopped') return
 
     if (cvId === DRAFT_ID) {
       setSaveStatus(writeLocalDraft(doc) ? 'saved' : 'error')
@@ -26,11 +28,26 @@ const saveCurrent = (): Promise<void> => {
 
     setSaveStatus('saving')
     try {
-      await updateCvAPI({ id: cvId, title: doc.title, content: doc.content, design: doc.design })
+      const { updatedAt } = await updateCvAPI({
+        id: cvId,
+        baseUpdatedAt: serverUpdatedAt ?? undefined,
+        title: doc.title,
+        content: doc.content,
+        design: doc.design,
+      })
+      setServerUpdatedAt(updatedAt)
       // An edit made while the request was out leaves the document newer than what was sent.
       setSaveStatus(useCvEditorStoreBase.getState().doc === doc ? 'saved' : 'dirty')
     } catch (error) {
-      reportError(error, 'editor:autosave')
+      const failure = classifyError(error)
+      if (failure.code === ERROR_CODES.cvChangedElsewhere) return setSaveStatus('conflict')
+      // A refusal (signed out, CV deleted, too large) is the same on every retry: stop until
+      // the next edit rather than retry it every few seconds.
+      if (failure.status && failure.status >= 400 && failure.status < 500 && failure.kind !== 'rateLimited' && failure.kind !== 'timeout') {
+        reportError(error, 'editor:autosave')
+        return setSaveStatus('stopped')
+      }
+      if (!failure.retryable) reportError(error, 'editor:autosave')
       setSaveStatus('error')
     }
   })
@@ -49,6 +66,7 @@ export const flushSave = async (): Promise<boolean> => {
  */
 export const useAutosave = (): void => {
   const doc = useCvEditorStore.use.doc()
+  // `conflict` and `stopped` wait for the next edit (it sets `dirty`): retrying cannot help.
   const saveStatus = useCvEditorStore.use.saveStatus()
   const setSaveStatus = useCvEditorStore.use.setSaveStatus()
 

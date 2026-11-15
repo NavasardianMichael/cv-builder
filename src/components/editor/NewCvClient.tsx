@@ -1,14 +1,14 @@
 'use client'
 
 import { type FC, useCallback, useEffect, useState } from 'react'
-import { Button, Modal, Spin } from 'antd'
+import { Button, Modal, Result, Spin } from 'antd'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
-import { editorPath, ROUTES } from '@constants/routes'
+import { editorPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import type { TemplateId } from '@constants/templates'
 import { newCvDocument } from '@helpers/cvFactory'
 import { dedupe } from '@helpers/dedupe'
@@ -19,7 +19,9 @@ type Props = { templateId: TemplateId; sample: boolean; free: boolean }
 
 /**
  * Starts a CV and opens it. Signed in: created on the server. Guest: written as the local
- * draft — after asking, if a draft is already there, since there is only one.
+ * draft — after asking, if a draft is already there, since there is only one. A browser that
+ * refuses to store it (site data blocked) is told so here: the editor reads the draft back, and
+ * opening it without one would send the guest straight back to this page, in a loop.
  */
 export const NewCvClient: FC<Props> = ({ templateId, sample, free }) => {
   const t = useTranslations('Editor')
@@ -29,9 +31,13 @@ export const NewCvClient: FC<Props> = ({ templateId, sample, free }) => {
   const isResolved = useAuthStore.use.isResolved()
   const [askReplace, setAskReplace] = useState(false)
   const [error, setError] = useState<unknown>(null)
+  const [storageBlocked, setStorageBlocked] = useState(false)
 
   const startDraft = useCallback(() => {
-    writeLocalDraft(newCvDocument(templateId, { sample, free }))
+    if (!writeLocalDraft(newCvDocument(templateId, { sample, free }))) {
+      setAskReplace(false)
+      return setStorageBlocked(true)
+    }
     router.replace(editorPath(DRAFT_ID))
   }, [free, router, sample, templateId])
 
@@ -54,6 +60,29 @@ export const NewCvClient: FC<Props> = ({ templateId, sample, free }) => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     start().catch(setError)
   }, [isResolved, start])
+
+  if (storageBlocked) {
+    const back = `${window.location.pathname}${window.location.search}`
+    return (
+      <div className='grid min-h-dvh place-items-center p-6'>
+        <Result
+          status='warning'
+          title={t('storageBlockedTitle')}
+          subTitle={t('storageBlockedText')}
+          extra={
+            <div className='flex flex-wrap justify-center gap-2'>
+              <Link href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(back)}`}>
+                <Button type='primary'>{t('guestBannerCta')}</Button>
+              </Link>
+              <Link href={ROUTES.templates}>
+                <Button>{tCommon('back')}</Button>
+              </Link>
+            </div>
+          }
+        />
+      </div>
+    )
+  }
 
   if (error) {
     return (

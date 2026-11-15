@@ -163,7 +163,9 @@ systemctl status cv-builder-web cv-builder-api
 # backup now (before a deploy that adds a migration); restore: docs/DRIVE_BACKUP.md
 /home/michael/apps/cv-builder/shared/backup-db.sh
 
-# rollback — migrations do NOT roll back
+# rollback — automatic when a deploy's health wait or PDF check fails; by hand below.
+# Migrations do NOT roll back: every API deploy dumps the database first, to
+# /home/michael/apps/cv-builder/backups/pre-deploy-*.dump (the last 5 kept).
 ls -t /home/michael/apps/cv-builder/web/releases
 ln -sfn /home/michael/apps/cv-builder/web/releases/<sha> /home/michael/apps/cv-builder/web/current
 sudo systemctl restart cv-builder-web                     # same shape for api

@@ -106,7 +106,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
       const back = `${editorPath(cvId)}${autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''}`
       return router.replace(`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(back)}`)
     }
-    loadDocument({ cvId: cv.id, doc: { title: cv.title, content: cv.content, design: cv.design } })
+    loadDocument({ cvId: cv.id, doc: { title: cv.title, content: cv.content, design: cv.design }, updatedAt: cv.updatedAt })
     setState({ phase: 'ready' })
   }, [autoCheckout, cvId, loadDocument, router, user])
 

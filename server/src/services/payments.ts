@@ -25,7 +25,8 @@ import { HttpError } from '../middleware/error.js'
  *   page reload and a reconcile racing each other settle it once.
  * - `reconcileOwnerPayments` covers the buyer who paid and closed the tab before the redirect:
  *   reading the owner's access, printing, and starting another checkout re-check their recent
- *   pending payments. Computed on read, no background job.
+ *   pending payments, on read. `settleStalePayments` (hourly, `paymentSweep.ts`) catches the
+ *   buyer who never comes back at all.
  * - `runningPass` re-checks a running pass for a refund made in the bank's panel before the
  *   designed PDF prints.
  */
@@ -252,6 +253,44 @@ export const reconcileOwnerPayments = async (owner: CvOwner, context?: SettleCon
     }
   }
   return settled
+}
+
+/** How far back the hourly sweep looks: a bank keeps an order's record well past this. */
+const STALE_PENDING_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * The hourly sweep (`paymentSweep.ts`): every payment still `pending` after its bank page has
+ * timed out is asked about once more, whoever owns it. Paid → `succeeded` (the buyer who paid
+ * and never came back); nothing charged → `failed`, since that page can no longer be paid.
+ * Gateway errors are logged and retried next hour.
+ */
+export const settleStalePayments = async (now = new Date()): Promise<{ succeeded: number; failed: number; unresolved: number }> => {
+  const stale = await prisma.payment.findMany({
+    where: {
+      status: 'pending',
+      gatewayPaymentId: { not: null },
+      createdAt: { lt: new Date(now.getTime() - OPEN_PAYMENT_WINDOW_MS), gte: new Date(now.getTime() - STALE_PENDING_MAX_AGE_MS) },
+    },
+    orderBy: { createdAt: 'asc' },
+    take: 50,
+  })
+
+  const counts = { succeeded: 0, failed: 0, unresolved: 0 }
+  for (const payment of stale) {
+    try {
+      const status = await settlePayment(payment, { source: 'sweep', request: null })
+      if (status === 'succeeded') counts.succeeded += 1
+      else if (status === 'failed') counts.failed += 1
+      else if (status === 'unpaid') {
+        await failPending(payment, 'abandoned: the bank page timed out with nothing charged')
+        counts.failed += 1
+      } else counts.unresolved += 1
+    } catch (error) {
+      counts.unresolved += 1
+      console.error(`[payments] sweep of #${payment.orderNumber} failed`, error instanceof Error ? error.message : error)
+    }
+  }
+  return counts
 }
 
 export type Reversal = 'refund' | 'cancel'
