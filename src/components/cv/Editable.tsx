@@ -12,6 +12,7 @@ import {
 import { cn } from '@helpers/cn'
 import { linkify, linkTarget } from '@helpers/linkify'
 import { useCvEdit } from './CvEditContext'
+import { useCvHeadings } from './CvHeadings'
 
 type EditableTag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3'
 
@@ -61,13 +62,16 @@ const ViewText: FC<{ value: string; href?: string; linkify?: boolean }> = ({ val
  */
 export const Editable: FC<Props> = ({ value, onChange, placeholder, as: Tag = 'span', multiline, className, href, linkify }) => {
   const edit = useCvEdit()
+  const headings = useCvHeadings()
 
   if (!edit) {
     if (!value) return null
+    // In a page's preview the CV's headings are not the page's (`CvHeadings`).
+    const ViewTag = headings || !Tag.startsWith('h') ? Tag : 'div'
     return (
-      <Tag className={className}>
+      <ViewTag className={className}>
         <ViewText value={value} href={href} linkify={linkify} />
-      </Tag>
+      </ViewTag>
     )
   }
 

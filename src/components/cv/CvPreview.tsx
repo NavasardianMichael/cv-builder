@@ -4,6 +4,7 @@ import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import type { CvContent, CvDesign } from '@store/cvs/single/types'
 import { cn } from '@helpers/cn'
 import { CvDocument } from './CvDocument'
+import { CvHeadingsProvider } from './CvHeadings'
 
 /** 210mm at 96dpi. */
 export const A4_WIDTH_PX = 793.7
@@ -40,7 +41,15 @@ export const CvPreview: FC<Props> = ({ content, design, className, firstPageOnly
   const [seen, setSeen] = useState(!firstPageOnly)
   // The same element across renders, so measuring (a re-render per preview) never re-renders
   // the CV itself — a page of template cards would otherwise redraw every CV once on load.
-  const cv = useMemo(() => <CvDocument content={content} design={design} />, [content, design])
+  // Plain text, not headings: the page around the preview has its own (`CvHeadings`).
+  const cv = useMemo(
+    () => (
+      <CvHeadingsProvider value={false}>
+        <CvDocument content={content} design={design} />
+      </CvHeadingsProvider>
+    ),
+    [content, design]
+  )
 
   useEffect(() => {
     const frame = frameRef.current
