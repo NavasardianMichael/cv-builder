@@ -19,7 +19,7 @@ import { useAuthStore } from '@store/auth/store'
 import { ROUTES } from '@constants/routes'
 import { cn } from '@helpers/cn'
 import { clearGuestCvsMark, hasGuestCvs } from '@helpers/guestCvs'
-import { hasLocalDraft } from '@helpers/localDraft'
+import { hasLocalDrafts } from '@helpers/localDraft'
 import { AccountMenu } from './AccountMenu'
 import { BrandLogo } from './BrandLogo'
 
@@ -32,8 +32,8 @@ type NavItem = { href: string; label: string; icon: ReactNode }
  */
 const subscribeNever = (): (() => void) => () => undefined
 
-/** Something of the guest's lives in this browser: a draft, or CVs bought without an account. */
-const hasGuestWork = (): boolean => hasLocalDraft() || hasGuestCvs()
+/** Something of the guest's lives in this browser: drafts, or CVs bought without an account. */
+const hasGuestWork = (): boolean => hasLocalDrafts() || hasGuestCvs()
 
 export const Header: FC = () => {
   const t = useTranslations('Nav')

@@ -121,9 +121,6 @@ export type Cv = CvDocument & {
   updatedAt: string
 }
 
-/** `draft` is a guest's CV, kept in localStorage until they sign in. */
-export const DRAFT_ID = 'draft'
-
 /**
  * `error` retries on its own (network, server). `conflict`: the CV was saved elsewhere since this
  * copy was loaded, so saving it would overwrite that — the editor asks to reload. `stopped`: a
@@ -132,7 +129,7 @@ export const DRAFT_ID = 'draft'
 export type SaveStatus = 'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'stopped'
 
 export type CvEditorState = {
-  /** A server id, or `DRAFT_ID`. Null until a document is loaded. */
+  /** A server id, or a guest's local draft's (`isDraftId`, `helpers/localDraft`). Null until a document is loaded. */
   cvId: string | null
   doc: CvDocument | null
   /** The server's `updatedAt` of the copy being edited — sent with each save (`baseUpdatedAt`). Null for a draft. */

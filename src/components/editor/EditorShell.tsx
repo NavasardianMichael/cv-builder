@@ -9,13 +9,12 @@ import { useTranslations } from 'next-intl'
 import { createCvAPI, getCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
-import { DRAFT_ID } from '@store/cvs/single/types'
 import { COMPACT_QUERY, useMediaQuery } from '@hooks/useMediaQuery'
 import { CHECKOUT_QUERY, editorPath, newCvPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { DEFAULT_TEMPLATE_ID } from '@constants/templates'
 import { dedupe } from '@helpers/dedupe'
 import { classifyError } from '@helpers/error'
-import { clearLocalDraft, readLocalDraft } from '@helpers/localDraft'
+import { clearLocalDraft, isDraftId, LEGACY_DRAFT_ID, listLocalDrafts, readLocalDraft } from '@helpers/localDraft'
 import { LeaveGuard } from '@components/layout/LeaveGuard'
 import { ErrorState } from '@components/ui/ErrorState'
 import { CanvasZoomControl } from './canvas/CanvasZoomControl'
@@ -44,7 +43,7 @@ const SHEET_SIZES: Record<EditorTab, string> = { content: '88dvh', templates: '6
  *
  * - A server CV needs a session — or, for one bought without an account, this browser's guest
  *   cookie. Without either the user is sent to sign in and back.
- * - `draft` is a guest's local CV. Once the user is signed in it is imported as a server CV
+ * - `draft-…` is a guest's local CV. Once the user is signed in it is imported as a server CV
  *   and the URL replaced — which is how "sign in to buy" carries the work across. Buying
  *   without an account turns it into a server CV in place (CheckoutModal).
  */
@@ -80,20 +79,26 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
   }
 
   const load = useCallback(async () => {
-    if (cvId === DRAFT_ID) {
-      const draft = readLocalDraft()
+    const checkoutQuery = autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''
+    if (cvId === LEGACY_DRAFT_ID) {
+      // A link from before drafts had ids (a sign-in's way back): the last saved draft is that one.
+      const latest = listLocalDrafts()[0]
+      return router.replace(latest ? `${editorPath(latest.id)}${checkoutQuery}` : newCvPath(DEFAULT_TEMPLATE_ID))
+    }
+    if (isDraftId(cvId)) {
+      const draft = readLocalDraft(cvId)
       if (!draft) return router.replace(newCvPath(DEFAULT_TEMPLATE_ID))
       if (!user) {
-        loadDocument({ cvId: DRAFT_ID, doc: draft })
+        loadDocument({ cvId, doc: draft })
         return setState({ phase: 'ready' })
       }
       setState({ phase: 'importing' })
-      const createdId = await dedupe('import-draft', async () => {
+      const createdId = await dedupe(`import-draft:${cvId}`, async () => {
         const created = await createCvAPI(draft)
-        clearLocalDraft()
+        clearLocalDraft(cvId)
         return created.id
       })
-      return router.replace(`${editorPath(createdId)}${autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''}`)
+      return router.replace(`${editorPath(createdId)}${checkoutQuery}`)
     }
 
     let cv
@@ -103,7 +108,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
       // Signed out and not this browser's guest CV: it may be an account's, so sign in and back.
       const { kind } = classifyError(error)
       if (user || (kind !== 'unauthorized' && kind !== 'notFound')) throw error
-      const back = `${editorPath(cvId)}${autoCheckout ? `?${CHECKOUT_QUERY}=1` : ''}`
+      const back = `${editorPath(cvId)}${checkoutQuery}`
       return router.replace(`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(back)}`)
     }
     loadDocument({ cvId: cv.id, doc: { title: cv.title, content: cv.content, design: cv.design }, updatedAt: cv.updatedAt })
@@ -170,7 +175,7 @@ export const EditorShell: FC<Props> = ({ cvId, autoCheckout }) => {
           {/* As wide as the close button, so the message stays centred on the whole bar. */}
           <span className='w-6 shrink-0' aria-hidden='true' />
           <div className='flex min-w-0 flex-1 items-center justify-center gap-3 text-center'>
-            <span>{t(openCvId === DRAFT_ID ? 'guestBanner' : 'guestCvBanner')}</span>
+            <span>{t(isDraftId(openCvId) ? 'guestBanner' : 'guestCvBanner')}</span>
             <Link
               href={`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(editorPath(openCvId))}`}
               className='shrink-0 font-semibold text-ink underline'

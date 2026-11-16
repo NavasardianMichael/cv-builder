@@ -6,12 +6,12 @@ import { App, Button } from 'antd'
 import { useTranslations } from 'next-intl'
 import type { PdfVariant } from '@api/cvs/types'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
-import { DRAFT_ID } from '@store/cvs/single/types'
 import { usePurchasesStore, usePurchasesStoreBase } from '@store/purchases/store'
 import { accessActiveNow } from '@hooks/useAccess'
 import { usePdfDownload } from '@hooks/usePdfDownload'
 import { PASS_DAYS } from '@constants/pricing'
 import { formatDateTime } from '@helpers/date'
+import { isDraftId } from '@helpers/localDraft'
 import { HintTooltip } from '@components/ui/HintTooltip'
 import { AccessChip } from './AccessChip'
 import { CheckoutModal, moveDraftToServer } from './CheckoutModal'
@@ -40,20 +40,20 @@ export const DownloadButton: FC<Props> = ({ autoOpen }) => {
   const { download, downloadDraft, isDownloading } = usePdfDownload()
   // The bar mounts once the document has loaded, so the returning buyer's checkout can open
   // straight away rather than from an effect.
-  const [modal, setModal] = useState<'signIn' | 'checkout' | null>(() => (autoOpen && cvId && cvId !== DRAFT_ID ? 'checkout' : null))
+  const [modal, setModal] = useState<'signIn' | 'checkout' | null>(() => (autoOpen && cvId && !isDraftId(cvId) ? 'checkout' : null))
 
   const downloadNow = async (variant: PdfVariant = 'designed') => {
     if (!cvId) return
     await flushSave()
     const doc = useCvEditorStoreBase.getState().doc
     if (!doc) return
-    if (cvId === DRAFT_ID && variant === 'basic') {
+    if (isDraftId(cvId) && variant === 'basic') {
       // A draft exists only in this browser, so it is sent to be printed as it is.
       if (await downloadDraft(doc)) setModal(null)
       return
     }
     // The designed PDF prints from the server: a draft is saved there first (the guest key owns it).
-    const id = cvId === DRAFT_ID ? await moveDraftToServer(setCvId) : cvId
+    const id = isDraftId(cvId) ? await moveDraftToServer(setCvId) : cvId
     const done = await download(id, title, variant)
     if (done && variant === 'basic') setModal(null)
     // Refused for want of access (it ran out while the page was open): the dialog explains.

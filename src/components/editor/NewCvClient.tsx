@@ -1,19 +1,18 @@
 'use client'
 
 import { type FC, useCallback, useEffect, useState } from 'react'
-import { Button, Modal, Result, Spin } from 'antd'
+import { Button, Result, Spin } from 'antd'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { createCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
-import { DRAFT_ID } from '@store/cvs/single/types'
 import { editorPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import type { SampleCv } from '@constants/sampleCvs'
 import type { TemplateId } from '@constants/templates'
 import { newCvDocument } from '@helpers/cvFactory'
 import { dedupe } from '@helpers/dedupe'
-import { readLocalDraft, writeLocalDraft } from '@helpers/localDraft'
+import { startLocalDraft } from '@helpers/localDraft'
 import { ErrorState } from '@components/ui/ErrorState'
 
 type Props = {
@@ -25,10 +24,11 @@ type Props = {
 }
 
 /**
- * Starts a CV and opens it. Signed in: created on the server. Guest: written as the local
- * draft — after asking, if a draft is already there, since there is only one. A browser that
- * refuses to store it (site data blocked) is told so here: the editor reads the draft back, and
- * opening it without one would send the guest straight back to this page, in a loop.
+ * Starts a CV and opens it. Signed in: created on the server. Guest: kept as a new local draft
+ * beside any others (`helpers/localDraft`), so nothing is replaced and nothing is asked. A
+ * browser that refuses to store it (site data blocked) is told so here: the editor reads the
+ * draft back, and opening it without one would send the guest straight back to this page, in a
+ * loop.
  */
 export const NewCvClient: FC<Props> = ({ templateId, sample, free, example }) => {
   const t = useTranslations('Editor')
@@ -36,34 +36,26 @@ export const NewCvClient: FC<Props> = ({ templateId, sample, free, example }) =>
   const router = useRouter()
   const user = useAuthStore.use.user()
   const isResolved = useAuthStore.use.isResolved()
-  const [askReplace, setAskReplace] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [storageBlocked, setStorageBlocked] = useState(false)
 
-  const startDraft = useCallback(() => {
-    if (!writeLocalDraft(newCvDocument(templateId, { sample, free, example: example?.cv }))) {
-      setAskReplace(false)
-      return setStorageBlocked(true)
-    }
-    router.replace(editorPath(DRAFT_ID))
-  }, [example, free, router, sample, templateId])
-
   const start = useCallback(async () => {
+    const key = `new-cv:${templateId}:${sample}:${free}:${example?.slug ?? ''}`
+    const create = () => newCvDocument(templateId, { sample, free, example: example?.cv })
     if (user) {
-      const id = await dedupe(
-        `new-cv:${templateId}:${sample}:${free}:${example?.slug ?? ''}`,
-        async () => (await createCvAPI(newCvDocument(templateId, { sample, free, example: example?.cv }))).id,
-      )
+      const id = await dedupe(key, async () => (await createCvAPI(create())).id)
       return router.replace(editorPath(id))
     }
-    if (readLocalDraft()) return setAskReplace(true)
-    startDraft()
-  }, [example, free, router, sample, startDraft, templateId, user])
+    // Deduped like the server's: StrictMode's second run must not leave a second draft.
+    const id = await dedupe(`${key}:draft`, async () => startLocalDraft(create()))
+    if (!id) return setStorageBlocked(true)
+    router.replace(editorPath(id))
+  }, [example, free, router, sample, templateId, user])
 
   useEffect(() => {
     if (!isResolved) return
-    // Reading localStorage (is there a draft?) is an external system; asking about it from
-    // here, once the session is known, is what this effect is for.
+    // Writing the guest's draft to localStorage (an external system) once the session is known
+    // is what this effect is for; it reports a refusal through state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     start().catch(setError)
   }, [isResolved, start])
@@ -113,18 +105,6 @@ export const NewCvClient: FC<Props> = ({ templateId, sample, free, example }) =>
   return (
     <div className='grid min-h-dvh place-items-center bg-canvas'>
       <Spin size='large' description={tCommon('loading')} />
-      <Modal
-        open={askReplace}
-        title={t('replaceDraftTitle')}
-        closable={false}
-        mask={{ closable: false }}
-        onOk={startDraft}
-        okText={t('replaceDraft')}
-        cancelText={t('keepDraft')}
-        onCancel={() => router.replace(editorPath(DRAFT_ID))}
-      >
-        {t('replaceDraftText')}
-      </Modal>
     </div>
   )
 }

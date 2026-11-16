@@ -19,9 +19,9 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
-import { DRAFT_ID } from '@store/cvs/single/types'
 import { ROUTES } from '@constants/routes'
 import { stepZoom } from '@helpers/canvasZoom'
+import { isDraftId } from '@helpers/localDraft'
 import { BrandMark } from '@components/layout/BrandLogo'
 import { HintTooltip } from '@components/ui/HintTooltip'
 import { DownloadButton } from './download/DownloadButton'
@@ -45,7 +45,7 @@ const SaveIndicator: FC = () => {
   const t = useTranslations('Editor.status')
   const { message } = App.useApp()
   const status = useCvEditorStore.use.saveStatus()
-  const isDraft = useCvEditorStore.use.cvId() === DRAFT_ID
+  const isDraft = isDraftId(useCvEditorStore.use.cvId())
 
   useEffect(() => {
     if (status === 'conflict') void message.warning({ content: t('conflictHint'), duration: 8 })

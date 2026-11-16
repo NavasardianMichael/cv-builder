@@ -9,7 +9,6 @@ import { createCvAPI } from '@api/cvs/main'
 import type { PdfVariant } from '@api/cvs/types'
 import { useAuthStore } from '@store/auth/store'
 import { useCvEditorStore, useCvEditorStoreBase } from '@store/cvs/single/store'
-import { DRAFT_ID } from '@store/cvs/single/types'
 import { usePurchasesStore } from '@store/purchases/store'
 import { useAccessUntil, useNow } from '@hooks/useAccess'
 import { useCapabilities } from '@hooks/useCapabilities'
@@ -22,7 +21,7 @@ import { basicContent } from '@helpers/basicCv'
 import { formatDateTime } from '@helpers/date'
 import { classifyError } from '@helpers/error'
 import { markGuestCvs } from '@helpers/guestCvs'
-import { clearLocalDraft } from '@helpers/localDraft'
+import { clearLocalDraft, isDraftId } from '@helpers/localDraft'
 import { CvPreview } from '@components/cv/CvPreview'
 import { ErrorAlert } from '@components/ui/ErrorAlert'
 import { flushSave } from '../useAutosave'
@@ -89,10 +88,10 @@ const DownloadOption: FC<OptionProps> = ({ variant, name, price, items, children
  * same document, new id, and the URL follows without a reload.
  */
 export const moveDraftToServer = async (setCvId: (id: string) => void): Promise<string> => {
-  const { doc } = useCvEditorStoreBase.getState()
-  if (!doc) throw new Error('No document to buy')
+  const { cvId, doc } = useCvEditorStoreBase.getState()
+  if (!doc || !isDraftId(cvId)) throw new Error('No draft to buy')
   const created = await createCvAPI(doc)
-  clearLocalDraft()
+  clearLocalDraft(cvId)
   markGuestCvs()
   setCvId(created.id)
   window.history.replaceState(null, '', editorPath(created.id))
@@ -172,7 +171,7 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onEarlierPayment, onDo
     setRedirecting(true)
     try {
       await flushSave()
-      const id = cvId === DRAFT_ID ? await moveDraftToServer(setCvId) : cvId
+      const id = isDraftId(cvId) ? await moveDraftToServer(setCvId) : cvId
       // False: an earlier payment may still be open, and the buyer chose not to start another.
       if (!(await checkout(id))) setRedirecting(false)
     } catch (failure) {

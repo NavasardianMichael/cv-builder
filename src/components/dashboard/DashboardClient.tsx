@@ -8,12 +8,12 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useAuthStore } from '@store/auth/store'
 import { useCvsListStore } from '@store/cvs/list/store'
-import { type Cv, type CvDocument, DRAFT_ID } from '@store/cvs/single/types'
+import type { Cv } from '@store/cvs/single/types'
 import { useAccessActive } from '@hooks/useAccess'
 import { usePdfDownload } from '@hooks/usePdfDownload'
 import { RETURN_TO_QUERY, ROUTES } from '@constants/routes'
 import { classifyError, errorCopyKey } from '@helpers/error'
-import { clearLocalDraft, hasLocalDraft, readLocalDraftEntry } from '@helpers/localDraft'
+import { clearLocalDraft, hasLocalDrafts, listLocalDrafts, type LocalDraft } from '@helpers/localDraft'
 import { reportError } from '@helpers/reportError'
 import { ErrorState } from '@components/ui/ErrorState'
 import { AccessBanner } from './AccessBanner'
@@ -39,8 +39,8 @@ export const DashboardClient: FC = () => {
   const [loadError, setLoadError] = useState<unknown>(null)
   /** The API knows no owner here: signed out and no guest cookie, so no server CVs. */
   const [noOwner, setNoOwner] = useState(false)
-  /** This browser's draft (`helpers/localDraft`); opening it signed in imports it to the account. */
-  const [draft, setDraft] = useState<{ doc: CvDocument; savedAt: string } | null>(null)
+  /** This browser's drafts (`helpers/localDraft`); opening one signed in imports it to the account. */
+  const [drafts, setDrafts] = useState<LocalDraft[]>([])
 
   const load = useCallback(
     () =>
@@ -59,11 +59,11 @@ export const DashboardClient: FC = () => {
   useEffect(() => {
     // localStorage exists only after hydration — the external system this effect reads.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(readLocalDraftEntry())
+    setDrafts(listLocalDrafts())
   }, [])
 
   // Nothing of theirs in this browser and not signed in: the dashboard is the account's.
-  const nothingHere = isGuest && noOwner && !draft && !hasLocalDraft()
+  const nothingHere = isGuest && noOwner && !drafts.length && !hasLocalDrafts()
   useEffect(() => {
     if (nothingHere) router.replace(`${ROUTES.signIn}?${RETURN_TO_QUERY}=${encodeURIComponent(ROUTES.dashboard)}`)
   }, [nothingHere, router])
@@ -93,27 +93,25 @@ export const DashboardClient: FC = () => {
           .catch(showError),
     })
 
-  const onDeleteDraft = () =>
+  const onDeleteDraft = (draft: LocalDraft) =>
     modal.confirm({
-      title: t('deleteTitle', { title: draft?.doc.title ?? '' }),
+      title: t('deleteTitle', { title: draft.doc.title }),
       content: t('deleteText'),
       okText: tCommon('delete'),
       okButtonProps: { danger: true },
       cancelText: tCommon('cancel'),
       onOk: () => {
-        clearLocalDraft()
-        setDraft(null)
+        clearLocalDraft(draft.id)
+        setDrafts((current) => current.filter((item) => item.id !== draft.id))
         message.success(t('deleted'))
       },
     })
 
-  /** The draft drawn as a CV card; its id opens `/editor/draft`, which imports it when signed in. */
-  const draftCv: Cv | null = draft
-    ? { ...draft.doc, id: DRAFT_ID, createdAt: draft.savedAt, updatedAt: draft.savedAt }
-    : null
+  /** A draft drawn as a CV card; its id opens it in the editor, which imports it when signed in. */
+  const draftCv = (draft: LocalDraft): Cv => ({ ...draft.doc, id: draft.id, createdAt: draft.savedAt, updatedAt: draft.savedAt })
   const cvs = list.allIds.map((id) => list.byId[id])
   const loaded = isLoaded || noOwner
-  const count = cvs.length + (draftCv ? 1 : 0)
+  const count = cvs.length + drafts.length
 
   const body = () => {
     if (loadError) return <ErrorState error={loadError} onRetry={retry} />
@@ -145,9 +143,9 @@ export const DashboardClient: FC = () => {
     }
     return (
       <div className='mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 xl:grid-cols-4'>
-        {draftCv && draft && (
-          <CvCard cv={draftCv} onDelete={onDeleteDraft} onDownload={() => void downloadDraft(draft.doc)} />
-        )}
+        {drafts.map((draft) => (
+          <CvCard key={draft.id} cv={draftCv(draft)} onDelete={() => onDeleteDraft(draft)} onDownload={() => void downloadDraft(draft.doc)} />
+        ))}
         {cvs.map((cv) => (
           <CvCard
             key={cv.id}
