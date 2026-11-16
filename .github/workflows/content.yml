@@ -137,10 +137,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # No pnpm here (the script needs only Node), so no package-manager cache: setup-node
+      # otherwise reads `packageManager` from package.json and fails looking for pnpm.
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
           node-version-file: '.nvmrc'
+          package-manager-cache: false
 
       - name: IndexNow
         env:
