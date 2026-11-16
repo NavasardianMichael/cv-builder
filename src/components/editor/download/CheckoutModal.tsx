@@ -189,7 +189,23 @@ export const CheckoutModal: FC<Props> = ({ open, onClose, onEarlierPayment, onDo
   const unavailable = capabilities !== null && !capabilities.payments
 
   return (
-    <Modal open={open} onCancel={close} footer={null} width={760} title={t('payTitle')} destroyOnHidden>
+    <Modal
+      open={open}
+      onCancel={close}
+      footer={null}
+      width={760}
+      title={t('payTitle')}
+      destroyOnHidden
+      // Taller than a short screen (a phone sideways, a laptop at zoom): the modal keeps 30px
+      // above and below and its body scrolls, the title stays, and the page behind never moves.
+      centered
+      classNames={{ body: 'scrollbar-thin' }}
+      styles={{
+        container: { display: 'flex', flexDirection: 'column', maxHeight: 'calc(100dvh - 60px)' },
+        header: { flexShrink: 0 },
+        body: { minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain' },
+      }}
+    >
       <div className='grid gap-4 md:grid-cols-2'>
         <DownloadOption
           variant='basic'

@@ -44,7 +44,7 @@ export const EditorPanel: FC = () => {
       defaultActiveKey='design'
       centered
       destroyOnHidden
-      className='[&>.ant-tabs-body-holder]:overflow-y-auto [&>.ant-tabs-body-holder]:overscroll-contain'
+      className='[&>.ant-tabs-body-holder]:overflow-y-auto [&>.ant-tabs-body-holder]:overscroll-contain [&>.ant-tabs-body-holder]:scrollbar-thin'
       styles={{ root: { height: '100%' } }}
       items={DESKTOP_TABS.map((tab) => ({
         key: tab,

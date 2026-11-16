@@ -127,6 +127,12 @@
   font-size: 0.8125rem;
 }
 
+/* The browser's thin scrollbar, in its own colours: for panels inside the app (the editor's
+   settings column), where the full-width bar looks heavy. */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
+
 /* A soft mesh behind the hero and auth cards. */
 @utility mesh-bg {
   background:
