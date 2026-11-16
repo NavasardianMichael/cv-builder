@@ -125,7 +125,8 @@ Values that must match something else exactly:
 |              |                                                                                                                                                         |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ci.yml`     | PR → master. typecheck · typecheck:server · lint · unit tests · build · build:api. No database and no Chrome needed.                                     |
-| `deploy.yml` | Push to `master` (or **Run workflow**). `changes` picks the sides, `verify` runs the non-build gates, `build-web` and `build-api` in parallel, `deploy`. |
+| `deploy.yml` | Push to `master` (or **Run workflow**). `changes` picks the sides, `verify` runs the non-build gates, `build-web` and `build-api` in parallel, `deploy`. Ignores a push that changes only `src/content/**`. |
+| `content.yml` | Push to `master` changing `src/content/**` (or **Run workflow**). Content tests → `deploy.yml` with `scope: web` → IndexNow. See "Content" below. |
 
 The API deploys **first**: the browser calls it the moment new pages serve, so the schema and
 the API must be new before they do. API side: `pnpm install --prod --frozen-lockfile` (which
@@ -140,6 +141,35 @@ the API ships as a standalone package with pinned dependencies
 (`scripts/build-api-release.mjs`) — both for the reasons documented in Bookie's
 `docs/DEPLOYMENT.md`. The runners skip Puppeteer's Chrome download (`PUPPETEER_SKIP_DOWNLOAD`);
 only the host needs it.
+
+## Content
+
+The guides (`/guides`) and CV examples (`/examples`) are typed data in `src/content/`, one
+file per page named after its slug, rendered by ordinary routes and prerendered by the web
+build. So they need no build of their own — `content.yml` only decides **when** the web is
+rebuilt for them and what follows:
+
+1. **Check content.** `tests/unit/content`: every file registered under its own slug, titles
+   and descriptions within search-result lengths, links only to public pages that exist, every
+   page linked from another, complete example CVs, and Armenian punctuation (`՞` not `?`, `։`
+   not `.`, `«»` not `"`).
+2. **Deploy the web.** `deploy.yml` called with `scope: web`: its full `verify`, `build-web`
+   and `deploy`, and no API — a content change cannot need one. A push that also changes code
+   is run by `deploy.yml` itself (its `paths-ignore` only skips pushes where *every* file is
+   ignored); `content.yml` then waits for that run instead of deploying a second time. The two
+   ignore lists (`deploy.yml`'s `paths-ignore`, `content.yml`'s "What else this push changed")
+   must stay the same.
+3. **Notify search engines.** `scripts/content/indexnow.mjs` sends the changed pages and their
+   hub to IndexNow (Bing, Yandex, and through Bing, ChatGPT search). The key is
+   `public/<32 hex>.txt`, served at the site root. Google does not take IndexNow: it reads
+   `sitemap.xml`, where each page's `lastModified` is its `updated` date — bump `updated`
+   whenever a page's text changes. A failed notification is a warning, not a failed run.
+
+`deploy-production` is a job-level concurrency group on `deploy.yml`'s `deploy` job, so a
+content deploy and a code deploy queue behind each other rather than overlapping.
+
+Adding a page: a file in `src/content/guides/` or `src/content/examples/`, a line in
+`src/content/index.ts`, `pnpm test`. Push — that is the whole release.
 
 ## Ports
 

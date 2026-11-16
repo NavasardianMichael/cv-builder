@@ -29,7 +29,7 @@ export default async function TemplatesPage() {
           ]),
         ]}
       />
-      <div className='mx-auto max-w-7xl px-4 pt-10 pb-10 sm:pt-14 md:px-6'>
+      <div className='mx-auto max-w-page px-4 pt-10 pb-10 sm:pt-14 md:px-6'>
         <h1 className='text-balance max-w-3xl font-display text-title font-extrabold tracking-tight text-ink sm:text-5xl'>{t('title')}</h1>
         <p className='mt-4 max-w-2xl text-base leading-relaxed text-muted sm:mt-5 sm:text-lg'>{t('subtitle')}</p>
         <div className='mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:mt-14 sm:gap-y-12 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'>

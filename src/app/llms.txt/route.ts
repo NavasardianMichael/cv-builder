@@ -1,9 +1,10 @@
 import { APP_DESCRIPTION, APP_NAME, APP_NAME_LATIN } from '@constants/app'
 import { FONT_SLUGS, FONTS } from '@constants/fonts'
 import { formatAmd, PASS_DAYS, PASS_PRICE_AMD } from '@constants/pricing'
-import { ROUTES, templatePath } from '@constants/routes'
+import { examplePath, guidePath, ROUTES, templatePath } from '@constants/routes'
 import { KEYWORDS_EN, KEYWORDS_RU } from '@constants/seo'
 import { TEMPLATE_LIST } from '@constants/templates'
+import { CV_EXAMPLES, GUIDES } from '@content/index'
 import { buildLlmsTxt } from '@helpers/llmsTxt'
 import { absoluteUrl } from '@helpers/url'
 
@@ -40,6 +41,14 @@ export function GET(): Response {
           },
           { name: 'Կապ մեզ հետ', url: absoluteUrl(ROUTES.contact), note: 'հարցեր և առաջարկներ' },
         ],
+      },
+      {
+        title: 'Ուղեցույցներ',
+        links: GUIDES.map((guide) => ({ name: guide.title, url: absoluteUrl(guidePath(guide.slug)), note: guide.description })),
+      },
+      {
+        title: 'Ինքնակենսագրականի օրինակներ',
+        links: CV_EXAMPLES.map((example) => ({ name: example.title, url: absoluteUrl(examplePath(example.slug)), note: example.description })),
       },
       {
         title: 'Ձևանմուշներ',

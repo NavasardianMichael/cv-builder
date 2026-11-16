@@ -1,0 +1,63 @@
+import type { Article, CollectionPage, WithContext } from 'schema-dts'
+import { APP_NAME, LOCALE } from '@constants/app'
+import type { CvExample, Guide } from '@content/types'
+import { absoluteUrl } from '@helpers/url'
+import { ORGANIZATION_ID, WEBSITE_ID } from './site'
+
+/**
+ * A guide or a CV example as an Article: dates, and the Latin-lettered title as
+ * `alternativeHeadline`. The image is the site's card: a page's own card (its `og:image`)
+ * is served under a hashed name Next picks at build time (`opengraph-image-<hash>`), which a
+ * hand-written URL would miss. The author is the organisation, named in full so the node
+ * stands on its own.
+ */
+export const articleSchema = (page: Guide | CvExample, path: string): WithContext<Article> => ({
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  '@id': `${absoluteUrl(path)}#article`,
+  headline: page.title,
+  alternativeHeadline: page.latinTitle,
+  description: page.description,
+  url: absoluteUrl(path),
+  mainEntityOfPage: absoluteUrl(path),
+  image: absoluteUrl('/opengraph-image'),
+  inLanguage: LOCALE,
+  datePublished: page.published,
+  dateModified: page.updated,
+  keywords: page.searchTerms.join(', '),
+  isAccessibleForFree: true,
+  author: { '@type': 'Organization', '@id': ORGANIZATION_ID, name: APP_NAME, url: absoluteUrl('/') },
+  publisher: { '@id': ORGANIZATION_ID },
+  isPartOf: { '@id': WEBSITE_ID },
+})
+
+/** A hub page (`/guides`, `/examples`) and the pages it lists. */
+export const collectionSchema = ({
+  name,
+  description,
+  path,
+  items,
+}: {
+  name: string
+  description: string
+  path: string
+  items: { name: string; path: string }[]
+}): WithContext<CollectionPage> => ({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name,
+  description,
+  url: absoluteUrl(path),
+  inLanguage: LOCALE,
+  isPartOf: { '@id': WEBSITE_ID },
+  mainEntity: {
+    '@type': 'ItemList',
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      url: absoluteUrl(item.path),
+    })),
+  },
+})

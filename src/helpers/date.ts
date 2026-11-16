@@ -30,6 +30,12 @@ const numericParts = new Intl.DateTimeFormat('en-GB', {
   hourCycle: 'h23',
 })
 
+/** «16 նոյեմբերի 2026 թ.»: a calendar date (`YYYY-MM-DD`, as content pages keep them). */
+export const formatDay = (isoDate: string): string => {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return `${day} ${MONTHS[month - 1]} ${year} թ.`
+}
+
 /** «31 հոկտեմբերի 2026 թ., 19:42», in Yerevan time. */
 export const formatDateTime = (value: string | number | Date): string => {
   const parts = Object.fromEntries(

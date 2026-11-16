@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
 import { APP_NAME } from '@constants/app'
 import { FONTS_SOURCE_URL } from '@constants/fonts'
-import { ROUTES } from '@constants/routes'
+import { examplePath, guidePath, ROUTES } from '@constants/routes'
+import { CV_EXAMPLES, GUIDES } from '@content/index'
 import { GA_ID } from '@helpers/analytics'
 import { ConsentSettingsLink } from '@components/analytics/ConsentSettingsLink'
 import { BrandLogo } from './BrandLogo'
@@ -24,6 +25,16 @@ export const Footer: FC = async () => {
       ],
     },
     {
+      // Every article and example from every page: how they are found and crawled.
+      title: t('resources'),
+      links: [
+        { href: ROUTES.guides, label: tNav('guides') },
+        ...GUIDES.map((guide) => ({ href: guidePath(guide.slug), label: guide.shortTitle })),
+        { href: ROUTES.examples, label: tNav('examples') },
+        ...CV_EXAMPLES.map((example) => ({ href: examplePath(example.slug), label: example.shortTitle })),
+      ],
+    },
+    {
       title: t('legal'),
       links: [
         { href: ROUTES.terms, label: t('terms') },
@@ -41,7 +52,7 @@ export const Footer: FC = async () => {
 
   return (
     <footer className='border-t border-line bg-surface'>
-      <div className='mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-[2fr_1fr_1fr] md:px-6'>
+      <div className='mx-auto grid max-w-page gap-10 px-4 py-12 md:grid-cols-[2fr_1.2fr_1fr] lg:grid-cols-[2fr_1fr_1.4fr_1fr] md:px-6'>
         <div className='max-w-sm'>
           <BrandLogo />
           <p className='mt-4 text-sm leading-relaxed text-muted'>{t('tagline')}</p>

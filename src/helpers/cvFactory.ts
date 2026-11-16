@@ -1,6 +1,6 @@
 import type { BlockStyle, CvContact, CvContent, CvDocument, CvEntry, CvSection, CvTag } from '@store/cvs/single/types'
 import { type ContactType, LEGACY_CONTACT_TYPES } from '@constants/contacts'
-import { DEFAULT_SAMPLE, SAMPLE_CVS, TEMPLATE_SAMPLES } from '@constants/sampleCvs'
+import { DEFAULT_SAMPLE, SAMPLE_CVS, type SampleCv, TEMPLATE_SAMPLES } from '@constants/sampleCvs'
 import { SECTION_DEFAULT_TITLES, SECTION_META, type SectionType } from '@constants/sections'
 import { BASIC_DESIGN, templateDesign, type TemplateId } from '@constants/templates'
 
@@ -64,39 +64,43 @@ export const blankContent = (): CvContent => ({
   ],
 })
 
+/** A `SampleCv` (plain data) as a document's content, with ids and empty styles. */
+export const contentFromSample = (sample: SampleCv): CvContent => ({
+  basics: {
+    fullName: sample.fullName,
+    headline: sample.headline,
+    contacts: sample.contacts.map(([type, value]) => newContact(type, value)),
+    photo: null,
+    style: emptyStyle(),
+  },
+  sections: sample.sections.map(({ type, title, text, entries, tags }) => {
+    const section = newSection(type, {
+      text,
+      entries: entries?.map((entry) => newEntry(entry)),
+      tags: tags?.map(([name, level]) => newTag(name, level)),
+    })
+    return title ? { ...section, title } : section
+  }),
+})
+
 /**
  * A filled-in example: template previews, and "start from an example". Each template has its
  * own person (`TEMPLATE_SAMPLES`); without one, the designer.
  */
-export const sampleContent = (templateId?: TemplateId): CvContent => {
-  const sample = SAMPLE_CVS[templateId ? TEMPLATE_SAMPLES[templateId] : DEFAULT_SAMPLE]
-  return {
-    basics: {
-      fullName: sample.fullName,
-      headline: sample.headline,
-      contacts: sample.contacts.map(([type, value]) => newContact(type, value)),
-      photo: null,
-      style: emptyStyle(),
-    },
-    sections: sample.sections.map(({ type, title, text, entries, tags }) => {
-      const section = newSection(type, {
-        text,
-        entries: entries?.map((entry) => newEntry(entry)),
-        tags: tags?.map(([name, level]) => newTag(name, level)),
-      })
-      return title ? { ...section, title } : section
-    }),
-  }
-}
+export const sampleContent = (templateId?: TemplateId): CvContent =>
+  contentFromSample(SAMPLE_CVS[templateId ? TEMPLATE_SAMPLES[templateId] : DEFAULT_SAMPLE])
 
 export const DEFAULT_CV_TITLE = 'Իմ ինքնակենսագրականը'
 
-/** `free` starts in the free PDF's black-and-white design instead of the template's own. */
+/**
+ * `free` starts in the free PDF's black-and-white design instead of the template's own.
+ * `example` (a CV example page's person, `src/content/examples`) beats `sample`.
+ */
 export const newCvDocument = (
   templateId: TemplateId,
-  { sample = false, free = false }: { sample?: boolean; free?: boolean } = {},
+  { sample = false, free = false, example }: { sample?: boolean; free?: boolean; example?: SampleCv } = {},
 ): CvDocument => ({
   title: DEFAULT_CV_TITLE,
-  content: sample ? sampleContent(templateId) : blankContent(),
+  content: example ? contentFromSample(example) : sample ? sampleContent(templateId) : blankContent(),
   design: free ? { ...BASIC_DESIGN, palette: { ...BASIC_DESIGN.palette } } : templateDesign(templateId),
 })

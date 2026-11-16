@@ -9,13 +9,20 @@ import { createCvAPI } from '@api/cvs/main'
 import { useAuthStore } from '@store/auth/store'
 import { DRAFT_ID } from '@store/cvs/single/types'
 import { editorPath, RETURN_TO_QUERY, ROUTES } from '@constants/routes'
+import type { SampleCv } from '@constants/sampleCvs'
 import type { TemplateId } from '@constants/templates'
 import { newCvDocument } from '@helpers/cvFactory'
 import { dedupe } from '@helpers/dedupe'
 import { readLocalDraft, writeLocalDraft } from '@helpers/localDraft'
 import { ErrorState } from '@components/ui/ErrorState'
 
-type Props = { templateId: TemplateId; sample: boolean; free: boolean }
+type Props = {
+  templateId: TemplateId
+  sample: boolean
+  free: boolean
+  /** A CV example page's text to start from (`?example=`), or null. */
+  example: { slug: string; cv: SampleCv } | null
+}
 
 /**
  * Starts a CV and opens it. Signed in: created on the server. Guest: written as the local
@@ -23,7 +30,7 @@ type Props = { templateId: TemplateId; sample: boolean; free: boolean }
  * refuses to store it (site data blocked) is told so here: the editor reads the draft back, and
  * opening it without one would send the guest straight back to this page, in a loop.
  */
-export const NewCvClient: FC<Props> = ({ templateId, sample, free }) => {
+export const NewCvClient: FC<Props> = ({ templateId, sample, free, example }) => {
   const t = useTranslations('Editor')
   const tCommon = useTranslations('Common')
   const router = useRouter()
@@ -34,24 +41,24 @@ export const NewCvClient: FC<Props> = ({ templateId, sample, free }) => {
   const [storageBlocked, setStorageBlocked] = useState(false)
 
   const startDraft = useCallback(() => {
-    if (!writeLocalDraft(newCvDocument(templateId, { sample, free }))) {
+    if (!writeLocalDraft(newCvDocument(templateId, { sample, free, example: example?.cv }))) {
       setAskReplace(false)
       return setStorageBlocked(true)
     }
     router.replace(editorPath(DRAFT_ID))
-  }, [free, router, sample, templateId])
+  }, [example, free, router, sample, templateId])
 
   const start = useCallback(async () => {
     if (user) {
       const id = await dedupe(
-        `new-cv:${templateId}:${sample}:${free}`,
-        async () => (await createCvAPI(newCvDocument(templateId, { sample, free }))).id,
+        `new-cv:${templateId}:${sample}:${free}:${example?.slug ?? ''}`,
+        async () => (await createCvAPI(newCvDocument(templateId, { sample, free, example: example?.cv }))).id,
       )
       return router.replace(editorPath(id))
     }
     if (readLocalDraft()) return setAskReplace(true)
     startDraft()
-  }, [free, router, sample, startDraft, templateId, user])
+  }, [example, free, router, sample, startDraft, templateId, user])
 
   useEffect(() => {
     if (!isResolved) return

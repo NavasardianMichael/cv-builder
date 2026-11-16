@@ -23,9 +23,21 @@ export const ROUTES = {
   privacy: '/privacy',
   refundPolicy: '/refund-policy',
   contact: '/contact',
+  guides: '/guides',
+  examples: '/examples',
 } as const
 
 export const templatePath = (id: TemplateId): string => `${ROUTES.templates}/${id}`
+
+/** An article in `src/content/guides`, by its slug (a transliterated search phrase). */
+export const guidePath = (slug: string): string => `${ROUTES.guides}/${slug}`
+
+/** A CV example in `src/content/examples`, by its slug. */
+export const examplePath = (slug: string): string => `${ROUTES.examples}/${slug}`
+
+/** A new CV filled with a CV example's text, in that example's template. */
+export const newCvFromExamplePath = (templateId: TemplateId, slug: string): string =>
+  `${ROUTES.editorNew}?${TEMPLATE_QUERY}=${templateId}&${EXAMPLE_QUERY}=${slug}`
 
 export const editorPath = (cvId: string): string => `${ROUTES.editor}/${cvId}`
 
@@ -51,3 +63,5 @@ export const CHECKOUT_QUERY = 'checkout'
 export const TEMPLATE_QUERY = 'template'
 export const SAMPLE_QUERY = 'sample'
 export const FREE_QUERY = 'free'
+/** `ROUTES.editorNew`'s CV example slug: the new CV starts with that example's text. */
+export const EXAMPLE_QUERY = 'example'
