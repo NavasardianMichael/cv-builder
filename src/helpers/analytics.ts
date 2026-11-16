@@ -11,7 +11,7 @@ type AnalyticsEvents = {
   /** `variant`: the free black-and-white PDF, the paid designed one, or a guest draft's free one. */
   cv_download: { variant: 'basic' | 'designed' | 'draft' }
   begin_checkout: { currency: string; value: number }
-  /** `transaction_id` is the CV's id: GA counts a repeated one once. */
+  /** `transaction_id` is the payment's id: GA counts a repeated one once. */
   purchase: { currency: string; value: number; transaction_id: string }
   sign_up: { method: 'password' }
   login: { method: 'password' }
