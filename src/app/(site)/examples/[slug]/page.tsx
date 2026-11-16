@@ -3,17 +3,15 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { examplePath, newCvFromExamplePath, ROUTES } from '@constants/routes'
-import { templateDesign, TEMPLATES } from '@constants/templates'
+import { TEMPLATES } from '@constants/templates'
+import { exampleImage } from '@content/exampleImages'
 import { CV_EXAMPLES, examplesBySlug, findExample, guidesBySlug } from '@content/index'
-import { contentFromSample } from '@helpers/cvFactory'
 import { pageMetadata } from '@helpers/metadata'
 import { articleSchema } from '@linkedDataSchema/content'
 import { Breadcrumbs } from '@components/content/Breadcrumbs'
 import { ContentFaq } from '@components/content/ContentFaq'
-import { ContentCta, ContentMeta, ExampleCard, GuideCard, SearchTerms, TableOfContents } from '@components/content/ContentParts'
+import { ContentCta, ContentMeta, ExampleCard, ExamplePicture, GuideCard, TableOfContents } from '@components/content/ContentParts'
 import { ContentSections } from '@components/content/ContentSections'
-import { CvFontsLink } from '@components/cv/CvFontsLink'
-import { CvPreview } from '@components/cv/CvPreview'
 import { JsonLd } from '@components/seo/JsonLd'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -47,8 +45,7 @@ export default async function ExamplePage({ params }: Props) {
 
   return (
     <div className='mesh-bg'>
-      <CvFontsLink />
-      <JsonLd data={articleSchema(example, path)} />
+      <JsonLd data={articleSchema(example, path, exampleImage(example).src)} />
       <div className='mx-auto grid max-w-page grid-cols-1 gap-8 px-4 pt-8 pb-4 sm:gap-12 sm:pt-10 md:px-6 lg:grid-cols-[1fr_1.1fr]'>
         <div className='lg:sticky lg:top-24 lg:self-start'>
           <Breadcrumbs
@@ -87,7 +84,7 @@ export default async function ExamplePage({ params }: Props) {
 
         <figure className='m-0'>
           <div className='overflow-hidden rounded-2xl shadow-[0_30px_70px_-25px_rgba(20,24,45,0.45)] ring-1 ring-black/5'>
-            <CvPreview content={contentFromSample(example.cv)} design={templateDesign(example.templateId)} firstPageOnly={false} />
+            <ExamplePicture example={example} loading='eager' />
           </div>
           <figcaption className='mt-3 text-center text-sm text-muted'>{t('examplePreviewLabel', { profession: example.profession })}</figcaption>
         </figure>
@@ -97,7 +94,6 @@ export default async function ExamplePage({ params }: Props) {
         <TableOfContents sections={example.sections} hasFaq={example.faq.length > 0} />
         <ContentSections sections={example.sections} />
         {example.faq.length > 0 && <ContentFaq items={example.faq} />}
-        <SearchTerms terms={example.searchTerms} />
         <ContentCta />
       </article>
 

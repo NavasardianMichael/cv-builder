@@ -41,7 +41,11 @@ type ContentPage = {
   description: string
   /** The title in Latin letters, as many people type Armenian: the Article's `alternativeHeadline`. */
   latinTitle: string
-  /** Other ways people search for this, Latin-lettered among them: shown under the article. */
+  /**
+   * Other ways people search for this, Latin-lettered among them: the Article's `keywords` in
+   * JSON-LD only. Never shown as a list on the page — Google's spam policies name "keywords in
+   * a list or group" as keyword stuffing. Visible text says these things in sentences.
+   */
   searchTerms: string[]
   /** ISO dates (YYYY-MM-DD). */
   published: string
@@ -51,7 +55,24 @@ type ContentPage = {
   faq: FaqItem[]
 }
 
+/**
+ * A tutorial video shown under the article's intro, self-hosted in `public/content/video/`
+ * (`pnpm content:video` records it). `file` is the name without extension: `<file>.mp4` and its
+ * poster `<file>.jpg`.
+ */
+export type ContentVideo = {
+  file: string
+  title: string
+  description: string
+  durationSeconds: number
+  /** ISO date (YYYY-MM-DD). */
+  uploaded: string
+  width: number
+  height: number
+}
+
 export type Guide = ContentPage & {
+  video?: ContentVideo
   /** The template drawn on the share image. */
   cardTemplate: TemplateId
   /** Other guides, by slug. */

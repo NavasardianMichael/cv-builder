@@ -23,6 +23,7 @@ export const ROUTES = {
   privacy: '/privacy',
   refundPolicy: '/refund-policy',
   contact: '/contact',
+  about: '/about',
   guides: '/guides',
   examples: '/examples',
 } as const

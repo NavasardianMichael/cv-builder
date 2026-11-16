@@ -171,6 +171,19 @@ content deploy and a code deploy queue behind each other rather than overlapping
 Adding a page: a file in `src/content/guides/` or `src/content/examples/`, a line in
 `src/content/index.ts`, `pnpm test`. Push — that is the whole release.
 
+**Pictures and video are made locally, then committed** (CI has no Chrome):
+
+- `pnpm content:images` (web running) prints each CV example's first page through `/render`,
+  the PDF's own page, to `public/content/examples/<slug>.webp`, and records a fingerprint of
+  the CV in `src/content/exampleImages.json`. Change an example's CV without rerunning it and
+  the content tests fail — the pipeline never ships a stale picture. After restyling a
+  template, rerun it with `--force` (styling is not in the fingerprint).
+- `pnpm content:video` (web + API running, ffmpeg on the PATH) records the tutorial in the
+  real app, adds music synthesised by `scripts/content/video/music.mjs` (original, so no
+  licence or Content ID claim), and writes the MP4, its poster and a WebVTT captions file
+  timed from the recording itself. Rerun it when the editor changes visibly, then update
+  the guide's `video.durationSeconds` from its output.
+
 ## Ports
 
 | Port | What     | Declared in                                                                                                              |

@@ -1,21 +1,34 @@
 import type { FC } from 'react'
 import Link from 'next/link'
 import { getTranslations } from 'next-intl/server'
+import { APP_NAME } from '@constants/app'
 import { examplePath, guidePath, newCvPath, ROUTES } from '@constants/routes'
-import { DEFAULT_TEMPLATE_ID, templateDesign } from '@constants/templates'
-import { readingMinutes } from '@content/index'
-import type { ContentSection, CvExample, Guide } from '@content/types'
-import { contentFromSample } from '@helpers/cvFactory'
+import { DEFAULT_TEMPLATE_ID, TEMPLATES } from '@constants/templates'
+import { exampleImage, exampleImageAlt } from '@content/exampleImages'
+import { readingMinutes, videoFiles } from '@content/index'
+import type { ContentSection, ContentVideo, CvExample, Guide } from '@content/types'
 import { formatDay } from '@helpers/date'
-import { CvPreview } from '@components/cv/CvPreview'
+import { videoSchema } from '@linkedDataSchema/content'
+import { JsonLd } from '@components/seo/JsonLd'
 import { TemplateCardLink, TemplateCardPending } from '@components/templates/TemplateCardLink'
 import { ArrowRightOutlined } from '@components/ui/icons'
 
-/** Updated date and reading time, under a page's `<h1>`. `<time>` carries the machine date. */
+/** Byline, updated date and reading time, under a page's `<h1>`. `<time>` carries the machine date. */
 export const ContentMeta: FC<{ page: Guide | CvExample }> = async ({ page }) => {
   const t = await getTranslations('Content')
   return (
     <p className='m-0 mt-4 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted'>
+      {/* Who stands behind the text: the About page, which the Article's author also names. */}
+      <span>
+        {t.rich('byline', {
+          name: APP_NAME,
+          link: (chunks) => (
+            <Link href={ROUTES.about} className='text-muted underline underline-offset-2 hover:text-ink'>
+              {chunks}
+            </Link>
+          ),
+        })}
+      </span>
       <span>
         {t.rich('updated', { date: () => <time dateTime={page.updated}>{formatDay(page.updated)}</time> })}
       </span>
@@ -44,16 +57,6 @@ export const TableOfContents: FC<{ sections: ContentSection[]; hasFaq: boolean }
         ))}
       </ol>
     </nav>
-  )
-}
-
-/** Other phrasings of the page's subject, Latin-lettered among them: how people type it. */
-export const SearchTerms: FC<{ terms: string[] }> = async ({ terms }) => {
-  const t = await getTranslations('Content')
-  return (
-    <p className='m-0 mt-12 text-sm leading-relaxed text-muted'>
-      {t('searchTerms')} {terms.join(', ')}
-    </p>
   )
 }
 
@@ -94,11 +97,29 @@ export const GuideCard: FC<{ guide: Guide; headingLevel?: 'h2' | 'h3' }> = async
   )
 }
 
-/** An example's first page, drawn by the CV renderer, linking to its page. */
+/** An example's first page (its picture, `content/exampleImages`) at its natural A4 proportions. */
+export const ExamplePicture: FC<{ example: CvExample; loading: 'lazy' | 'eager' }> = ({ example, loading }) => {
+  const image = exampleImage(example)
+  return (
+    <img
+      src={image.src}
+      width={image.width}
+      height={image.height}
+      alt={exampleImageAlt(example, TEMPLATES[example.templateId].name)}
+      loading={loading}
+      // The page's main picture is its largest paint: fetched first, not after the scripts.
+      fetchPriority={loading === 'eager' ? 'high' : 'auto'}
+      decoding='async'
+      className='block h-auto w-full'
+    />
+  )
+}
+
+/** An example's picture, linking to its page. */
 export const ExampleCard: FC<{ example: CvExample; headingLevel?: 'h2' | 'h3' }> = ({ example, headingLevel: Heading = 'h3' }) => (
   <TemplateCardLink href={examplePath(example.slug)} className='group block rounded-2xl text-inherit no-underline focus-visible:outline-offset-4'>
     <div className='relative overflow-hidden rounded-2xl bg-surface shadow-[0_10px_30px_-12px_rgba(20,24,45,0.25)] ring-1 ring-black/5 transition duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[0_24px_50px_-16px_rgba(20,24,45,0.35)]'>
-      <CvPreview content={contentFromSample(example.cv)} design={templateDesign(example.templateId)} />
+      <ExamplePicture example={example} loading='lazy' />
       <TemplateCardPending />
     </div>
     <div className='mt-4 px-1'>
@@ -107,3 +128,34 @@ export const ExampleCard: FC<{ example: CvExample; headingLevel?: 'h2' | 'h3' }>
     </div>
   </TemplateCardLink>
 )
+
+/**
+ * A tutorial video under an article's intro, with its VideoObject JSON-LD. Nothing downloads
+ * until play (`preload="none"`): the poster is all the page loads. No autoplay; the music is
+ * quiet; the steps are in the picture and, for screen readers and muted players, in the
+ * captions track the recorder writes.
+ */
+export const ContentVideoPlayer: FC<{ video: ContentVideo; pagePath: string }> = ({ video, pagePath }) => {
+  const files = videoFiles(video)
+  return (
+    <figure className='m-0 mt-8'>
+      <JsonLd data={videoSchema(video, pagePath)} />
+      <video
+        controls
+        preload='none'
+        playsInline
+        poster={files.poster}
+        width={video.width}
+        height={video.height}
+        className='block h-auto w-full rounded-2xl bg-ink shadow-[0_20px_50px_-25px_rgba(20,24,45,0.5)] ring-1 ring-black/5'
+        aria-label={video.title}
+      >
+        <source src={files.src} type='video/mp4' />
+        <track kind='captions' src={files.captions} srcLang='hy' label='Հայերեն' />
+      </video>
+      <figcaption className='mt-3 text-sm leading-relaxed text-muted'>
+        <strong className='font-semibold text-ink'>{video.title}</strong> · {video.description}
+      </figcaption>
+    </figure>
+  )
+}

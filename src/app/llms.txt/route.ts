@@ -39,6 +39,7 @@ export function GET(): Response {
             url: absoluteUrl(ROUTES.pricing),
             note: `պարզ, սև-սպիտակ, առանց նկարի ձևանմուշով PDF՝ անվճար․ լիարժեք հասանելիություն ${PASS_DAYS} օրով՝ ${price}, բոլոր պատրաստի, գունավոր, նկարով ձևանմուշները բոլոր ինքնակենսագրականների համար`,
           },
+          { name: 'Մեր մասին', url: absoluteUrl(ROUTES.about), note: 'ով ենք, ինչպես ենք գրում ուղեցույցները, ինչն է անվճար, տվյալների պահպանում' },
           { name: 'Կապ մեզ հետ', url: absoluteUrl(ROUTES.contact), note: 'հարցեր և առաջարկներ' },
         ],
       },

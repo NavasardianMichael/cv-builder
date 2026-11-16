@@ -21,6 +21,8 @@ pnpm dev            # web :7009 + api :9009
 pnpm verify         # typecheck → typecheck:server → lint → test → build — run before calling anything done
 pnpm test           # vitest (tests/unit)
 pnpm fonts:css      # public/fonts/manifest.json -> public/fonts/cv-fonts.css
+pnpm content:images # CV example pictures (public/content/examples), needs the web running; a stale one fails the content tests
+pnpm content:video  # the tutorial video (public/content/video), needs web + API running and ffmpeg
 pnpm build:api      # server/dist -> out/api, the standalone API release the deploy ships
 pnpm env:base64 production | clip   # server/.env.production.local -> the ENV_API_BASE64 secret
 pnpm payments:reverse refund 12 13  # money back through the gateway (refund | cancel), by Payment.orderNumber —
@@ -64,7 +66,7 @@ these paths and would rewrite scoped packages (`@sentry/nextjs/config` → `./sr
 | Free black-and-white PDF | `server/src/services/basicCv.ts` (prints) · twin `BASIC_DESIGN` in `templates.ts` + `src/helpers/basicCv.ts` (previews) |
 | Auth (password + Google) | `server/src/routes/identity.ts`, `identity-google.ts` · `src/components/auth/` · emailed links (verify, reset, "password changed") in `server/src/lib/{email-verification,password-reset}.ts`. A password sign-up has no session until its verification link is opened |
 | CI/CD, production | `.github/workflows/{ci,deploy}.yml` · `docs/DEPLOYMENT.md` (how) · `docs/PRODUCTION_SETUP.md` (one-time server setup) · host templates + invariants `deployment/` |
-| Guides & CV examples (SEO content) | `src/content/` (typed Armenian copy, one file per slug, registry `index.ts`) · routes `app/(site)/{guides,examples}` · `components/content/` · checks `tests/unit/content` · own pipeline `.github/workflows/content.yml` + IndexNow `scripts/content/indexnow.mjs` (`docs/DEPLOYMENT.md`, "Content") |
+| Guides & CV examples (SEO content) | `src/content/` (typed Armenian copy, one file per slug, registry `index.ts`; example pictures `exampleImages.ts` + `scripts/content/example-images.mjs`; tutorial video `scripts/content/video/` — music synthesised there, no third-party audio; `/about` copy `about.ts`) · routes `app/(site)/{guides,examples}` · `components/content/` · checks `tests/unit/content` · own pipeline `.github/workflows/content.yml` + IndexNow `scripts/content/indexnow.mjs` (`docs/DEPLOYMENT.md`, "Content") |
 | SEO / GEO | `src/helpers/metadata.ts`, `src/constants/seo.ts` (hy/en/ru keywords, verification tags), `src/linkedDataSchema/site.ts`, `src/app/{sitemap,robots}.ts`, `src/app/llms.txt/`, `next.config.ts#htmlLimitedBots` |
 | Share cards (OpenGraph / X) | `src/app/socialCard.tsx` draws them; `app/opengraph-image.tsx` (site) and `templates/[templateId]/{opengraph,twitter}-image.tsx` (per template). `pageMetadata` names the site image on every page — a page's own `openGraph` would otherwise drop it — except with `ownImage: true` |
 | Error reporting, analytics | Sentry (web only): `src/helpers/sentry.ts`, `src/instrumentation{,-client}.ts`, `reportError` · GA4: `src/helpers/analytics.ts` (`trackEvent`), `components/analytics/Analytics.tsx` · consent (asked only in the EU/EEA, UK, Switzerland, by time zone): `src/helpers/consent.ts`, `constants/consent.ts`, `ConsentBanner` · both off while their `NEXT_PUBLIC_*` is empty, never on `/render` |

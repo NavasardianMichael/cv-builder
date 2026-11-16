@@ -1,12 +1,17 @@
-import { readdirSync } from 'node:fs'
+import { existsSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { examplePath, guidePath, ROUTES, templatePath } from '@constants/routes'
 import { SECTION_META } from '@constants/sections'
 import { TEMPLATE_IDS } from '@constants/templates'
-import { CV_EXAMPLES, GUIDES, pageTexts } from '@content/index'
+import { ABOUT } from '@content/about'
+import { exampleImageEntry, exampleRenderInput } from '@content/exampleImages'
+import { CV_EXAMPLES, GUIDES, pageTexts, sectionTexts, videoFiles } from '@content/index'
 import type { CvExample, Guide } from '@content/types'
+import { contentFromSample } from '@helpers/cvFactory'
 import { inlineLinks } from '@helpers/inlineMarkup'
+import { fingerprint } from '../../../scripts/content/example-images.mjs'
+import { coerceContent } from '../../../server/src/services/cvDocument'
 
 /**
  * The content pipeline's gate (`.github/workflows/content.yml`): what a page needs to be
@@ -14,6 +19,8 @@ import { inlineLinks } from '@helpers/inlineMarkup'
  */
 
 const PAGES: (Guide | CvExample)[] = [...GUIDES, ...CV_EXAMPLES]
+
+const aboutTexts = (): string[] => [ABOUT.title, ABOUT.metaTitle, ABOUT.description, ...ABOUT.intro, ...ABOUT.sections.flatMap(sectionTexts)]
 const label = (page: Guide | CvExample): string => page.slug
 
 const ARMENIAN_LETTER = 'Ա-և'
@@ -24,6 +31,10 @@ const LINKABLE = new Set<string>([
   ROUTES.templates,
   ROUTES.pricing,
   ROUTES.contact,
+  ROUTES.about,
+  ROUTES.privacy,
+  ROUTES.terms,
+  ROUTES.refundPolicy,
   ROUTES.guides,
   ROUTES.examples,
   ...GUIDES.map((guide) => guidePath(guide.slug)),
@@ -33,6 +44,19 @@ const LINKABLE = new Set<string>([
 
 /** Lowercase Latin, digits, single dashes between. */
 const isSlug = (value: string): boolean => /^[a-z0-9-]+$/.test(value) && !/^-|-$|--/.test(value)
+
+/** Official sources a page may cite (opened in a new tab): https only, these hosts only. */
+const TRUSTED_HOSTS = new Set(['europass.europa.eu', 'fonter.am'])
+
+const isAllowedLink = (href: string): boolean => {
+  if (href.startsWith('/')) return LINKABLE.has(href)
+  try {
+    const url = new URL(href)
+    return url.protocol === 'https:' && TRUSTED_HOSTS.has(url.hostname)
+  } catch {
+    return false
+  }
+}
 
 const fileSlugs = (folder: string): string[] =>
   readdirSync(path.join(process.cwd(), 'src/content', folder))
@@ -124,11 +148,44 @@ describe('page structure', () => {
     }
   })
 
-  it('links only to public pages of this site', () => {
-    for (const page of PAGES) {
-      for (const href of pageTexts(page).flatMap(inlineLinks)) {
-        expect(LINKABLE.has(href), `${label(page)} links to ${href}`).toBe(true)
+  it('links only to public pages of this site and to trusted sources', () => {
+    const about = { slug: 'about', texts: aboutTexts() }
+    for (const { slug, texts } of [...PAGES.map((page) => ({ slug: page.slug, texts: pageTexts(page) })), about]) {
+      for (const href of texts.flatMap(inlineLinks)) {
+        expect(isAllowedLink(href), `${slug} links to ${href}`).toBe(true)
       }
+    }
+  })
+
+  // "Use this example" saves the CV through the API, which trims what breaks its rules
+  // (lengths, counts, catalogue types) without an error. A content-only push deploys no API,
+  // so the content must fit the API that is already live.
+  it('keeps every example CV whole through the API save', () => {
+    for (const example of CV_EXAMPLES) {
+      const content = contentFromSample(example.cv)
+      expect(coerceContent(content), example.slug).toEqual(content)
+    }
+  })
+
+  it('has a current picture of every example CV (pnpm content:images)', () => {
+    for (const example of CV_EXAMPLES) {
+      const entry = exampleImageEntry(example.slug)
+      expect(entry, `${example.slug}: no picture — run pnpm content:images`).toBeDefined()
+      expect(entry?.fingerprint, `${example.slug}: the CV changed since its picture — run pnpm content:images`).toBe(
+        fingerprint(exampleRenderInput(example))
+      )
+      expect(existsSync(path.join(process.cwd(), 'public/content/examples', `${example.slug}.webp`)), example.slug).toBe(true)
+    }
+  })
+
+  it('has the files of every content video (pnpm content:video)', () => {
+    for (const guide of GUIDES) {
+      if (!guide.video) continue
+      for (const file of Object.values(videoFiles(guide.video))) {
+        expect(existsSync(path.join(process.cwd(), 'public', file)), `${guide.slug}: ${file}`).toBe(true)
+      }
+      expect(guide.video.durationSeconds, guide.slug).toBeGreaterThan(0)
+      expect(guide.video.uploaded, guide.slug).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     }
   })
 
@@ -150,7 +207,10 @@ describe('page structure', () => {
 })
 
 describe('Armenian punctuation', () => {
-  const texts = PAGES.flatMap((page) => pageTexts(page).map((text) => ({ page: label(page), text })))
+  const texts = [
+    ...PAGES.flatMap((page) => pageTexts(page).map((text) => ({ page: label(page), text }))),
+    ...aboutTexts().map((text) => ({ page: 'about', text })),
+  ]
 
   it('asks questions with ՞ on the word, never ?', () => {
     for (const page of PAGES) {

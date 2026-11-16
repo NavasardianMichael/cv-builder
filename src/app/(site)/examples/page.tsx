@@ -6,7 +6,6 @@ import { pageMetadata } from '@helpers/metadata'
 import { collectionSchema } from '@linkedDataSchema/content'
 import { Breadcrumbs } from '@components/content/Breadcrumbs'
 import { ContentCta, ExampleCard, GuideCard } from '@components/content/ContentParts'
-import { CvFontsLink } from '@components/cv/CvFontsLink'
 import { JsonLd } from '@components/seo/JsonLd'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,7 +22,6 @@ export default async function ExamplesPage() {
   const tNav = await getTranslations('Nav')
   return (
     <div className='mesh-bg'>
-      <CvFontsLink />
       <JsonLd
         data={collectionSchema({
           name: t('examplesTitle'),

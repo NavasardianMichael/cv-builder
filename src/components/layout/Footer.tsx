@@ -20,6 +20,7 @@ export const Footer: FC = async () => {
       links: [
         { href: ROUTES.templates, label: tNav('templates') },
         { href: ROUTES.pricing, label: tNav('pricing') },
+        { href: ROUTES.about, label: tNav('about') },
         { href: ROUTES.contact, label: tNav('contact') },
         { href: ROUTES.signIn, label: tNav('signIn') },
       ],

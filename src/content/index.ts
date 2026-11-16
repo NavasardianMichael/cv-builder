@@ -10,7 +10,7 @@ import { cvRezyumeInqnakensagrutyun } from './guides/cv-rezyume-inqnakensagrutyu
 import { inchpesGrelInqnakensagrakan } from './guides/inchpes-grel-inqnakensagrakan'
 import { inqnakensagrakanArantsPordzi } from './guides/inqnakensagrakan-arants-pordzi'
 import { ughektsoghNamak } from './guides/ughektsogh-namak'
-import type { ContentSection, CvExample, FaqItem, Guide } from './types'
+import type { ContentSection, ContentVideo, CvExample, FaqItem, Guide } from './types'
 
 /**
  * Every article and CV example, in the order the hubs list them. Adding a page: a file named
@@ -44,7 +44,8 @@ export const findExample = (slug: unknown): CvExample | undefined => CV_EXAMPLES
 export const guidesBySlug = (slugs: string[]): Guide[] => slugs.flatMap((slug) => findGuide(slug) ?? [])
 export const examplesBySlug = (slugs: string[]): CvExample[] => slugs.flatMap((slug) => findExample(slug) ?? [])
 
-const sectionText = (section: ContentSection): string[] => [
+/** A section's text, heading included: reading time and the content tests. */
+export const sectionTexts = (section: ContentSection): string[] => [
   section.heading,
   ...section.blocks.flatMap((block) => {
     switch (block.kind) {
@@ -65,18 +66,26 @@ const sectionText = (section: ContentSection): string[] => [
 const WORDS_PER_MINUTE = 160
 
 export const readingMinutes = (page: { intro: string[]; sections: ContentSection[]; faq: FaqItem[] }): number => {
-  const text = [...page.intro, ...page.sections.flatMap(sectionText), ...page.faq.flatMap((item) => [item.question, item.answer])].join(' ')
+  const text = [...page.intro, ...page.sections.flatMap(sectionTexts), ...page.faq.flatMap((item) => [item.question, item.answer])].join(' ')
   const words = text.split(/\s+/).filter(Boolean).length
   return Math.max(1, Math.round(words / WORDS_PER_MINUTE))
 }
 
+/** A content video's files, served from `public/`. */
+export const videoFiles = (video: ContentVideo): { src: string; poster: string; captions: string } => ({
+  src: `/content/video/${video.file}.mp4`,
+  poster: `/content/video/${video.file}.jpg`,
+  captions: `/content/video/${video.file}.vtt`,
+})
+
 /** Every text field of a page, for the content tests. */
 export const pageTexts = (page: Guide | CvExample): string[] => [
+  ...('video' in page && page.video ? [page.video.title, page.video.description] : []),
   page.title,
   page.shortTitle,
   page.metaTitle,
   page.description,
   ...page.intro,
-  ...page.sections.flatMap(sectionText),
+  ...page.sections.flatMap(sectionTexts),
   ...page.faq.flatMap((item) => [item.question, item.answer]),
 ]

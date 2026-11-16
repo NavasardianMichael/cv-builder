@@ -7,9 +7,8 @@ import { pageMetadata } from '@helpers/metadata'
 import { articleSchema } from '@linkedDataSchema/content'
 import { Breadcrumbs } from '@components/content/Breadcrumbs'
 import { ContentFaq } from '@components/content/ContentFaq'
-import { ContentCta, ContentMeta, ExampleCard, GuideCard, SearchTerms, TableOfContents } from '@components/content/ContentParts'
+import { ContentCta, ContentMeta, ContentVideoPlayer, ExampleCard, GuideCard, TableOfContents } from '@components/content/ContentParts'
 import { ContentSections } from '@components/content/ContentSections'
-import { CvFontsLink } from '@components/cv/CvFontsLink'
 import { JsonLd } from '@components/seo/JsonLd'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -45,7 +44,6 @@ export default async function GuidePage({ params }: Props) {
 
   return (
     <div className='mesh-bg'>
-      <CvFontsLink />
       <JsonLd data={articleSchema(guide, path)} />
       <article className='mx-auto max-w-3xl px-4 pt-8 pb-14 sm:pt-10 md:px-6'>
         <Breadcrumbs
@@ -64,10 +62,10 @@ export default async function GuidePage({ params }: Props) {
             {paragraph}
           </p>
         ))}
+        {guide.video && <ContentVideoPlayer video={guide.video} pagePath={path} />}
         <TableOfContents sections={guide.sections} hasFaq={guide.faq.length > 0} />
         <ContentSections sections={guide.sections} />
         {guide.faq.length > 0 && <ContentFaq items={guide.faq} headingLevel={faqOnly ? 'h2' : 'h3'} />}
-        <SearchTerms terms={guide.searchTerms} />
         <ContentCta />
       </article>
 
